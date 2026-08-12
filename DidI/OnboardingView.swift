@@ -331,7 +331,9 @@ private struct WidgetScreen: View {
     }
 }
 
-private struct WalkthroughSheet: View {
+/// Also reached from the day-1 nudge, which deep-links here rather than to the
+/// main screen.
+struct WalkthroughSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {

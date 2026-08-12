@@ -48,6 +48,16 @@ targets:
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        NSLocationWhenInUseUsageDescription: >-
+          Used to clear your confirmations when you leave home, so an old checkmark
+          never fools you. Your location stays on this device.
+        # architecture §6: background region events require `always`, so this
+        # string must be present alongside the when-in-use one.
+        NSLocationAlwaysAndWhenInUseUsageDescription: >-
+          Used to clear your confirmations when you leave home, even with the app
+          closed. Your location stays on this device.
+        UIBackgroundModes:
+          - location
 
   DidIWidget:
     type: app-extension

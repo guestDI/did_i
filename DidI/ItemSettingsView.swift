@@ -74,6 +74,26 @@ struct ItemSettingsView: View {
                         Text(Copy.neverWarning)
                     }
                 }
+
+                // Only offered once a home exists — there is nothing to leave
+                // otherwise. Permission is asked at the moment it buys something.
+                if hasHome {
+                    Section {
+                        Toggle(
+                            "Remind me when I leave",
+                            isOn: Binding(
+                                get: { draft.leavingHomeReminder == true },
+                                set: { on in
+                                    draft.leavingHomeReminder = on
+                                    if on { Task { _ = await Notifications.requestAuthorization() } }
+                                }
+                            )
+                        )
+                        .tint(Palette.amber)
+                    } footer: {
+                        Text("One notification, when you leave and this has no record.")
+                    }
+                }
             }
             .scrollContentBackground(.hidden)
             .background(Palette.ink)

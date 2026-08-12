@@ -156,6 +156,79 @@ public enum Copy {
 
     public static let confirmHint = "Double tap to log"
 
+    // MARK: - Day 2 (day-2-decay-and-location.md, verbatim)
+
+    /// "Your stove confirmation aged out at 4am". The doc writes the possessive
+    /// without the article, so a leading "The " is dropped and the first letter
+    /// lowercased — "The stove" reads as "Your stove confirmation".
+    static func bareName(_ name: String) -> String {
+        var bare = name
+        for article in ["The ", "the "] where bare.hasPrefix(article) {
+            bare = String(bare.dropFirst(article.count))
+        }
+        return bare.prefix(1).lowercased() + bare.dropFirst()
+    }
+
+    public enum Lesson {
+        /// Item name interpolated. If several aged out, the name is dropped.
+        public static func title(items: [Item], hour: Int?) -> String {
+            let when = hour.map { " at \(clockHour($0))" } ?? ""
+            guard items.count == 1, let only = items.first else {
+                return "Your confirmations aged out\(when)"
+            }
+            return "Your \(bareName(only.name)) confirmation aged out\(when)"
+        }
+
+        public static let body =
+            "Old checkmarks lie. A green tick from yesterday tells you nothing about today, so we expire them overnight and start fresh."
+        /// Waking up to "unknown" reads as failure. It isn't, and it can't know.
+        public static let footer = "Nothing went wrong. This is the app working."
+        public static let button = "Makes sense"
+    }
+
+    public enum LocationAsk {
+        public static let title = "Want it to reset when you actually leave?"
+        public static let body =
+            "Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it never leaves your phone."
+        public static let use = "Use my location"
+        public static let keepTimer = "Keep the timer"
+
+        /// architecture §6: background region events require `always`, so this is
+        /// a second, later ask rather than optional politeness.
+        public static let alwaysReason =
+            "so we can clear the board when you leave, even with the app closed"
+        public static let alwaysTitle = "One more thing"
+        public static let alwaysButton = "Allow while closed"
+        public static let alwaysSkip = "Not now"
+    }
+
+    public enum HomeSetup {
+        public static let title = "Where's home?"
+        public static let body =
+            "Tap \"Set as home\" while you're there. We'll remember the spot, not the address."
+        public static let set = "Set as home"
+        public static let notHome = "I'm not home right now"
+        public static let confirmed = "Home set. From now on, leaving the house clears the board."
+    }
+
+    public enum LocationDeclined {
+        public static let message = "No problem. We'll keep expiring things overnight instead."
+        /// Shown silently, once.
+        public static let settingsHint =
+            "You can change how each item expires in Settings → any item → \"Forget this after\"."
+    }
+
+    /// The escape hatch, always available on an unknown item while away.
+    public static let cantCheckRightNow = "Can't check right now"
+    public static let askSomeoneAtHome = "Ask someone at home"
+
+    /// Pre-fills a share sheet. Names that do not start with an article read a
+    /// little clipped ("is front door locked?"); it is an editable draft, not a
+    /// sent message, so the user fixes it in the half-second before sending.
+    public static func shareMessage(item: Item) -> String {
+        "Random question — is \(item.name.lowercased()) \(item.word.lowercased())?"
+    }
+
     // MARK: - Item settings
 
     /// day-2 introduces this editor, and only on day 2: "How long until this
@@ -225,4 +298,84 @@ public enum Copy {
             body: unknownAway
         )
     }
+}
+
+// MARK: - Day 3+ (day-3-plus-repeat-use.md, verbatim)
+
+public extension Copy {
+    /// "checking the iron", "is the front door locked?" — item names come from
+    /// the Day 0 chips as "The stove", "Front door", "Iron", so an article is
+    /// added unless one is already there.
+    static func withArticle(_ name: String) -> String {
+        let lower = name.lowercased()
+        return lower.hasPrefix("the ") ? lower : "the \(lower)"
+    }
+
+    static func sentenceCased(_ text: String) -> String {
+        text.prefix(1).uppercased() + text.dropFirst()
+    }
+
+    enum SecondItemPrompt {
+        public static let title = "You've opened this a few times today"
+        public static let body = "Anything else worth keeping an eye on?"
+        public static let decline = "Not right now"
+    }
+
+    enum Cap {
+        public static let title = "That's six things"
+        public static let body =
+            "This app works because the list is short enough to trust at a glance. Want to swap something out instead?"
+        public static let swap = "Swap one out"
+        public static let neverMind = "Never mind"
+
+        /// "Windows — last confirmed 12 days ago." Shown so the choice is informed.
+        public static func usage(item: Item, now: Date) -> String {
+            guard let last = item.lastConfirmedAt else {
+                return "\(item.name) — never confirmed"
+            }
+            let days = Int(now.timeIntervalSince(last) / 86_400)
+            if days < 1 { return "\(item.name) — last confirmed today" }
+            return "\(item.name) — last confirmed \(days) day\(days == 1 ? "" : "s") ago"
+        }
+    }
+
+    enum Paranoia {
+        public static let title = "This week"
+
+        public static func topWorry(item: Item, checks: Int) -> String {
+            "Top worry: \(withArticle(item.name)). \(checks) checks."
+        }
+
+        public static func runnerUp(item: Item, checks: Int) -> String {
+            "Runner-up: \(withArticle(item.name)), a modest \(checks)."
+        }
+
+        public static func reassurance(item: Item) -> String {
+            "\(sentenceCased(withArticle(item.name))) was fine every single time. It's always fine."
+        }
+
+        public static let closing = [
+            "You checked 61 times. It was off 61 times. Just saying.",
+            "Perfect record. Zero disasters. One slightly tired phone.",
+            "Everything was fine, every time, all week.",
+        ]
+    }
+
+    /// One honest sentence, once, and then get out of the way. No resources, no
+    /// diagnosis, no follow-up.
+    static func escalatingChecks(item: Item) -> String {
+        let name = withArticle(item.name)
+        return "You've been checking \(name) a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to delete it — \(name) will still be off."
+    }
+
+    enum StaleItem {
+        public static func title(item: Item) -> String {
+            "\(item.name) hasn't come up in a month"
+        }
+        public static let body = "Want to put it away? You can bring it back any time."
+        public static let archive = "Archive it"
+        public static let keep = "Keep it"
+    }
+
+    static let previouslySection = "Previously"
 }

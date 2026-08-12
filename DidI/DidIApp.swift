@@ -2,6 +2,8 @@ import SwiftUI
 
 @main
 struct DidIApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     init() {
         StoreChange.startListening()
     }

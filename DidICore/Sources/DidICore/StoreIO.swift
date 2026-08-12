@@ -10,6 +10,10 @@ public struct Store: Codable, Sendable {
     /// Set by the region-exit background wake. `nil` until the geofence exists.
     public var lastLeftHomeAt: Date?
 
+    /// Set by the region-entry event. Paired with `lastLeftHomeAt` it derives
+    /// `isAway` — two timestamps rather than a stored "currently away" flag.
+    public var lastEnteredHomeAt: Date?
+
     /// The last confirmation line shown, so the next one can avoid it.
     /// Global rather than per-item: "never twice in a row" is about what the
     /// person just read, and they read one line at a time.
@@ -17,18 +21,25 @@ public struct Store: Codable, Sendable {
 
     public var flags: OnboardingFlags
 
+    /// day-3+ counters. Local only, never transmitted.
+    public var usage: Usage
+
     public init(
         items: [Item] = [],
         home: HomeLocation? = nil,
         lastLeftHomeAt: Date? = nil,
+        lastEnteredHomeAt: Date? = nil,
         lastConfirmationLine: String? = nil,
-        flags: OnboardingFlags = OnboardingFlags()
+        flags: OnboardingFlags = OnboardingFlags(),
+        usage: Usage = Usage()
     ) {
         self.items = items
         self.home = home
         self.lastLeftHomeAt = lastLeftHomeAt
+        self.lastEnteredHomeAt = lastEnteredHomeAt
         self.lastConfirmationLine = lastConfirmationLine
         self.flags = flags
+        self.usage = usage
     }
 
     /// Hand-written so a store file missing any newer key still decodes rather
@@ -39,12 +50,14 @@ public struct Store: Codable, Sendable {
         items = try c.decodeIfPresent([Item].self, forKey: .items) ?? []
         home = try c.decodeIfPresent(HomeLocation.self, forKey: .home)
         lastLeftHomeAt = try c.decodeIfPresent(Date.self, forKey: .lastLeftHomeAt)
+        lastEnteredHomeAt = try c.decodeIfPresent(Date.self, forKey: .lastEnteredHomeAt)
         lastConfirmationLine = try c.decodeIfPresent(String.self, forKey: .lastConfirmationLine)
         flags = try c.decodeIfPresent(OnboardingFlags.self, forKey: .flags) ?? OnboardingFlags()
+        usage = try c.decodeIfPresent(Usage.self, forKey: .usage) ?? Usage()
     }
 
     enum CodingKeys: String, CodingKey {
-        case items, home, lastLeftHomeAt, lastConfirmationLine, flags
+        case items, home, lastLeftHomeAt, lastEnteredHomeAt, lastConfirmationLine, flags, usage
     }
 
     /// Adds the first item onboarding produced.
@@ -66,15 +79,16 @@ public struct Store: Codable, Sendable {
     public mutating func confirm(id: UUID, at date: Date, calendar: Calendar = .current) {
         guard let i = items.firstIndex(where: { $0.id == id }) else { return }
 
-        let today = (items[i].todaysConfirmations ?? [])
-            .filter { calendar.isDate($0, inSameDayAs: date) } + [date]
+        let history = (items[i].confirmations ?? [])
+            .filter { $0 > date.addingTimeInterval(-30 * 86_400) } + [date]
+        let today = history.filter { calendar.isDate($0, inSameDayAs: date) }
 
         let line = Copy.confirmationLine(
             escalating: today.count >= 3,
             avoiding: lastConfirmationLine
         )
 
-        items[i].todaysConfirmations = today
+        items[i].confirmations = history
         items[i].lastConfirmedAt = date
         items[i].confirmationLine = line
         lastConfirmationLine = line
@@ -89,9 +103,9 @@ public struct Store: Codable, Sendable {
     /// for undoing.
     public mutating func undo(id: UUID) {
         guard let i = items.firstIndex(where: { $0.id == id }) else { return }
-        var history = items[i].todaysConfirmations ?? []
+        var history = items[i].confirmations ?? []
         if !history.isEmpty { history.removeLast() }
-        items[i].todaysConfirmations = history
+        items[i].confirmations = history
         items[i].lastConfirmedAt = history.last
         items[i].confirmationLine = nil
     }

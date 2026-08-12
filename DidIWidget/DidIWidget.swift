@@ -100,7 +100,7 @@ struct BoardWidgetView: View {
                 .containerBackground(.clear, for: .widget)
 
         default:
-            RectangularFace(items: entry.store.active, states: entry.states)
+            RectangularFace(items: entry.store.counted, states: entry.states)
                 .containerBackground(.clear, for: .widget)
         }
     }

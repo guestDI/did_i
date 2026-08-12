@@ -336,3 +336,135 @@ succeeded because the directory was missing. Removed rather than fixed: **to re-
 delete the reference PNG and re-run.** Deleting one also used to break the build,
 because XcodeGen globbed `__Snapshots__` in as build inputs; the directory is now
 excluded from the target's sources.
+
+## Phase 5
+
+**The board is top-anchored now.** Design `1a` parks the rows at the bottom behind a
+`flex:1` spacer, and day-2 requires that the decay lesson be "a sheet over the main
+screen, not a full-screen takeover — the item list stays visible behind it so they can
+see what's being talked about". The sheet lands exactly where the design parks the rows,
+so the list was completely hidden. Docs beat design, and this also closes the dead-space
+question flagged after Phase 3.
+
+**`isAway` is derived from two timestamps**, `lastLeftHomeAt` and `lastEnteredHomeAt`,
+not stored as a flag — same rule as display state. With no home set, `isAway` is false:
+the away line claims "since you left", and that has to be true when shown.
+
+**The `always` escalation is its own step**, immediately after home is captured, with
+architecture §6's one-line reason. Refusal is silent — the geofence degrades to the 24h
+ceiling, the leaving-home reminder is simply never offered, and no banner appears
+anywhere. day-2 wanted this deferred until the nudge was enabled; architecture §6
+overrides, because exit events do not arrive at all without it.
+
+**The late-install nudge rule.** "If the install happened after 20:00, the nudge targets
+the *next* weekday morning rather than the one 12 hours later" is read as: an install at
+or after 20:00 waives the 12-hour minimum and takes the next morning, instead of skipping
+to the morning after. A 21:00 Monday install fires Tuesday 08:00, eleven hours later.
+The alternative reading — wait until Wednesday — makes the nudge arrive two days after
+install, which is not what "rather than" is contrasting. Tested across every hour of a
+full week; the fire date is never a weekend and always 08:00.
+
+**The escape hatch lives in a context menu.** day-2 wants "Can't check right now" and
+"Ask someone at home" always available on an unknown item while away. Two visible buttons
+per row would wreck the board, so they are a long-press context menu on the row, shown
+only in that state. Discoverability is the trade; revisit if it goes unused.
+
+**Muted items are excluded from `counted`**, which is what `accessoryRectangular`
+summarises. `active` still includes them, so they stay on the board — the mute silences
+the count, not the item.
+
+**A Settings screen exists now**, minimally. Phase 5 forces it: day-2 wants "Reset home
+location" and a one-line note when location is revoked, and both need somewhere to live.
+It holds home state and the "Forget this after" pointer, nothing else. Tone and reminder
+sections from design `2a` wait for Phase 6.
+
+**Notification permission for the per-item reminder is asked at the toggle**, not
+earlier — the first moment it buys the user something concrete. The toggle only appears
+once a home exists.
+
+**`reconcileWidgetNudge` runs on every foreground** and resolves the nudge to exactly one
+of scheduled, retired, or already handled. Permission revoked in Settings marks it fired,
+per the day-1 edge case: iOS drops it silently, so the bookkeeping should be honest.
+Installing the widget also marks it fired, which is what stops it re-arming if the widget
+is later removed.
+
+**Foreground notifications are presented as banners.** The leaving-home reminder arrives
+seconds after the exit, when the phone may still be in the user's hand; suppressing it
+there would make the feature look broken.
+
+## Phase 6
+
+**The guardrail has a magnitude floor the doc does not specify.** day-3 says only
+"if checks-per-day for a single item trend upward across three consecutive weeks".
+Taken literally, 1 → 2 → 3 checks over three weeks trips it — permanently suppressing
+the weekly card and telling a light user that the app "has become the thing you check".
+That is the most harmful sentence in the product, so it now also requires the most
+recent week to reach 10 checks, reusing the counter's own threshold for "a lot".
+Tested both ways. **This is a judgement call on an underspecified rule — overrule it
+by changing `EscalatingChecks.floor`.**
+
+**Per-item check counts come only from app opens.** A "check" is a *view*, per
+architecture §3. iOS gives no callback when someone looks at a widget, so widget views
+are unobservable — the widget's timeline is precomputed and the system renders it
+without running our code. Opening the board therefore counts as one check for every
+item on it. Consequences: the second-item trigger "one item checked 5+ times" is in
+practice "the board opened 5+ times", and the weekly card's "top worry" ranking is
+driven by how long an item has been on the board rather than by attention. The
+plumbing, the trends and the guardrail are all real; the input signal is coarser than
+the doc assumes. A real per-item signal would need something like a tap that opens an
+item — worth adding before shipping the counter.
+
+**`checkCounts` is `[String: [Date]]`, keyed by `uuidString`.** Architecture §3 writes
+`[UUID: [Date]]`, which `JSONEncoder` emits as a flat alternating array — unreadable in
+a store that §2 wants inspectable during development.
+
+**`todaysConfirmations` became `confirmations`, trimmed to 30 days.** The weekly card
+needs to know what was confirmed across a week, not just today; the escalation pool
+still filters to the current day. Stores written before this lose their confirmation
+history once, which resets escalation and delays the first weekly card. No migration
+written — it is a counter, not content.
+
+**`OnboardingFlags` and `Usage` now decode leniently**, like `Store`. Found by test:
+the Phase 4 "old store still decodes" test only passed because `flags` was absent
+entirely. With a partial `flags` object present, synthesised `Decodable` threw and the
+whole store — every item — was silently replaced by an empty one. Any field added to
+either struct would have shipped that bug.
+
+**A "flat week breaks the trend."** `escalating` requires strictly increasing rates.
+Trending upward should not fire on a plateau.
+
+**Archived items do not count toward the cap**, so "Swap one out" frees a slot without
+deleting anything. Archive, never delete.
+
+**The add-item sheet is the second-item prompt.** Same view, different heading, so the
+suggestion is a normal add rather than a special modal. Declining it increments
+`declineCount` — the cooldowns depend on that being the *only* way to decline.
+
+**Chips are matched to existing items by name.** Renaming an item resurfaces its chip.
+Better than silently hiding a chip whose item no longer resembles it.
+
+**Not built, though day-3 describes them:** the 30-day stale-item archive prompt and
+the `SKStoreReviewController` prompt. Neither was in the phase brief. The archive
+machinery they need (`archive`, `unarchive`, `archived`, the "Previously" section) is
+in place, so both are small additions.
+
+## Tail: stale items and the review prompt
+
+**The 30-day archive offer counts from creation for never-confirmed items.** day-3
+says "hasn't come up in a month"; an item created six weeks ago and never confirmed has
+not come up either, and is the likeliest thing on the board to be dead weight. Offered
+once, whatever the answer — `Item.archiveOfferedAt` is stamped on both buttons.
+
+**One prompt per app open, in priority order:** decay lesson → pending home setup →
+escalating-checks guardrail → weekly card → second-item suggestion → stale-item offer.
+Each returns early. Stacking any two of these would undo the restraint every one of
+them is written with.
+
+**Review uses SwiftUI's `requestReview` environment action**, not
+`SKStoreReviewController.requestReview(in:)`, which is deprecated on iOS 18 and would
+fail the warnings-as-errors build.
+
+**Review's "at home" test passes when there is no geofence.** `isAway` is false without
+a home, so a user who declined location can still be asked. The trigger is a
+confirmation that just happened, which is itself the "things are good" signal day-3 is
+reaching for. Only a *known* away state suppresses it.

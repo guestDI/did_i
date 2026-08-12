@@ -66,6 +66,17 @@ public struct OnboardingFlags: Codable, Sendable, Equatable {
     public var widgetNudgeFired: Bool
     public var widgetInstalledAt: Date?
 
+    // MARK: day-2
+
+    public var decayLessonShown: Bool
+    /// Set when the user picks "Keep the timer". Never ask again — not on day 5,
+    /// not on a settings banner, not with a "you're missing out" card.
+    public var locationDeclined: Bool
+    /// The one-time "Settings → any item → Forget this after" pointer.
+    public var settingsHintShown: Bool
+    /// "I'm not home right now" — ask again on a later open.
+    public var homeSetupPending: Bool
+
     public init(
         installedAt: Date? = nil,
         completedScreen: Int = 0,
@@ -74,7 +85,11 @@ public struct OnboardingFlags: Codable, Sendable, Equatable {
         widgetPromptOutcome: WidgetPrompt? = nil,
         notificationOptIn: Bool = false,
         widgetNudgeFired: Bool = false,
-        widgetInstalledAt: Date? = nil
+        widgetInstalledAt: Date? = nil,
+        decayLessonShown: Bool = false,
+        locationDeclined: Bool = false,
+        settingsHintShown: Bool = false,
+        homeSetupPending: Bool = false
     ) {
         self.installedAt = installedAt
         self.completedScreen = completedScreen
@@ -84,6 +99,32 @@ public struct OnboardingFlags: Codable, Sendable, Equatable {
         self.notificationOptIn = notificationOptIn
         self.widgetNudgeFired = widgetNudgeFired
         self.widgetInstalledAt = widgetInstalledAt
+        self.decayLessonShown = decayLessonShown
+        self.locationDeclined = locationDeclined
+        self.settingsHintShown = settingsHintShown
+        self.homeSetupPending = homeSetupPending
+    }
+
+    /// Hand-written for the same reason `Store`'s is: synthesised `Decodable`
+    /// ignores property defaults, so every field added here would otherwise make
+    /// an existing store file undecodable and silently reset someone's board.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func flag(_ key: CodingKeys) throws -> Bool {
+            try c.decodeIfPresent(Bool.self, forKey: key) ?? false
+        }
+        installedAt = try c.decodeIfPresent(Date.self, forKey: .installedAt)
+        completedScreen = try c.decodeIfPresent(Int.self, forKey: .completedScreen) ?? 0
+        firstItemType = try c.decodeIfPresent(String.self, forKey: .firstItemType)
+        practiceTapCompleted = try flag(.practiceTapCompleted)
+        widgetPromptOutcome = try c.decodeIfPresent(WidgetPrompt.self, forKey: .widgetPromptOutcome)
+        notificationOptIn = try flag(.notificationOptIn)
+        widgetNudgeFired = try flag(.widgetNudgeFired)
+        widgetInstalledAt = try c.decodeIfPresent(Date.self, forKey: .widgetInstalledAt)
+        decayLessonShown = try flag(.decayLessonShown)
+        locationDeclined = try flag(.locationDeclined)
+        settingsHintShown = try flag(.settingsHintShown)
+        homeSetupPending = try flag(.homeSetupPending)
     }
 
     public static let lastScreen = 3

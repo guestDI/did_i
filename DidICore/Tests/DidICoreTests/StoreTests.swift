@@ -46,7 +46,7 @@ private func store(_ rule: ResetRule = .dailyAt(hour: 4)) -> Store {
     #expect(Copy.general.contains(s.items[0].confirmationLine ?? ""))
     s.confirm(id: id, at: at("2026-08-11 18:00:00"), calendar: utc)
     #expect(Copy.escalation.contains(s.items[0].confirmationLine ?? ""))
-    #expect(s.items[0].todaysConfirmations?.count == 3)
+    #expect(s.items[0].confirmations?.count == 3)
 }
 
 @Test func theCountResetsWithTheDay() {
@@ -57,7 +57,9 @@ private func store(_ rule: ResetRule = .dailyAt(hour: 4)) -> Store {
     }
     s.confirm(id: id, at: at("2026-08-12 08:00:00"), calendar: utc)
 
-    #expect(s.items[0].todaysConfirmations?.count == 1)
+    // History is kept for 30 days; it is the *day's* count that resets, which is
+    // what de-escalates the line.
+    #expect(s.items[0].confirmations?.count == 4)
     #expect(Copy.general.contains(s.items[0].confirmationLine ?? ""))
 }
 
@@ -91,7 +93,7 @@ private func store(_ rule: ResetRule = .dailyAt(hour: 4)) -> Store {
 // MARK: - Encoding
 
 @Test func aStoreWrittenBeforeTheNewFieldsExistedStillDecodes() {
-    // Phase 0 wrote items without confirmationLine or todaysConfirmations.
+    // Phase 0 wrote items without confirmationLine or confirmations.
     let legacy = """
     {
       "items": [{
@@ -108,7 +110,7 @@ private func store(_ rule: ResetRule = .dailyAt(hour: 4)) -> Store {
     let decoded = try? StoreIO.decoder.decode(Store.self, from: Data(legacy.utf8))
     #expect(decoded?.items.count == 1)
     #expect(decoded?.items[0].confirmationLine == nil)
-    #expect(decoded?.items[0].todaysConfirmations == nil)
+    #expect(decoded?.items[0].confirmations == nil)
 }
 
 @Test func storeRoundTripsThroughJSON() {
@@ -145,7 +147,7 @@ private func store(_ rule: ResetRule = .dailyAt(hour: 4)) -> Store {
     s.undo(id: id)
 
     #expect(s.items[0].lastConfirmedAt == at("2026-08-11 08:00:00"))
-    #expect(s.items[0].todaysConfirmations?.count == 1)
+    #expect(s.items[0].confirmations?.count == 1)
 }
 
 @Test func undoDeEscalatesTheNextLine() {

@@ -16,10 +16,23 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
     /// *copy*, not stored state — nothing here says the item is green.
     public var confirmationLine: String?
 
-    /// Confirmations of this item so far today, trimmed on each write. Feeds the
-    /// 3+-in-one-day escalation pool. Optional so files written before this field
-    /// existed still decode.
-    public var todaysConfirmations: [Date]?
+    /// Confirmation history, trimmed to 30 days on each write. Feeds the
+    /// 3+-in-one-day escalation pool and the weekly card. Optional so files
+    /// written before this field existed still decode.
+    public var confirmations: [Date]?
+
+    /// Opt-in, per item: notify me when I leave home and this has no record.
+    /// One of only two notification categories in the app.
+    public var leavingHomeReminder: Bool?
+
+    /// day-2's escape hatch. Mutes the item until the geofence says they are home
+    /// again, and drops it out of the widget's summary count. Not a state flag —
+    /// it records a choice the user made, not what colour anything is.
+    public var mutedUntilHome: Bool?
+
+    /// When we offered to put this away. Offered once, ever — nagging about an
+    /// unused item is worse than the unused item.
+    public var archiveOfferedAt: Date?
 
     public init(
         id: UUID = UUID(),
@@ -32,7 +45,10 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
         archivedAt: Date? = nil,
         order: Int,
         confirmationLine: String? = nil,
-        todaysConfirmations: [Date]? = nil
+        confirmations: [Date]? = nil,
+        leavingHomeReminder: Bool? = nil,
+        mutedUntilHome: Bool? = nil,
+        archiveOfferedAt: Date? = nil
     ) {
         self.id = id
         self.name = name
@@ -44,6 +60,9 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
         self.archivedAt = archivedAt
         self.order = order
         self.confirmationLine = confirmationLine
-        self.todaysConfirmations = todaysConfirmations
+        self.confirmations = confirmations
+        self.leavingHomeReminder = leavingHomeReminder
+        self.mutedUntilHome = mutedUntilHome
+        self.archiveOfferedAt = archiveOfferedAt
     }
 }
