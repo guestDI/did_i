@@ -92,6 +92,11 @@ public struct Store: Codable, Sendable {
         items[i].lastConfirmedAt = date
         items[i].confirmationLine = line
         lastConfirmationLine = line
+
+        // A tap is a look you can actually observe, and the only one the widget
+        // ever gives us. Without this a widget-only user has no check history at
+        // all and the counter reads their week as empty.
+        recordCheck(id, at: date)
     }
 
     /// Reverses the most recent confirmation. The promise on the Day 0 practice

@@ -85,7 +85,12 @@ public struct SmallFace: View {
 
 // MARK: - systemMedium
 
-/// Up to four items in a 2×2 grid (architecture §5). Each cell is its own button.
+/// Two columns (architecture §5). Two rows for a board of four or fewer, three
+/// once it grows past that — the cap is six and `prefix(4)` silently hid the last
+/// two, which on a "did I?" board is the worst possible thing to hide.
+///
+/// Board order, never state order: cells that reshuffle on a timeline refresh
+/// would move the target out from under a finger already on its way down.
 public struct MediumFace: View {
     @Environment(\.confirmAction) private var confirm
 
@@ -99,7 +104,9 @@ public struct MediumFace: View {
         self.date = date
     }
 
-    var shown: [Item] { Array(items.prefix(4)) }
+    var shown: [Item] { Array(items.prefix(6)) }
+
+    private var rowCount: Int { shown.count > 4 ? 3 : 2 }
 
     public var body: some View {
         VStack(spacing: 0) {
@@ -122,13 +129,11 @@ public struct MediumFace: View {
             }
 
             Grid(horizontalSpacing: 14, verticalSpacing: 0) {
-                GridRow {
-                    cell(at: 0)
-                    cell(at: 1)
-                }
-                GridRow {
-                    cell(at: 2)
-                    cell(at: 3)
+                ForEach(0..<rowCount, id: \.self) { row in
+                    GridRow {
+                        cell(at: row * 2)
+                        cell(at: row * 2 + 1)
+                    }
                 }
             }
             .frame(maxHeight: .infinity)

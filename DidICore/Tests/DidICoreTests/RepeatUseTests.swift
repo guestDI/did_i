@@ -395,3 +395,38 @@ private func goodWeek() -> Store {
     s.usage.lastReviewPromptAt = now.addingTimeInterval(-121 * day)
     #expect(ReviewPrompt.shouldAsk(in: s, now: now))
 }
+
+// MARK: - What actually counts as a check
+
+@Test func confirmingAnItemCountsAsCheckingIt() {
+    var s = settled()
+    let id = s.items[0].id
+    s.confirm(id: id, at: now, calendar: utc)
+    // The only signal a widget-only user ever produces.
+    #expect(s.checks(id, since: now.addingTimeInterval(-day), until: now.addingTimeInterval(1)) == 1)
+}
+
+@Test func openingTheBoardOnlyChecksWhatWasStillInQuestion() {
+    var s = settled([item(), item()])
+    let answered = s.items[0].id, open = s.items[1].id
+    s.confirm(id: answered, at: now.addingTimeInterval(-3600), calendar: utc)
+
+    s.recordBoardView(at: now, calendar: utc)
+
+    let window = (since: now.addingTimeInterval(-60), until: now.addingTimeInterval(1))
+    // One for its own confirmation an hour ago, and nothing for this look.
+    #expect(s.checks(answered, since: window.since, until: window.until) == 0)
+    #expect(s.checks(open, since: window.since, until: window.until) == 1)
+}
+
+@Test func aBoardOfGreenItemsRecordsALookAtNothing() {
+    var s = settled([item(), item()])
+    for i in s.items.indices {
+        s.confirm(id: s.items[i].id, at: now.addingTimeInterval(-3600), calendar: utc)
+    }
+    let before = s.usage.checks.mapValues(\.count)
+    s.recordBoardView(at: now, calendar: utc)
+    // The app open is still recorded; it just is not evidence about any one item.
+    #expect(s.usage.checks.mapValues(\.count) == before)
+    #expect(s.usage.appOpens.count == 1)
+}

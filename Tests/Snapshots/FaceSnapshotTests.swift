@@ -168,6 +168,29 @@ final class FaceSnapshotTests: XCTestCase {
         }
     }
 
+    func testMediumFaceFullBoard() {
+        // Six is the cap, and all six have to be on the face. This is the layout
+        // most likely to overflow — three rows into the same height.
+        let (four, states) = board()
+        var items = four
+        var states6 = states
+        for extra in [
+            fixture("Bathroom window", word: "Shut", symbol: "window.vertical.closed",
+                    state: .unknown, order: 4),
+            fixture("Straighteners", word: "Off", symbol: "powerplug", state: .aging, order: 5),
+        ] {
+            items.append(extra)
+            states6[extra.id] = extra.order == 4 ? Fixture.unknown.state : Fixture.aging.state
+        }
+        for (scheme, schemeName) in schemes {
+            assertSnapshot(
+                of: homeScreen(MediumFace(items: items, states: states6, date: Self.now)),
+                size: Self.medium, scheme: scheme,
+                named: "medium-six-items-\(schemeName)"
+            )
+        }
+    }
+
     // MARK: - accessoryCircular
 
     func testCircularFace() {

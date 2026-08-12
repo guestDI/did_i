@@ -76,11 +76,17 @@ public extension Store {
         usage.checks[key] = seen.filter { $0 > date.addingTimeInterval(-retention) }
     }
 
-    /// Opening the board is a look at everything on it.
-    mutating func recordBoardView(at date: Date) {
+    /// Opening the board is a look at whatever was still in question.
+    ///
+    /// Attributing it to every item made "checks" a copy of the app-open count,
+    /// so every item tied and the counter's ranking meant nothing. If the stove
+    /// already reads green, opening the board was not checking the stove.
+    mutating func recordBoardView(at date: Date, calendar: Calendar = .current) {
         usage.appOpens = (usage.appOpens + [date])
             .filter { $0 > date.addingTimeInterval(-retention) }
-        for item in active { recordCheck(item.id, at: date) }
+        for item in active where state(item, now: date, calendar: calendar) == .unknown {
+            recordCheck(item.id, at: date)
+        }
     }
 
     func checks(_ id: UUID, since: Date, until: Date) -> Int {

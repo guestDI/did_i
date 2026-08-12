@@ -468,3 +468,34 @@ fail the warnings-as-errors build.
 a home, so a user who declined location can still be asked. The trigger is a
 confirmation that just happened, which is itself the "things are good" signal day-3 is
 reaching for. Only a *known* away state suppresses it.
+
+## Tail: the medium widget and the check signal
+
+**The medium face shows all six items, not four.** It was `prefix(4)` against a
+six-item cap, so a full board silently hid two rows — on a board whose entire job is
+answering "did I?", a hidden row is the worst thing it can do. Two columns still
+(architecture §5); the row count goes to three once there are more than four items.
+Six rows fit the medium height with no clipping in either scheme.
+
+**Cells stay in board order, never sorted by state.** Ranking unknown items first
+reads better on paper, but widget timelines refresh on their own schedule, and a cell
+that moves between the decision to tap and the tap itself confirms the wrong item.
+Stable position beats useful order in a one-tap product.
+
+**Confirming an item now records a check of it.** `checks` was written only by
+`recordBoardView`, so a widget-only user — the intended primary user — produced no
+check history at all, and the paranoia counter read their week as empty. A tap is the
+only look iOS ever lets us observe.
+
+**Opening the board only counts as a check of items that were still unknown.**
+Previously it fanned out to every active item, which made per-item checks a copy of
+the app-open count: every item tied, and the counter's "top worry" ranking was
+meaningless. If the stove already reads green, opening the board was not checking the
+stove. When everything is green the open is recorded in `appOpens` and attributed to
+nothing.
+
+This narrows but does not close the gap noted in Phase 6: a look at the widget that
+does not end in a tap is still invisible, because iOS gives no callback for a widget
+being rendered or viewed. What `checks` now measures is *observed* attention —
+confirmations plus board-opens while in doubt — which is a real per-item signal rather
+than a proxy for app launches.
