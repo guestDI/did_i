@@ -1,0 +1,6 @@
+/* Widget configuration — Russian. Separate from DidICore: AppIntents only reads the extension's own bundle. */
+
+"Choose item" = "Выбрать пункт";
+"Pick which item this widget shows." = "Выбери, что показывает этот виджет.";
+"Item" = "Пункт";
+"Confirm" = "Подтвердить";

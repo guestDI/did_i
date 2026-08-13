@@ -128,3 +128,57 @@ import Foundation
     #expect(Store().active.isEmpty)
     #expect(!Store().flags.isComplete)
 }
+
+// MARK: - Chips against a board that already knows them
+
+@Test func anArchivedItemHidesItsChip() {
+    // Otherwise the chip makes a second "The stove" and strands the first one's
+    // history, while "Previously" offers the real thing one row below.
+    var s = Store()
+    s.add(Chip.all[0].item(createdAt: at("2026-08-01 00:00:00")))
+    s.archive(s.items[0].id, at: at("2026-09-01 00:00:00"))
+
+    let labels = Chip.available(excluding: s.items).map(\.label)
+    #expect(!labels.contains(Chip.all[0].label))
+    // "Something else" is never taken.
+    #expect(labels.contains(Chip.somethingElse.label))
+}
+
+// MARK: - Chip copy follows the language, user copy does not
+
+@Test func aChipItemIsTaggedAndATypedOneIsNot() {
+    let made = Date()
+    #expect(Chip.all[0].item(createdAt: made).chipID == "stove")
+    // A typed name is theirs, whichever chip opened the field.
+    #expect(Chip.somethingElse.item(named: "Bathroom window", createdAt: made).chipID == nil)
+    #expect(Chip.somethingElse.item(createdAt: made).chipID == nil)
+}
+
+@Test func chipCopyIsRewrittenOnLoadAndUserCopyIsLeftAlone() {
+    var s = Store()
+    s.add(Chip.all[0].item(createdAt: at("2026-08-01 00:00:00")))
+    s.add(Chip.somethingElse.item(named: "Bathroom window", createdAt: at("2026-08-01 00:00:00")))
+
+    // What a store written in another language looks like coming back.
+    s.items[0].name = "Der Herd"
+    s.items[0].word = "Aus"
+    s.items[1].name = "Badezimmerfenster"
+
+    s.localizeChipCopy()
+
+    #expect(s.items[0].name == Chip.all[0].label)
+    #expect(s.items[0].word == Chip.all[0].word)
+    // Never touched: no chipID, so this text belongs to the user.
+    #expect(s.items[1].name == "Badezimmerfenster")
+}
+
+@Test func clearingTheTagStopsTheRewriting() {
+    var s = Store()
+    s.add(Chip.all[0].item(createdAt: at("2026-08-01 00:00:00")))
+    // What ItemSettingsView does the moment they edit the name.
+    s.items[0].chipID = nil
+    s.items[0].name = "Hob"
+
+    s.localizeChipCopy()
+    #expect(s.items[0].name == "Hob")
+}

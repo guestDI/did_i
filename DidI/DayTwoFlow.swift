@@ -28,6 +28,10 @@ struct DayTwoFlow: View {
     @State var step: Step
     let onFinished: () -> Void
 
+    /// A one-shot fix can come back empty indoors or in airplane mode. Without
+    /// this the primary button silently does nothing and reads as broken.
+    @State private var homeCaptureFailed = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             switch step {
@@ -128,11 +132,23 @@ struct DayTwoFlow: View {
                 .font(.system(size: 14))
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 14)
+            if homeCaptureFailed {
+                Text(Copy.HomeSetup.noFix)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Palette.amber)
+                    .padding(.top, 14)
+            }
             Spacer(minLength: 20)
 
             Button(Copy.HomeSetup.set) {
+                homeCaptureFailed = false
                 LocationMonitor.shared.captureHome { coordinate in
-                    guard let coordinate else { return }
+                    // Not `decline()`: a failed fix is not a refusal, and burning
+                    // `locationDeclined` here would mean never asking again.
+                    guard let coordinate else {
+                        homeCaptureFailed = true
+                        return
+                    }
                     let home = HomeLocation(
                         latitude: coordinate.latitude, longitude: coordinate.longitude
                     )
@@ -197,7 +213,7 @@ struct DayTwoFlow: View {
                 .font(board(15, .semibold))
                 .foregroundStyle(Palette.text)
             // Shown silently, once.
-            Text(Copy.LocationDeclined.settingsHint)
+            Text(Copy.resetRuleHint)
                 .font(.system(size: 13))
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 16)

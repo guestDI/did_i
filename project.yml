@@ -45,6 +45,15 @@ targets:
       path: DidI/Info.plist
       properties:
         CFBundleDisplayName: Did I?
+        # Every string lives in DidICore, so this target has no .lproj folders of
+        # its own — but iOS picks the app's language from the *main* bundle's
+        # supported localizations. Without this list it runs the whole process in
+        # English, ignores the package's pl/ru catalogs entirely, and even formats
+        # dates in English. Add a locale here whenever one is translated.
+        CFBundleLocalizations:
+          - en
+          - pl
+          - ru
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait

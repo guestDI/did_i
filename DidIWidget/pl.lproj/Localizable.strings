@@ -1,0 +1,6 @@
+/* Widget configuration — Polish. Separate from DidICore: AppIntents only reads the extension's own bundle. */
+
+"Choose item" = "Wybierz element";
+"Pick which item this widget shows." = "Wybierz element wyświetlany w tym widżecie.";
+"Item" = "Element";
+"Confirm" = "Potwierdź";

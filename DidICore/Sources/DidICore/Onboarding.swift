@@ -13,24 +13,41 @@ public struct Chip: Identifiable, Sendable, Equatable {
     public let symbol: String
     public let resetRule: ResetRule
 
-    public static let all: [Chip] = [
-        Chip(id: "stove", label: "The stove", word: "Off",
+    public static var all: [Chip] { [
+        Chip(id: "stove", label: t("The stove"), word: t("Off"),
              symbol: "flame", resetRule: .dailyAt(hour: 4)),
-        Chip(id: "door", label: "Front door", word: "Locked",
+        Chip(id: "door", label: t("Front door"), word: t("Locked"),
              symbol: "lock", resetRule: .dailyAt(hour: 4)),
-        Chip(id: "iron", label: "Iron", word: "Unplugged",
+        Chip(id: "iron", label: t("Iron"), word: t("Unplugged"),
              symbol: "powerplug", resetRule: .afterHours(12)),
-        Chip(id: "windows", label: "Windows", word: "Shut",
+        Chip(id: "windows", label: t("Windows"), word: t("Shut"),
              symbol: "window.vertical.closed", resetRule: .dailyAt(hour: 4)),
-        Chip(id: "straightener", label: "Straightener", word: "Off",
+        Chip(id: "straightener", label: t("Straightener"), word: t("Off"),
              symbol: "flame", resetRule: .afterHours(12)),
-        Chip(id: "other", label: "Something else", word: "Done",
+        Chip(id: "other", label: t("Something else"), word: t("Done"),
              symbol: "checkmark", resetRule: .dailyAt(hour: 4)),
-    ]
+    ] }
 
     public static var somethingElse: Chip { all[all.count - 1] }
 
+    /// Chips for a board that already knows about some of them.
+    ///
+    /// Archived counts as known: the item is one tap away under "Previously",
+    /// and offering its chip alongside would add a second copy under the same
+    /// name while stranding the original's history. Matched by name, so a
+    /// renamed item resurfaces its chip — acceptable, and better than hiding it.
+    public static func available(excluding items: [Item]) -> [Chip] {
+        let taken = Set(items.map { $0.name.lowercased() })
+        return all.filter {
+            $0.id == somethingElse.id || !taken.contains($0.label.lowercased())
+        }
+    }
+
     /// Builds the real item. `name` overrides the label for "Something else".
+    ///
+    /// `chipID` is recorded only when the label and word came from the chip
+    /// untouched — that text is app copy and should follow the device language.
+    /// A typed name is the user's, so it is never tagged and never rewritten.
     public func item(named name: String? = nil, createdAt: Date) -> Item {
         Item(
             name: String((name ?? label).prefix(Item.maxNameLength)),
@@ -38,7 +55,8 @@ public struct Chip: Identifiable, Sendable, Equatable {
             symbol: symbol,
             resetRule: resetRule,
             createdAt: createdAt,
-            order: 0
+            order: 0,
+            chipID: name == nil && id != Chip.somethingElse.id ? id : nil
         )
     }
 }

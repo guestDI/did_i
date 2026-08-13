@@ -220,7 +220,11 @@ private func escalatingStore() -> Store {
 @Test func theGuardrailMessageIsVerbatimAndNamesTheItem() {
     var iron = item(); iron.name = "Iron"
     #expect(Copy.escalatingChecks(item: iron) ==
-        "You've been checking the iron a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to delete it — the iron will still be off.")
+        "Iron. You've been checking this a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to delete it — it'll still be off.")
+
+    // The closing clause used to say "off" for every item, including doors.
+    var door = item(word: "Locked"); door.name = "Front door"
+    #expect(Copy.escalatingChecks(item: door).hasSuffix("it'll still be locked."))
 }
 
 // MARK: - The paranoia counter
@@ -299,11 +303,11 @@ private func goodWeek() -> Store {
     var iron = item(); iron.name = "Iron"
     var door = item(); door.name = "Front door"
     var stove = item(); stove.name = "The stove"
-    #expect(Copy.Paranoia.topWorry(item: iron, checks: 34) == "Top worry: the iron. 34 checks.")
+    #expect(Copy.Paranoia.topWorry(item: iron, checks: 34) == "Top worry: Iron. 34 checks.")
     #expect(Copy.Paranoia.runnerUp(item: door, checks: 12)
-        == "Runner-up: the front door, a modest 12.")
+        == "Runner-up: Front door, a modest 12.")
     #expect(Copy.Paranoia.reassurance(item: stove)
-        == "The stove was fine every single time. It's always fine.")
+        == "The stove: fine every single time. It always is.")
 }
 
 // MARK: - Retention
@@ -429,4 +433,36 @@ private func goodWeek() -> Store {
     // The app open is still recorded; it just is not evidence about any one item.
     #expect(s.usage.checks.mapValues(\.count) == before)
     #expect(s.usage.appOpens.count == 1)
+}
+
+// MARK: - Board order
+
+/// Board order is also the medium widget's tap-target order, so it has to move.
+private func ordered() -> Store {
+    var s = settled([])
+    for _ in 0..<3 { s.add(item()) }
+    return s
+}
+
+@Test func movingUpSwapsWithTheItemAbove() {
+    var s = ordered()
+    let names = s.active.map(\.id)
+    s.moveUp(names[2])
+    #expect(s.active.map(\.id) == [names[0], names[2], names[1]])
+}
+
+@Test func theTopItemCannotMoveUp() {
+    var s = ordered()
+    let before = s.active.map(\.id)
+    s.moveUp(before[0])
+    #expect(s.active.map(\.id) == before)
+}
+
+@Test func movingUpSkipsPastArchivedItems() {
+    var s = ordered()
+    let all = s.active.map(\.id)
+    s.archive(all[1], at: now)
+    // The middle item is off the board, so the last one lands at the top.
+    s.moveUp(all[2])
+    #expect(s.active.map(\.id) == [all[2], all[0]])
 }

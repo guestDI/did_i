@@ -17,14 +17,8 @@ struct AddItemSheet: View {
     @State private var typing = false
     @FocusState private var focused: Bool
 
-    /// Chips they do not already have. Matched by name, so a renamed item can
-    /// resurface its chip — acceptable, and better than silently hiding it.
-    private var available: [Chip] {
-        let taken = Set(store.active.map { $0.name.lowercased() })
-        return Chip.all.filter {
-            $0.id == Chip.somethingElse.id || !taken.contains($0.label.lowercased())
-        }
-    }
+    /// Chips they do not already have, on the board or in the archive.
+    private var available: [Chip] { Chip.available(excluding: store.items) }
 
     var body: some View {
         NavigationStack {
@@ -41,7 +35,7 @@ struct AddItemSheet: View {
             .background(Palette.ink)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(suggestion != nil ? Copy.SecondItemPrompt.decline : "Close") {
+                    Button(suggestion != nil ? Copy.SecondItemPrompt.decline : Copy.close) {
                         if suggestion != nil { decline() }
                         dismiss()
                     }
@@ -56,10 +50,10 @@ struct AddItemSheet: View {
     private var picker: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text(suggestion != nil ? Copy.SecondItemPrompt.title : "Add an item")
+                Text(suggestion != nil ? Copy.SecondItemPrompt.title : Copy.addAnItem)
                     .font(board(18, .semibold))
                     .foregroundStyle(Palette.text)
-                Text(suggestion != nil ? Copy.SecondItemPrompt.body : "Pick one.")
+                Text(suggestion != nil ? Copy.SecondItemPrompt.body : Copy.pickOne)
                     .font(.system(size: 14))
                     .foregroundStyle(Palette.sub)
                     .padding(.top, 10)
@@ -88,33 +82,7 @@ struct AddItemSheet: View {
                 }
 
                 // Seasonal items come and go. Quiet section, one tap to re-add.
-                if !store.archived.isEmpty {
-                    Text(Copy.previouslySection)
-                        .font(board(9))
-                        .tracking(3)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Palette.dim)
-                        .padding(.top, 30)
-
-                    ForEach(store.archived) { item in
-                        Button { restore(item) } label: {
-                            HStack {
-                                Text(item.name)
-                                    .font(board(13))
-                                    .foregroundStyle(Palette.text)
-                                Spacer()
-                                Image(systemName: "arrow.uturn.backward")
-                                    .foregroundStyle(Palette.muted)
-                            }
-                            .padding(.vertical, 14)
-                            .contentShape(.rect)
-                        }
-                        .buttonStyle(.plain)
-                        .overlay(alignment: .bottom) {
-                            Rectangle().fill(Palette.rule).frame(height: 1)
-                        }
-                    }
-                }
+                PreviouslyList(archived: store.archived, onRestore: restore)
             }
             .padding(26)
         }
@@ -171,7 +139,7 @@ struct AddItemSheet: View {
     private var swapList: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Which one goes?")
+                Text(Copy.whichOneGoes)
                     .font(board(18, .semibold))
                     .foregroundStyle(Palette.text)
                     .padding(.bottom, 8)
@@ -230,6 +198,47 @@ struct AddItemSheet: View {
     }
 }
 
+/// The "Previously" section. Shared with onboarding Screen 1, which an emptied
+/// board falls back to — that path has no add sheet, so without it here the
+/// archive becomes unreachable exactly when it is needed.
+struct PreviouslyList: View {
+    let archived: [Item]
+    let onRestore: (Item) -> Void
+
+    var body: some View {
+        if !archived.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(Copy.previouslySection)
+                    .font(board(9))
+                    .tracking(3)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Palette.dim)
+                    .padding(.bottom, 4)
+
+                ForEach(archived) { item in
+                    Button { onRestore(item) } label: {
+                        HStack {
+                            Text(item.name)
+                                .font(board(13))
+                                .foregroundStyle(Palette.text)
+                            Spacer()
+                            Image(systemName: "arrow.uturn.backward")
+                                .foregroundStyle(Palette.muted)
+                        }
+                        .padding(.vertical, 14)
+                        .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .overlay(alignment: .bottom) {
+                        Rectangle().fill(Palette.rule).frame(height: 1)
+                    }
+                }
+            }
+            .padding(.top, 30)
+        }
+    }
+}
+
 /// The weekly card. Dismissible, never a notification, and only ever a joke about
 /// a good record.
 struct ParanoiaCard: View {
@@ -250,7 +259,7 @@ struct ParanoiaCard: View {
                         .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(Palette.dim)
                 }
-                .accessibilityLabel("Dismiss")
+                .accessibilityLabel(Copy.dismiss)
             }
             Text(Copy.Paranoia.topWorry(item: card.topWorry, checks: card.topChecks))
                 .foregroundStyle(Palette.text)

@@ -98,6 +98,20 @@ public extension Store {
         return (item.confirmations ?? []).count { $0 >= since && $0 < until }
     }
 
+    /// Swaps an item with the one above it. Board order is also the medium
+    /// widget's tap-target order, so a position assigned once at add time is not
+    /// something the user can be stuck with.
+    mutating func moveUp(_ id: UUID) {
+        let ordered = active
+        guard let position = ordered.firstIndex(where: { $0.id == id }), position > 0,
+              let lower = items.firstIndex(where: { $0.id == id }),
+              let upper = items.firstIndex(where: { $0.id == ordered[position - 1].id })
+        else { return }
+        let above = items[upper].order
+        items[upper].order = items[lower].order
+        items[lower].order = above
+    }
+
     /// Archive, never delete. Deleting a user's data on our own initiative is not
     /// our call to make.
     mutating func archive(_ id: UUID, at date: Date) {

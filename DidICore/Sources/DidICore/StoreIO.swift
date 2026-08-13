@@ -119,6 +119,25 @@ public struct Store: Codable, Sendable {
         resolve(item, lastLeftHome: lastLeftHomeAt, now: now, calendar: calendar)
     }
 
+    /// Re-applies the current language to items still carrying chip copy.
+    ///
+    /// Chip labels and words are app strings, but adding an item copies them into
+    /// the store as literals — so without this, switching the device language
+    /// leaves the board in the old one forever, and every chip reappears as
+    /// "available" because `Chip.available(excluding:)` matches on name.
+    ///
+    /// Only ever touches items whose `chipID` is still set, which by definition
+    /// means the user has not edited either field. Anything they typed is theirs.
+    mutating func localizeChipCopy() {
+        for i in items.indices {
+            guard let chipID = items[i].chipID,
+                  let chip = Chip.all.first(where: { $0.id == chipID })
+            else { continue }
+            items[i].name = chip.label
+            items[i].word = chip.word
+        }
+    }
+
     /// Every future instant at which any item's state changes.
     public func allBoundaries(after date: Date, calendar: Calendar = .current) -> [Date] {
         items.flatMap { boundaries(for: $0, after: date, calendar: calendar) }.sorted()
@@ -148,6 +167,10 @@ public enum StoreIO {
             guard let data = try? Data(contentsOf: url) else { return }
             result = try? decoder.decode(Store.self, from: data)
         }
+        // Both processes read through here, so the board and the widget can never
+        // disagree about which language they are in. Not written back on its own —
+        // the next `mutate` persists it.
+        result?.localizeChipCopy()
         return result ?? Store()
     }
 

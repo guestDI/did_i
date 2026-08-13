@@ -499,3 +499,142 @@ does not end in a tap is still invisible, because iOS gives no callback for a wi
 being rendered or viewed. What `checks` now measures is *observed* attention —
 confirmations plus board-opens while in doubt — which is a real per-item signal rather
 than a proxy for app launches.
+
+## PO pass: closing the flow dead ends
+
+**Items can be put away from item settings.** Archiving previously required either
+hitting the six-item cap (to reach the swap flow) or waiting 30 days for the stale
+offer. A three-item board was permanent. One destructive row in `ItemSettingsView`,
+worded "Put it away" with the restore promise as its footer — archive, never delete,
+same as every other path.
+
+**"Previously" also appears on onboarding Screen 1.** An empty board falls back to
+Screen 1, and the restore list lived only in `AddItemSheet`, which an empty board can
+never reach. Archiving your last item therefore stranded every item you had ever
+archived. `PreviouslyList` is now shared by both, and Screen 1 puts it in a
+`ScrollView` because unlike the fixed chip grid it can outgrow the screen.
+
+**A chip is hidden when an item of that name is archived, not just when it is
+active.** Fixing the above surfaced it: "The stove" showed as both a chip and a
+Previously row, and the chip would have created a second copy while stranding the
+first one's history. `Chip.available(excluding:)` now takes all items, and both
+callers use it.
+
+**Settings links to the widget walkthrough.** "Later" on Screen 3 plus a declined
+notification permanently closed the only two routes to those instructions, and the
+widget is the product. One quiet row; no banner, no re-prompting.
+
+**A failed home fix says so.** `captureHome` returns `nil` indoors or in airplane
+mode, and `guard let coordinate else { return }` made the primary button do nothing
+at all inside a sheet that cannot be swipe-dismissed. It now shows one amber line and
+stays put. Deliberately not `decline()` — a failed fix is not a refusal, and burning
+`locationDeclined` would mean never asking again.
+
+**Board order is editable, one step at a time.** "Move up" in the row context menu
+swaps `order` with the item above. Board order is also the medium widget's
+tap-target order (see the stable-position decision above), so a position assigned
+once at add time is not something to be stuck with. A `List` with `.onMove` would
+give free reordering but would take the departure-board layout with it.
+
+**`Copy.LocationDeclined.settingsHint` is now `Copy.resetRuleHint`.** It is the
+pointer to the reset-rule editor, shown unconditionally in Settings; someone who
+granted location needs it just as much as someone who declined.
+
+## Localization, stage 1: English only, but honestly English
+
+No second language is added here. This is the work that has to happen *before*
+one can be, plus the English-only bugs that were hiding inside it.
+
+**`.stringsdict`, not a String Catalog.** SwiftPM's command-line build copies an
+`.xcstrings` into the resource bundle verbatim and never compiles it, so plurals
+resolved to "1 minutes" under `swift test` while working under `xcodebuild`. A
+test suite that cannot see the localization is not a safety net. `.stringsdict`
+is processed by both build systems; Xcode can migrate it to a catalog with one
+menu command whenever a translator wants that format.
+
+**One `t()` helper rather than `String(localized:bundle:)` at ~70 sites.** The
+widget extension links DidICore, so every lookup has to name `Bundle.module`
+explicitly or it searches the running executable and finds nothing. One helper
+means that cannot be forgotten at one call site.
+
+**`withArticle` is deleted, and every sentence that used it was rewritten.** It
+lowercased a user-typed noun and prefixed "the". German needs der/die/das for a
+word we never see; Polish and Russian decline it differently per sentence. The
+paranoia card, the guardrail and the decay lesson now put the name in a label
+position — "Top worry: Iron.", "The stove: fine every single time." — where no
+language has to agree with it. `bareName`, which faked a possessive by deleting
+a leading "The ", went the same way.
+
+**The guardrail's closing clause was wrong for every item that is not a stove.**
+It said "will still be off" regardless, so a door read "the front door will still
+be off". Found while rewriting the sentence for the above; it takes `item.word`
+now.
+
+**The hour is formatted, not assembled.** `clockHour` glued a translated "am"
+onto a number, which assumes every locale has a meridiem and puts it last. It
+uses `Date.FormatStyle` now: "4 AM" in en_US, "13" in en_GB, "04 Uhr" in de_DE.
+This does change English copy — the design's "4am" becomes "4 AM" — and that is
+the honest cost of not hardcoding a clock convention. `locale` is injected for
+the same reason `now` and `calendar` are, or the tests assert whatever region
+the build machine happens to be in.
+
+**Tests normalize U+202F.** `Date.FormatStyle` separates hour from meridiem with
+a narrow no-break space. Correct typography, invisible in a source literal, so
+`plainSpaces()` swaps it rather than having every expectation carry a character
+nobody can see.
+
+**`Item.chipID` — chip copy follows the language, typed copy never does.** Adding
+an item copies the chip's label and word into the store as literals, so without
+this a language switch left the board in the old language forever and every chip
+reappeared as available (`Chip.available(excluding:)` matches on name). Items
+built from a chip carry its id; `Store.localizeChipCopy()` reapplies the current
+label and word on every read, in both processes, so the app and widget can never
+disagree. Editing either field in item settings clears the id, and from then on
+the text is the user's and is never rewritten. A typed name is never tagged.
+
+**What stage 1 deliberately does not solve.** `item.word` is spelled out in flap
+cells sized for short English words — "LOCKED" is six characters, German
+"ABGESCHLOSSEN" is thirteen, and `FlapWord` will scale it down to unreadable
+rather than clip. That is a design problem, not a plumbing one, and it should be
+solved against a real second language rather than in the abstract.
+
+## Localization, stage 2: Polish and Russian
+
+**`CFBundleLocalizations` on the app target is what actually turns a language on.**
+Shipping `pl.lproj` and `ru.lproj` inside the DidICore resource bundle did nothing
+on its own. iOS picks the process language from the *main* bundle's supported
+localizations, and the app target has no `.lproj` folders because every string
+lives in the package. With Polish set as the device language the app still ran
+entirely in English — including `Date.formatted`, which was the tell. The app
+target now declares `en, pl, ru` in its Info.plist. **Add a locale there whenever
+one is translated, or the translation is dead weight in the binary.**
+
+**Plural rules come from the process locale, not the catalog.** A macOS harness
+running under `en_PL` applied English plural rules to the Polish forms and picked
+"5 minuty" instead of "5 minut". That is a property of the test environment, not
+the data. Verified on a genuinely Polish device: 1 minuta / 22 minuty / 5 minut,
+and on Russian: 1 час / 3 часа / 5 часов. All four categories resolve correctly in
+both languages. The lesson is that plural forms cannot be trusted from a unit test
+run in another region — they need a device set to the target language.
+
+**`Done` is one key serving two places.** It is both a chip status word and a
+toolbar button, and a `.strings` file cannot hold a key twice. Both translations
+were checked identical before deduping; if a future language needs them different,
+the two uses have to be split into separate keys first.
+
+**The widget extension carries its own four-string file per locale.** Not
+duplication for its own sake — the AppIntents metadata extractor refuses any
+bundle but the extension's own. Everything else in the product resolves from
+DidICore.
+
+**The chip relocalization works as designed.** A store written with English chip
+names came back on a Polish device as KUCHENKA / DRZWI WEJŚCIOWE / ŻELAZKO / OKNA
+without any migration step, which is `Store.localizeChipCopy` doing its job on
+read. Diacritics and Cyrillic both render in the flap cells.
+
+**The flap-cell width problem did not materialise, because the translator dodged
+it.** Polish and Russian status words came back as abbreviations — WYŁ., ZAMK.,
+ODŁ., ВЫКЛ., ОТКЛ. — rather than full adjectives, so nothing was scaled down to
+unreadable. That was the translator honouring the six-character brief, not the
+layout being safe. A language that cannot abbreviate naturally will still break
+this, and the constraint has to stay in every future brief.

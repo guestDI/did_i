@@ -49,13 +49,18 @@ struct BoardView: View {
             reload()
         }
         .sheet(item: $editing) { item in
-            ItemSettingsView(item: item, hasHome: store.home != nil) { updated in
-                save { store in
-                    guard let i = store.items.firstIndex(where: { $0.id == updated.id })
-                    else { return }
-                    store.items[i] = updated
-                }
-            }
+            ItemSettingsView(
+                item: item,
+                hasHome: store.home != nil,
+                save: { updated in
+                    save { store in
+                        guard let i = store.items.firstIndex(where: { $0.id == updated.id })
+                        else { return }
+                        store.items[i] = updated
+                    }
+                },
+                archive: { save { $0.archive(item.id, at: .now) } }
+            )
         }
         .sheet(item: $sharing) { item in
             ShareSheet(text: Copy.shareMessage(item: item))
@@ -183,13 +188,13 @@ struct BoardView: View {
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Palette.muted)
                 }
-                .accessibilityLabel("Add an item")
+                .accessibilityLabel(Copy.addAnItem)
                 Button { showingSettings = true } label: {
                     Image(systemName: "slider.horizontal.3")
                         .font(.system(size: 14))
                         .foregroundStyle(Palette.muted)
                 }
-                .accessibilityLabel("Settings")
+                .accessibilityLabel(Copy.settings)
                 .padding(.leading, 14)
             }
         }
@@ -199,9 +204,9 @@ struct BoardView: View {
 
     private var columnHeadings: some View {
         HStack {
-            Text("Item")
+            Text(Copy.columnItem)
             Spacer()
-            Text("Status")
+            Text(Copy.columnStatus)
         }
         .font(board(9))
         .tracking(3)
@@ -241,6 +246,10 @@ struct BoardView: View {
             if store.isAway, store.state(item, now: now) == .unknown {
                 Button(Copy.cantCheckRightNow) { mute(item) }
                 Button(Copy.askSomeoneAtHome) { sharing = item }
+            }
+            // Position matters: this is also the order of the widget's cells.
+            if store.active.first?.id != item.id {
+                Button(Copy.moveUp) { save { $0.moveUp(item.id) } }
             }
             Button(Copy.forgetAfterTitle) { editing = item }
         }

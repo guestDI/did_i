@@ -105,13 +105,21 @@ private func awayStore() -> Store {
     }
     let aged = DecayLesson.agedOut(in: s, now: at("2026-08-12 09:00:00"), calendar: utc)
     #expect(aged.count == 2)
-    #expect(Copy.Lesson.title(items: aged, hour: 4) == "Your confirmations aged out at 4am")
+    #expect(plainSpaces(Copy.Lesson.title(items: aged, hour: 4, locale: Locale(identifier: "en_US")))
+        == "Your confirmations aged out at 4 AM")
 }
 
-@Test func theLessonNamesASingleItemWithoutItsArticle() {
+/// The name leads instead of being folded into a possessive — no language has to
+/// agree with a noun the user typed.
+@Test func theLessonPutsASingleItemsNameInFront() {
     let stove = item()   // "The stove"
-    #expect(Copy.Lesson.title(items: [stove], hour: 4)
-        == "Your stove confirmation aged out at 4am")
+    #expect(plainSpaces(Copy.Lesson.title(items: [stove], hour: 4, locale: Locale(identifier: "en_US")))
+        == "The stove: confirmation aged out at 4 AM")
+}
+
+@Test func theLessonDropsTheHourWhenItemsDisagree() {
+    #expect(Copy.Lesson.title(items: [item()], hour: nil)
+        == "The stove: confirmation aged out")
 }
 
 // MARK: - The one-shot widget nudge
@@ -223,14 +231,14 @@ private func optedIn() -> OnboardingFlags {
 @Test func theDeclineCopyIsVerbatim() {
     #expect(Copy.LocationDeclined.message ==
         "No problem. We'll keep expiring things overnight instead.")
-    #expect(Copy.LocationDeclined.settingsHint ==
+    #expect(Copy.resetRuleHint ==
         "You can change how each item expires in Settings → any item → \"Forget this after\".")
 }
 
 @Test func theEscapeHatchCopyIsVerbatim() {
     #expect(Copy.cantCheckRightNow == "Can't check right now")
     #expect(Copy.askSomeoneAtHome == "Ask someone at home")
-    #expect(Copy.shareMessage(item: item()) == "Random question — is the stove off?")
+    #expect(Copy.shareMessage(item: item()) == "Random question — is The stove off?")
 }
 
 @Test func theGeofenceRadiusIsOneFiftyMetres() {

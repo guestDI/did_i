@@ -1,0 +1,11 @@
+/* Widget configuration screen: the title of the item picker. */
+"Choose item" = "Choose item";
+
+/* Widget configuration screen: help text under the item picker. */
+"Pick which item this widget shows." = "Pick which item this widget shows.";
+
+/* Widget configuration screen: the label of the item parameter itself. */
+"Item" = "Item";
+
+/* Shortcuts app: the name of the tap-to-confirm action. Not user-discoverable. */
+"Confirm" = "Confirm";

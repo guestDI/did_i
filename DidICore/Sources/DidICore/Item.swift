@@ -34,6 +34,13 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
     /// unused item is worse than the unused item.
     public var archiveOfferedAt: Date?
 
+    /// The Day 0 chip this came from, while `name` and `word` are still the ones
+    /// the chip supplied. Those two are app copy in that case, not user data, so
+    /// they follow the device language — see `Store.localizeChipCopy`. Cleared
+    /// the moment the user edits either field, after which the text is theirs and
+    /// is never touched again.
+    public var chipID: String?
+
     public init(
         id: UUID = UUID(),
         name: String,
@@ -48,7 +55,8 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
         confirmations: [Date]? = nil,
         leavingHomeReminder: Bool? = nil,
         mutedUntilHome: Bool? = nil,
-        archiveOfferedAt: Date? = nil
+        archiveOfferedAt: Date? = nil,
+        chipID: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -64,5 +72,6 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
         self.leavingHomeReminder = leavingHomeReminder
         self.mutedUntilHome = mutedUntilHome
         self.archiveOfferedAt = archiveOfferedAt
+        self.chipID = chipID
     }
 }

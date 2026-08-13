@@ -1,5 +1,15 @@
 import Foundation
 
+/// Every string in this file goes through here.
+///
+/// `bundle: .module` matters: the widget extension links DidICore, so the
+/// catalog has to be looked up in the package's bundle and not in whichever
+/// executable happens to be running. One helper rather than a `String(localized:)`
+/// at each of ~70 sites, so the bundle can never be forgotten at one of them.
+func t(_ key: String.LocalizationValue) -> String {
+    String(localized: key, bundle: .module)
+}
+
 /// Every user-facing string, identical in both processes.
 ///
 /// The pools are a designed artefact, not placeholder text — see day-0-install.md.
@@ -12,29 +22,29 @@ public enum Copy {
 
     /// Shown once, on the onboarding practice tap only.
     public static let onboardingConfirmation =
-        "Nice. Now go about your day, you magnificent adult."
+        t("Nice. Now go about your day, you magnificent adult.")
 
     /// The general pool, used everywhere after onboarding.
     public static let general = [
-        "Logged. The stove is off. The world is safe. Ish.",
-        "Done. Future you says thanks and means it.",
-        "Noted. You're doing better than you think.",
-        "Confirmed. Look at you, adulting.",
-        "Got it. Nothing is on fire, probably because of you.",
-        "Recorded for posterity and for your peace of mind.",
-        "Yep. Consider it handled.",
-        "Marked. Your past self was reliable after all.",
-        "Filed under \"things that are fine\".",
-        "Done. That's one less thing rattling around in there.",
-        "Locked in. Go be somewhere else now.",
-        "Confirmed. Genuinely, well done.",
+        t("Logged. The stove is off. The world is safe. Ish."),
+        t("Done. Future you says thanks and means it."),
+        t("Noted. You're doing better than you think."),
+        t("Confirmed. Look at you, adulting."),
+        t("Got it. Nothing is on fire, probably because of you."),
+        t("Recorded for posterity and for your peace of mind."),
+        t("Yep. Consider it handled."),
+        t("Marked. Your past self was reliable after all."),
+        t("Filed under \"things that are fine\"."),
+        t("Done. That's one less thing rattling around in there."),
+        t("Locked in. Go be somewhere else now."),
+        t("Confirmed. Genuinely, well done."),
     ]
 
     /// Used only when the same item is confirmed 3+ times in one day.
     public static let escalation = [
-        "Third time today. It was off the first time too, but sure.",
-        "We've done this. I'm not judging. I'm barely even counting.",
-        "Still off. Still fine. Still you.",
+        t("Third time today. It was off the first time too, but sure."),
+        t("We've done this. I'm not judging. I'm barely even counting."),
+        t("Still off. Still fine. Still you."),
     ]
 
     /// Rotating and random, never the same line twice in a row.
@@ -71,195 +81,257 @@ public enum Copy {
         }
     }
 
-    public static let unknownAtHome = "No record yet. Easy fix."
-    public static let unknownAway = "No record since you left. That's not the same as leaving it on."
+    public static let unknownAtHome = t("No record yet. Easy fix.")
+    public static let unknownAway = t("No record since you left. That's not the same as leaving it on.")
 
     /// Mild, no jokes: "Off, 6 hours ago."
     public static func confirmedAgo(word: String, age: TimeInterval) -> String {
         let subject = word.prefix(1).uppercased() + word.dropFirst().lowercased()
-        return "\(subject), \(elapsed(age)) ago."
+        return t("\(subject), \(elapsed(age)) ago.")
     }
 
+    /// The `s`-or-nothing ternary this replaces was English-only: Russian has
+    /// three plural forms and Arabic six. The catalog carries the variants.
     static func elapsed(_ age: TimeInterval) -> String {
         let minutes = max(0, Int(age / 60))
-        if minutes < 1 { return "a moment" }
-        if minutes < 60 { return "\(minutes) minute\(minutes == 1 ? "" : "s")" }
-        let hours = minutes / 60
-        return "\(hours) hour\(hours == 1 ? "" : "s")"
+        if minutes < 1 { return t("a moment") }
+        if minutes < 60 { return t("\(minutes) minutes") }
+        return t("\(minutes / 60) hours")
     }
 
     /// The board's clipped corner units: "14M", "6H". Design chrome, not prose.
     public static func shortAge(_ age: TimeInterval) -> String {
         let minutes = max(0, Int(age / 60))
-        if minutes < 1 { return "NOW" }
-        if minutes < 60 { return "\(minutes)M" }
-        return "\(minutes / 60)H"
+        if minutes < 1 { return t("NOW") }
+        if minutes < 60 { return t("\(minutes)M") }
+        return t("\(minutes / 60)H")
     }
 
-    public static let boardFooter = "Ticks expire overnight · green means since you left"
+    public static let boardFooter = t("Ticks expire overnight · green means since you left")
 
     /// accessoryRectangular's whole content. Counts records, never behaviour —
     /// "handled" means there is a confirmation, not that anything was done.
     public static func summary(handled: Int, of total: Int) -> String {
-        if total == 0 { return "Nothing on the board" }
-        if handled == total { return "All \(total) handled" }
-        return "\(handled) of \(total) handled"
+        if total == 0 { return t("Nothing on the board") }
+        if handled == total { return t("All \(total) handled") }
+        return t("\(handled) of \(total) handled")
     }
 
     // MARK: - Onboarding (day-0-install.md, verbatim)
 
     /// There is no Screen 0. No splash, no logo animation, no "Welcome to Did I?".
     public enum Screen1 {
-        public static let title = "What did you last go back home to check?"
-        public static let subtitle = "Pick one. You can add more later, but you probably won't."
-        public static let footer = "No account. Nothing leaves your phone."
+        public static let title = t("What did you last go back home to check?")
+        public static let subtitle = t("Pick one. You can add more later, but you probably won't.")
+        public static let footer = t("No account. Nothing leaves your phone.")
         /// A real example, not a repeat of the label.
-        public static let placeholder = "The garage door"
-        public static let returnKey = "Add"
+        public static let placeholder = t("The garage door")
+        public static let returnKey = t("Add")
     }
 
     public enum Screen2 {
-        public static let title = "Try it once"
-        public static let subtitle = "This is the whole app. There's no step four."
-        public static let footer = "Hold to undo. Everything resets overnight."
-        public static let loggedJustNow = "logged just now"
+        public static let title = t("Try it once")
+        public static let subtitle = t("This is the whole app. There's no step four.")
+        public static let footer = t("Hold to undo. Everything resets overnight.")
+        public static let loggedJustNow = t("logged just now")
     }
 
     public enum Screen3 {
-        public static let title = "Put it where you'll look"
-        public static let subtitle = "The widget answers without opening anything."
-        public static let steps = "Long-press your home screen → Edit → Add widget → search \"Did I?\""
-        public static let showMe = "Show me"
-        public static let later = "Later"
+        public static let title = t("Put it where you'll look")
+        public static let subtitle = t("The widget answers without opening anything.")
+        public static let steps = t("Long-press your home screen → Edit → Add widget → search \"Did I?\"")
+        public static let showMe = t("Show me")
+        public static let later = t("Later")
 
         /// The doc calls for a 4–6s looping video here. There is no asset, so the
         /// same five beats are shown as captions. See decisions.md.
         public static let walkthrough = [
-            "Long-press an empty part of your home screen.",
-            "Tap Edit in the corner.",
-            "Tap Add widget.",
-            "Search for \"Did I?\".",
-            "Pick a size and place it.",
+            t("Long-press an empty part of your home screen."),
+            t("Tap Edit in the corner."),
+            t("Tap Add widget."),
+            t("Search for \"Did I?\"."),
+            t("Pick a size and place it."),
         ]
 
-        public static let nudgeTitle = "Want a nudge tomorrow morning?"
+        public static let nudgeTitle = t("Want a nudge tomorrow morning?")
         public static let nudgeBody =
-            "We'll remind you once, around the time you'd be leaving the house. Once. Then never again."
-        public static let yesOnce = "Yes, once"
-        public static let noThanks = "No thanks"
+            t("We'll remind you once, around the time you'd be leaving the house. Once. Then never again.")
+        public static let yesOnce = t("Yes, once")
+        public static let noThanks = t("No thanks")
     }
 
     /// VoiceOver, per the Day 0 edge cases: the practice tap is one button.
     public static func confirmLabel(item: Item) -> String {
-        "Confirm \(item.name.lowercased()) is \(item.word.lowercased())"
+        t("Confirm \(item.name) is \(item.word.lowercased())")
     }
 
-    public static let confirmHint = "Double tap to log"
+    public static let confirmHint = t("Double tap to log")
 
     // MARK: - Day 2 (day-2-decay-and-location.md, verbatim)
 
-    /// "Your stove confirmation aged out at 4am". The doc writes the possessive
-    /// without the article, so a leading "The " is dropped and the first letter
-    /// lowercased — "The stove" reads as "Your stove confirmation".
-    static func bareName(_ name: String) -> String {
-        var bare = name
-        for article in ["The ", "the "] where bare.hasPrefix(article) {
-            bare = String(bare.dropFirst(article.count))
-        }
-        return bare.prefix(1).lowercased() + bare.dropFirst()
-    }
-
     public enum Lesson {
-        /// Item name interpolated. If several aged out, the name is dropped.
-        public static func title(items: [Item], hour: Int?) -> String {
-            let when = hour.map { " at \(clockHour($0))" } ?? ""
-            guard items.count == 1, let only = items.first else {
-                return "Your confirmations aged out\(when)"
+        /// Four whole sentences, not one sentence assembled from fragments.
+        ///
+        /// This used to build the title by appending " at 4am" and by stripping a
+        /// leading "The " off the name to make it read as a possessive. Both are
+        /// English-only: clause order moves between languages, and no other
+        /// language forms a possessive by deleting its article. The name now sits
+        /// in a label position, and each variant is its own key.
+        public static func title(items: [Item], hour: Int?, locale: Locale = .current) -> String {
+            switch (items.count == 1 ? items.first : nil, hour) {
+            case (let only?, let hour?):
+                t("\(only.name): confirmation aged out at \(clockHour(hour, locale: locale))")
+            case (let only?, nil):
+                t("\(only.name): confirmation aged out")
+            case (nil, let hour?):
+                t("Your confirmations aged out at \(clockHour(hour, locale: locale))")
+            case (nil, nil):
+                t("Your confirmations aged out")
             }
-            return "Your \(bareName(only.name)) confirmation aged out\(when)"
         }
 
         public static let body =
-            "Old checkmarks lie. A green tick from yesterday tells you nothing about today, so we expire them overnight and start fresh."
+            t("Old checkmarks lie. A green tick from yesterday tells you nothing about today, so we expire them overnight and start fresh.")
         /// Waking up to "unknown" reads as failure. It isn't, and it can't know.
-        public static let footer = "Nothing went wrong. This is the app working."
-        public static let button = "Makes sense"
+        public static let footer = t("Nothing went wrong. This is the app working.")
+        public static let button = t("Makes sense")
     }
 
     public enum LocationAsk {
-        public static let title = "Want it to reset when you actually leave?"
+        public static let title = t("Want it to reset when you actually leave?")
         public static let body =
-            "Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it never leaves your phone."
-        public static let use = "Use my location"
-        public static let keepTimer = "Keep the timer"
+            t("Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it never leaves your phone.")
+        public static let use = t("Use my location")
+        public static let keepTimer = t("Keep the timer")
 
         /// architecture §6: background region events require `always`, so this is
         /// a second, later ask rather than optional politeness.
         public static let alwaysReason =
-            "so we can clear the board when you leave, even with the app closed"
-        public static let alwaysTitle = "One more thing"
-        public static let alwaysButton = "Allow while closed"
-        public static let alwaysSkip = "Not now"
+            t("so we can clear the board when you leave, even with the app closed")
+        public static let alwaysTitle = t("One more thing")
+        public static let alwaysButton = t("Allow while closed")
+        public static let alwaysSkip = t("Not now")
     }
 
     public enum HomeSetup {
-        public static let title = "Where's home?"
+        public static let title = t("Where's home?")
         public static let body =
-            "Tap \"Set as home\" while you're there. We'll remember the spot, not the address."
-        public static let set = "Set as home"
-        public static let notHome = "I'm not home right now"
-        public static let confirmed = "Home set. From now on, leaving the house clears the board."
+            t("Tap \"Set as home\" while you're there. We'll remember the spot, not the address.")
+        public static let set = t("Set as home")
+        public static let notHome = t("I'm not home right now")
+        public static let confirmed = t("Home set. From now on, leaving the house clears the board.")
+        /// A fix can fail indoors or in airplane mode. Say so; do not guess.
+        public static let noFix = t("Couldn't get a location just now. Try again from here, or later.")
     }
 
     public enum LocationDeclined {
-        public static let message = "No problem. We'll keep expiring things overnight instead."
-        /// Shown silently, once.
-        public static let settingsHint =
-            "You can change how each item expires in Settings → any item → \"Forget this after\"."
+        public static let message = t("No problem. We'll keep expiring things overnight instead.")
     }
 
     /// The escape hatch, always available on an unknown item while away.
-    public static let cantCheckRightNow = "Can't check right now"
-    public static let askSomeoneAtHome = "Ask someone at home"
+    public static let cantCheckRightNow = t("Can't check right now")
+    public static let askSomeoneAtHome = t("Ask someone at home")
 
     /// Pre-fills a share sheet. Names that do not start with an article read a
     /// little clipped ("is front door locked?"); it is an editable draft, not a
     /// sent message, so the user fixes it in the half-second before sending.
     public static func shareMessage(item: Item) -> String {
-        "Random question — is \(item.name.lowercased()) \(item.word.lowercased())?"
+        t("Random question — is \(item.name) \(item.word.lowercased())?")
     }
 
     // MARK: - Item settings
 
     /// day-2 introduces this editor, and only on day 2: "How long until this
     /// expires?" is unanswerable about a thing you've owned for nine seconds.
-    public static let forgetAfterTitle = "Forget this after"
-    public static let neverWarning = "A tick that never expires is a tick you can't trust."
-    public static let nameFieldTitle = "Name"
-    public static let nameFieldFooter = "Keep it short — long names break the widget."
+    public static let forgetAfterTitle = t("Forget this after")
+
+    /// The pointer to the editor. Belongs to the reset rule, not to the location
+    /// branch it used to live in — someone who granted location needs it too.
+    public static let resetRuleHint =
+        t("You can change how each item expires in Settings → any item → \"Forget this after\".")
+
+    /// Archive, never delete. The footer is the promise that makes the button safe.
+    public static let putItAway = t("Put it away")
+    public static let putItAwayFooter = t("It leaves the board. You can bring it back any time.")
+
+    /// Board order is the widget's tap-target order, so it has to be editable.
+    public static let moveUp = t("Move up")
+
+    public static let widgetHelpRow = t("How to add the widget")
+    public static let neverWarning = t("A tick that never expires is a tick you can't trust.")
+    public static let nameFieldTitle = t("Name")
+    public static let nameFieldFooter = t("Keep it short — long names break the widget.")
 
     /// The word the board spells out. Not in the docs; the design's board needs it.
-    public static let wordFieldTitle = "Status word"
-    public static let wordFieldFooter = "What the board says when this is confirmed."
+    public static let wordFieldTitle = t("Status word")
+    public static let wordFieldFooter = t("What the board says when this is confirmed.")
 
-    public static func forgetAfter(_ rule: ResetRule) -> String {
+    /// `locale` is injected for the same reason `now` and `calendar` are: the
+    /// hour renders as "4 AM" or "04" depending on the region, so a test that
+    /// reads the ambient locale asserts something different on every machine.
+    public static func forgetAfter(_ rule: ResetRule, locale: Locale = .current) -> String {
         switch rule {
-        case .onLeavingHome: "When I leave home"
-        case .afterHours(let n): "\(n) hours"
-        case .dailyAt(let hour): "Every night at \(clockHour(hour))"
-        case .never: "Never"
+        case .onLeavingHome: t("When I leave home")
+        case .afterHours(let n): t("\(n) hours")
+        case .dailyAt(let hour): t("Every night at \(clockHour(hour, locale: locale))")
+        case .never: t("Never")
         }
     }
 
-    static func clockHour(_ hour: Int) -> String {
-        let suffix = hour < 12 ? "am" : "pm"
-        let twelve = hour % 12 == 0 ? 12 : hour % 12
-        return "\(twelve)\(suffix)"
+    /// "4am" in English, "04:00" where the locale runs a 24-hour clock. Built by
+    /// the formatter rather than by gluing a number to a translated "am", which
+    /// assumed every locale has a meridiem and puts it on the right.
+    static func clockHour(_ hour: Int, locale: Locale = .current) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = locale
+        let date = calendar.date(from: DateComponents(hour: hour, minute: 0)) ?? Date()
+        return date.formatted(.dateTime.hour().locale(locale))
+    }
+
+    // MARK: - Chrome
+    //
+    // These lived inline in the views until the localization pass found them.
+    // "Did I?" itself is the product name and is deliberately absent: it is not
+    // translated, in the header flaps or in the widget gallery.
+
+    public static let done = t("Done")
+    public static let close = t("Close")
+    public static let addAnItem = t("Add an item")
+    public static let pickOne = t("Pick one.")
+    public static let whichOneGoes = t("Which one goes?")
+    public static let dismiss = t("Dismiss")
+    public static let settings = t("Settings")
+
+    /// The board's two column headings.
+    public static let columnItem = t("Item")
+    public static let columnStatus = t("Status")
+
+    public enum Reminder {
+        public static let toggle = t("Remind me when I leave")
+        public static let footer = t("One notification, when you leave and this has no record.")
+    }
+
+    public enum HomeSettings {
+        public static let section = t("Home")
+        public static let notSet = t("Not set")
+        public static let isSet = t("Home is set")
+        public static let reset = t("Reset home location")
+        /// Shown when location was granted and later revoked in iOS Settings.
+        public static let revoked = t("Location is off, so we're expiring things on a timer instead.")
+        /// `whenInUse` without `always`: exit events only arrive in the foreground.
+        public static let foregroundOnly = t("Leaving home clears the board only while the app is open.")
+    }
+
+    /// The widget's gallery entry. Its *configuration* strings are not here: the
+    /// AppIntents metadata extractor rejects any bundle but the extension's own,
+    /// so they live in DidIWidget/<locale>.lproj/Localizable.strings.
+    public enum Widget {
+        public static let description = t("One tap on your way out.")
     }
 
     /// Spoken after a hold-to-undo. Not in the docs — invented, and deliberately
     /// flat: undoing is a correction, not an achievement.
-    public static let undone = "Undone. No record now."
+    public static let undone = t("Undone. No record now.")
 
     // MARK: - Notifications
 
@@ -272,16 +344,16 @@ public enum Copy {
     /// day-1: the one-shot widget nudge. One picked at random at schedule time.
     public static let widgetNudges = [
         Notification(
-            title: "Your widget is still homeless",
-            body: "Two taps and it lives on your home screen. Long-press → Edit → Add widget."
+            title: t("Your widget is still homeless"),
+            body: t("Two taps and it lives on your home screen. Long-press → Edit → Add widget.")
         ),
         Notification(
-            title: "The app works better when you can see it",
-            body: "Long-press your home screen, hit Edit, add the widget. Ten seconds."
+            title: t("The app works better when you can see it"),
+            body: t("Long-press your home screen, hit Edit, add the widget. Ten seconds.")
         ),
         Notification(
-            title: "Quick one before you head out",
-            body: "Add the widget so you never have to open this app again. Long-press → Edit → Add widget."
+            title: t("Quick one before you head out"),
+            body: t("Add the widget so you never have to open this app again. Long-press → Edit → Add widget.")
         ),
     ]
 
@@ -294,7 +366,7 @@ public enum Copy {
     /// register: plain, factual, zero jokes. See decisions.md.
     public static func leavingHomeReminder(item: Item) -> Notification {
         Notification(
-            title: "No record for \(item.name.lowercased())",
+            title: t("No record for \(item.name.lowercased())"),
             body: unknownAway
         )
     }
@@ -303,79 +375,88 @@ public enum Copy {
 // MARK: - Day 3+ (day-3-plus-repeat-use.md, verbatim)
 
 public extension Copy {
-    /// "checking the iron", "is the front door locked?" — item names come from
-    /// the Day 0 chips as "The stove", "Front door", "Iron", so an article is
-    /// added unless one is already there.
-    static func withArticle(_ name: String) -> String {
-        let lower = name.lowercased()
-        return lower.hasPrefix("the ") ? lower : "the \(lower)"
-    }
-
-    static func sentenceCased(_ text: String) -> String {
-        text.prefix(1).uppercased() + text.dropFirst()
-    }
+    /// There is deliberately no `withArticle` helper any more.
+    ///
+    /// It lowercased a user-typed noun and prefixed "the ", which is English-only
+    /// grammar applied to a word we do not know the gender, number or case of.
+    /// German needs der/die/das; Polish and Russian decline it differently per
+    /// sentence. Every sentence that used to interpolate a name mid-clause now
+    /// puts the name in a label position instead, where no language needs to
+    /// agree with it. See decisions.md.
 
     enum SecondItemPrompt {
-        public static let title = "You've opened this a few times today"
-        public static let body = "Anything else worth keeping an eye on?"
-        public static let decline = "Not right now"
+        public static let title = t("You've opened this a few times today")
+        public static let body = t("Anything else worth keeping an eye on?")
+        public static let decline = t("Not right now")
     }
 
     enum Cap {
-        public static let title = "That's six things"
+        public static let title = t("That's six things")
         public static let body =
-            "This app works because the list is short enough to trust at a glance. Want to swap something out instead?"
-        public static let swap = "Swap one out"
-        public static let neverMind = "Never mind"
+            t("This app works because the list is short enough to trust at a glance. Want to swap something out instead?")
+        public static let swap = t("Swap one out")
+        public static let neverMind = t("Never mind")
 
         /// "Windows — last confirmed 12 days ago." Shown so the choice is informed.
         public static func usage(item: Item, now: Date) -> String {
             guard let last = item.lastConfirmedAt else {
-                return "\(item.name) — never confirmed"
+                return t("\(item.name) — never confirmed")
             }
             let days = Int(now.timeIntervalSince(last) / 86_400)
-            if days < 1 { return "\(item.name) — last confirmed today" }
-            return "\(item.name) — last confirmed \(days) day\(days == 1 ? "" : "s") ago"
+            if days < 1 { return t("\(item.name) — last confirmed today") }
+            return "\(item.name) — last confirmed \(t("\(days) days")) ago"
         }
     }
 
     enum Paranoia {
-        public static let title = "This week"
+        public static let title = t("This week")
 
         public static func topWorry(item: Item, checks: Int) -> String {
-            "Top worry: \(withArticle(item.name)). \(checks) checks."
+            t("Top worry: \(item.name). \(checks) checks.")
         }
 
         public static func runnerUp(item: Item, checks: Int) -> String {
-            "Runner-up: \(withArticle(item.name)), a modest \(checks)."
+            t("Runner-up: \(item.name), a modest \(checks).")
         }
 
         public static func reassurance(item: Item) -> String {
-            "\(sentenceCased(withArticle(item.name))) was fine every single time. It's always fine."
+            t("\(item.name): fine every single time. It always is.")
         }
 
         public static let closing = [
-            "You checked 61 times. It was off 61 times. Just saying.",
-            "Perfect record. Zero disasters. One slightly tired phone.",
-            "Everything was fine, every time, all week.",
+            t("You checked 61 times. It was off 61 times. Just saying."),
+            t("Perfect record. Zero disasters. One slightly tired phone."),
+            t("Everything was fine, every time, all week."),
         ]
     }
 
     /// One honest sentence, once, and then get out of the way. No resources, no
     /// diagnosis, no follow-up.
+    /// The name leads, so the sentences never have to agree with it. The closing
+    /// clause used to say "will still be off" for every item, which was wrong for
+    /// a door; it takes the item's own word now.
     static func escalatingChecks(item: Item) -> String {
-        let name = withArticle(item.name)
-        return "You've been checking \(name) a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to delete it — \(name) will still be off."
+        t("\(item.name). You've been checking this a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to delete it — it'll still be \(item.word.lowercased()).")
     }
 
     enum StaleItem {
         public static func title(item: Item) -> String {
-            "\(item.name) hasn't come up in a month"
+            t("\(item.name) hasn't come up in a month")
         }
-        public static let body = "Want to put it away? You can bring it back any time."
-        public static let archive = "Archive it"
-        public static let keep = "Keep it"
+        public static let body = t("Want to put it away? You can bring it back any time.")
+        public static let archive = t("Archive it")
+        public static let keep = t("Keep it")
     }
 
-    static let previouslySection = "Previously"
+    static let previouslySection = t("Previously")
+}
+
+public extension Copy {
+    /// The bundle every string in this file is looked up in.
+    ///
+    /// Exposed because AppIntents resolves `LocalizedStringResource` lazily,
+    /// against a bundle it must be handed explicitly — and the widget extension
+    /// has no `Bundle.module` of its own. Without this its gallery and
+    /// configuration strings would be the only untranslated text in the product.
+    static var bundle: Bundle { .module }
 }

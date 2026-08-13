@@ -8,6 +8,8 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var store: Store
 
+    @State private var showingWalkthrough = false
+
     private var authorization: CLAuthorizationStatus { LocationMonitor.shared.status }
 
     private var locationRevoked: Bool {
@@ -20,39 +22,46 @@ struct SettingsView: View {
             Form {
                 Section {
                     if store.home == nil {
-                        Text("Not set")
+                        Text(Copy.HomeSettings.notSet)
                             .foregroundStyle(Palette.muted)
                     } else {
-                        Text("Home is set")
+                        Text(Copy.HomeSettings.isSet)
                             .foregroundStyle(Palette.text)
-                        Button("Reset home location", role: .destructive) { resetHome() }
+                        Button(Copy.HomeSettings.reset, role: .destructive) { resetHome() }
                     }
                 } header: {
-                    Text("Home")
+                    Text(Copy.HomeSettings.section)
                 } footer: {
                     // A one-line note here, never a banner on the main screen.
                     if locationRevoked {
-                        Text("Location is off, so we're expiring things on a timer instead.")
+                        Text(Copy.HomeSettings.revoked)
                     } else if store.home != nil, authorization == .authorizedWhenInUse {
-                        Text("Leaving home clears the board only while the app is open.")
+                        Text(Copy.HomeSettings.foregroundOnly)
                     } else if store.home != nil {
                         Text(Copy.HomeSetup.confirmed)
                     }
                 }
 
+                // Day 0's "Later" plus a declined nudge closes the only other
+                // route to these instructions, and the widget is the product.
                 Section {
-                    Text(Copy.LocationDeclined.settingsHint)
+                    Button(Copy.widgetHelpRow) { showingWalkthrough = true }
+                }
+
+                Section {
+                    Text(Copy.resetRuleHint)
                         .font(.system(size: 13))
                         .foregroundStyle(Palette.sub)
                 }
             }
+            .sheet(isPresented: $showingWalkthrough) { WalkthroughSheet() }
             .scrollContentBackground(.hidden)
             .background(Palette.ink)
-            .navigationTitle("Settings")
+            .navigationTitle(Copy.settings)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button(Copy.done) { dismiss() }
                 }
             }
         }

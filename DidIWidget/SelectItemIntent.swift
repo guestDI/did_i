@@ -4,6 +4,11 @@ import DidICore
 /// Which item the single-item families show. `nil` falls back to the first item,
 /// so an unconfigured widget is still useful.
 struct SelectItemIntent: WidgetConfigurationIntent {
+    // These four cannot come from DidICore: the AppIntents metadata extractor
+    // rejects any bundle but the extension's own ("AppIntents requires
+    // 'LocalizedStringResource' to use the main bundle"). They are translated in
+    // DidIWidget/en.lproj/Localizable.strings instead — the one place in the
+    // product with a second string file, and the reason it exists.
     static let title: LocalizedStringResource = "Choose item"
     static let description = IntentDescription("Pick which item this widget shows.")
 

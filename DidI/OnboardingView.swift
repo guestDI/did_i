@@ -27,7 +27,7 @@ struct OnboardingView: View {
         ZStack {
             Palette.ink.ignoresSafeArea()
             switch screen {
-            case 1: PickItemScreen(onPick: pick)
+            case 1: PickItemScreen(items: store.items, onPick: pick, onRestore: restore)
             case 2: PracticeScreen(store: $store, onDone: { advance(from: 2) })
             default: WidgetScreen(store: $store, onDone: finish)
             }
@@ -51,6 +51,14 @@ struct OnboardingView: View {
         if returning { finished() } else { screen = 2 }
     }
 
+    /// Emptying the board lands here, and the "Previously" list lives in the add
+    /// sheet — which an empty board can never reach. Without this, archiving your
+    /// last item strands everything you ever archived.
+    private func restore(_ item: Item) {
+        save { $0.unarchive(item.id) }
+        if store.flags.isComplete { finished() } else { screen = 2 }
+    }
+
     private func advance(from finishedScreen: Int) {
         save { $0.flags.completedScreen = max($0.flags.completedScreen, finishedScreen) }
         screen = finishedScreen + 1
@@ -71,7 +79,11 @@ struct OnboardingView: View {
 // MARK: - Screen 1
 
 private struct PickItemScreen: View {
+    let items: [Item]
     let onPick: (Chip, String?) -> Void
+    let onRestore: (Item) -> Void
+
+    private var archived: [Item] { items.filter { $0.archivedAt != nil } }
 
     @State private var typing = false
     @State private var custom = ""
@@ -114,7 +126,16 @@ private struct PickItemScreen: View {
                 chips.padding(.top, 28)
             }
 
-            Spacer()
+            if archived.isEmpty {
+                Spacer()
+            } else {
+                // Can grow past the screen, unlike the fixed chip grid.
+                ScrollView {
+                    PreviouslyList(archived: archived, onRestore: onRestore)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(.bottom, 20)
+            }
 
             Text(Copy.Screen1.footer)
                 .font(.system(size: 11))
@@ -128,7 +149,7 @@ private struct PickItemScreen: View {
 
     private var chips: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), spacing: 10)], spacing: 10) {
-            ForEach(Chip.all) { chip in
+            ForEach(Chip.available(excluding: items)) { chip in
                 Button {
                     // Tapping a chip advances immediately. No Continue button.
                     if chip.id == Chip.somethingElse.id { typing = true } else { onPick(chip, nil) }
@@ -350,7 +371,7 @@ struct WalkthroughSheet: View {
                 }
             }
             Spacer()
-            Button("Done") { dismiss() }
+            Button(Copy.done) { dismiss() }
                 .buttonStyle(PrimaryButton())
         }
         .padding(30)

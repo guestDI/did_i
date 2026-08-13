@@ -107,17 +107,31 @@ import Foundation
 
 // MARK: - The "Forget this after" editor (day-2)
 
+/// Pinned to en_US, because the hour renders as "4 AM" there and "04" in any
+/// 24-hour region. The ambient locale is not a fact about this app's copy.
+private let enUS = Locale(identifier: "en_US")
+private func forgetAfterEN(_ rule: ResetRule) -> String {
+    plainSpaces(Copy.forgetAfter(rule, locale: enUS))
+}
+
+/// `Date.FormatStyle` separates the hour from the meridiem with U+202F, a narrow
+/// no-break space. Correct typography, and invisible in a source literal — so it
+/// is swapped for a plain space here rather than pasted into every expectation.
+func plainSpaces(_ text: String) -> String {
+    text.replacingOccurrences(of: "\u{202F}", with: " ")
+}
+
 @Test func forgetAfterOffersTheDocsOptionsInOrder() {
-    #expect(ResetRule.choices(hasHome: true).map(Copy.forgetAfter) == [
-        "When I leave home", "4 hours", "12 hours", "Every night at 4am", "Never",
+    #expect(ResetRule.choices(hasHome: true).map(forgetAfterEN) == [
+        "When I leave home", "4 hours", "12 hours", "Every night at 4 AM", "Never",
     ])
 }
 
 @Test func leavingHomeIsHiddenWithoutAHome() {
     let choices = ResetRule.choices(hasHome: false)
     #expect(!choices.contains(.onLeavingHome))
-    #expect(choices.map(Copy.forgetAfter) == [
-        "4 hours", "12 hours", "Every night at 4am", "Never",
+    #expect(choices.map(forgetAfterEN) == [
+        "4 hours", "12 hours", "Every night at 4 AM", "Never",
     ])
 }
 
@@ -131,7 +145,13 @@ import Foundation
 }
 
 @Test func clockHoursReadAsClockTimes() {
-    #expect(Copy.forgetAfter(.dailyAt(hour: 4)) == "Every night at 4am")
-    #expect(Copy.forgetAfter(.dailyAt(hour: 0)) == "Every night at 12am")
-    #expect(Copy.forgetAfter(.dailyAt(hour: 13)) == "Every night at 1pm")
+    #expect(forgetAfterEN(.dailyAt(hour: 4)) == "Every night at 4 AM")
+    #expect(forgetAfterEN(.dailyAt(hour: 0)) == "Every night at 12 AM")
+    #expect(forgetAfterEN(.dailyAt(hour: 13)) == "Every night at 1 PM")
+}
+
+/// The whole reason the meridiem is no longer glued on by hand.
+@Test func aTwentyFourHourRegionGetsATwentyFourHourClock() {
+    #expect(Copy.forgetAfter(.dailyAt(hour: 13), locale: Locale(identifier: "en_GB"))
+        == "Every night at 13")
 }

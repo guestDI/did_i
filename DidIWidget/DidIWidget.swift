@@ -62,7 +62,7 @@ struct DidIWidget: Widget {
                 .environment(\.confirmAction, .widgetButton)
         }
         .configurationDisplayName("Did I?")
-        .description("One tap on your way out.")
+        .description(Copy.Widget.description)
         .supportedFamilies([
             .systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular,
         ])

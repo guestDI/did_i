@@ -8,13 +8,25 @@ struct ItemSettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var draft: Item
+    /// Kept to tell an edit from an untouched field on the way out.
+    private let original: Item
     let hasHome: Bool
     let save: (Item) -> Void
+    /// The only way off the board short of hitting the six-item cap. Without it
+    /// a three-item list is permanent.
+    let archive: () -> Void
 
-    init(item: Item, hasHome: Bool, save: @escaping (Item) -> Void) {
+    init(
+        item: Item,
+        hasHome: Bool,
+        save: @escaping (Item) -> Void,
+        archive: @escaping () -> Void
+    ) {
         _draft = State(initialValue: item)
+        self.original = item
         self.hasHome = hasHome
         self.save = save
+        self.archive = archive
     }
 
     private let maxNameLength = 24
@@ -80,7 +92,7 @@ struct ItemSettingsView: View {
                 if hasHome {
                     Section {
                         Toggle(
-                            "Remind me when I leave",
+                            Copy.Reminder.toggle,
                             isOn: Binding(
                                 get: { draft.leavingHomeReminder == true },
                                 set: { on in
@@ -91,8 +103,19 @@ struct ItemSettingsView: View {
                         )
                         .tint(Palette.amber)
                     } footer: {
-                        Text("One notification, when you leave and this has no record.")
+                        Text(Copy.Reminder.footer)
                     }
+                }
+
+                Section {
+                    Button(Copy.putItAway, role: .destructive) {
+                        // Dismiss first: archiving the last item swaps the whole
+                        // hierarchy out from under this sheet.
+                        dismiss()
+                        archive()
+                    }
+                } footer: {
+                    Text(Copy.putItAwayFooter)
                 }
             }
             .scrollContentBackground(.hidden)
@@ -101,8 +124,14 @@ struct ItemSettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        save(draft)
+                    Button(Copy.done) {
+                        var edited = draft
+                        // Once they have written their own words, the text is
+                        // theirs and must never be relocalized out from under them.
+                        if edited.name != original.name || edited.word != original.word {
+                            edited.chipID = nil
+                        }
+                        save(edited)
                         dismiss()
                     }
                     .disabled(draft.name.trimmingCharacters(in: .whitespaces).isEmpty)
