@@ -638,3 +638,50 @@ ODŁ., ВЫКЛ., ОТКЛ. — rather than full adjectives, so nothing was scal
 unreadable. That was the translator honouring the six-character brief, not the
 layout being safe. A language that cannot abbreviate naturally will still break
 this, and the constraint has to stay in every future brief.
+
+## Widget pass: the tap that lied
+
+**The small face is no longer one big button.** It used to wrap the whole face in
+`ConfirmItemIntent`, which meant tapping the widget to *look* at it wrote a
+confirmation. That is a false green — the precise failure the product exists to
+prevent, and the thing the location permission string promises to avoid ("an old
+checkmark never fools you"). It also left a small-widget-only user with no route
+into the app at all, since every pixel was the button.
+
+The header row (name + age) is now outside the button and falls through to the
+default open action; the flaps and status line are the button. The rule is one
+users already know from other widgets: the control acts, the label is the door.
+`RootView` already lands on the board when onboarding is complete, so no deep
+link was needed — opening from the widget arrives exactly where undo lives.
+
+This also repays the Day 0 promise. Screen 2 teaches "hold to undo", then Screen
+3 moves the user onto the widget, where hold means "edit home screen". A mis-tap
+used to cost: notice, find the app icon, open, locate the card, hold. It now
+costs tap-header, hold-card. A widget undo button was considered and rejected
+again — a second button on a one-tap surface argues with the premise.
+
+**`invalidatableContent()` on everything a tap changes.** Re-confirming an item
+that already read NOW produced no visible change whatsoever, which reproduces
+"did that register?" — the exact loop the app claims to end — inside the app's
+own widget. The modifier makes the age, flaps and status blur the instant the tap
+lands and resolve when the new entry arrives. This is why the medium face's age
+and status word are wrapped as one unit rather than separately: they are one
+statement and should settle together.
+
+**Snapshot tests pass unchanged, which is the point.** The small-face refactor is
+pixel-identical; only the tap regions moved. It also means the snapshots cannot
+prove the carve-out works — that needs a home screen.
+
+**Two hard-coded accessibility hints are gone.** `Faces.swift` had
+`"Double tap to log"` inline twice while a translated `Copy.confirmHint` already
+existed, so Polish and Russian VoiceOver users got English. They were also the
+only strings living outside `Copy.swift`. `CircularFace` had no hint at all.
+
+**Translation delta: one new key.** `"Double tap to open Did I?"` (`Copy.openHint`)
+is English-only and falls back cleanly. It needs to go to the translator with the
+next batch.
+
+**Known and accepted:** archiving the configured item silently retargets the
+widget to the first active one. The name is on screen so it is visible, but a
+user trained on "top-left widget = stove" will glance at green belonging to the
+door. A dead widget is worse.

@@ -167,6 +167,10 @@ public enum Copy {
 
     public static let confirmHint = t("Double tap to log")
 
+    /// The small widget's header row is not the confirm button — it opens the app.
+    /// Sighted users get that from the layout; VoiceOver needs it said.
+    public static let openHint = t("Double tap to open Did I?")
+
     // MARK: - Day 2 (day-2-decay-and-location.md, verbatim)
 
     public enum Lesson {

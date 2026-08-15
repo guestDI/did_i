@@ -111,9 +111,16 @@ struct BoardWidgetView: View {
         if let item = entry.selected {
             face(item, entry.store.state(item, now: entry.date))
         } else {
-            Text(Copy.summary(handled: 0, of: 0))
-                .font(board(9))
-                .foregroundStyle(Palette.muted)
+            // No button here, so the tap falls through and opens the app —
+            // which is exactly where "Add an item" has to be done.
+            VStack(alignment: .leading, spacing: 4) {
+                Text(Copy.summary(handled: 0, of: 0))
+                    .foregroundStyle(Palette.muted)
+                Text(Copy.addAnItem)
+                    .foregroundStyle(Palette.text)
+            }
+            .font(board(9))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         }
     }
 }

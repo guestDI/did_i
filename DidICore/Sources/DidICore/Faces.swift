@@ -36,7 +36,12 @@ public extension EnvironmentValues {
 
 // MARK: - systemSmall
 
-/// One item, chosen via widget configuration. The whole face is the button.
+/// One item, chosen via widget configuration.
+///
+/// The flaps are the button; the header row is not. Wrapping the whole face meant
+/// tapping to look closer wrote a confirmation — a false green, which is the one
+/// thing this app exists to prevent — and left a small-widget user with no way
+/// into the app at all. The header falls through to the default open action.
 public struct SmallFace: View {
     @Environment(\.confirmAction) private var confirm
 
@@ -49,37 +54,45 @@ public struct SmallFace: View {
     }
 
     public var body: some View {
-        confirm(item) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(item.name)
-                        .font(board(9))
-                        .tracking(2.5)
-                        .textCase(.uppercase)
-                        .lineLimit(1)
-                    Spacer(minLength: 4)
-                    Text(shortAge(state))
-                        .font(board(9, .medium))
-                }
-                .foregroundStyle(Palette.muted)
-
-                Spacer(minLength: 6)
-
-                FlapWord(item: item, state: state, cellWidth: 34, cellHeight: 48, fontSize: 22, maxWidth: 126)
-
-                Text(Copy.status(for: state, item: item))
-                    .font(board(8.5))
-                    .foregroundStyle(Palette.color(for: state))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.8)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 10)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(item.name)
+                    .font(board(9))
+                    .tracking(2.5)
+                    .textCase(.uppercase)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                Text(shortAge(state))
+                    .font(board(9, .medium))
+                    .invalidatableContent()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .foregroundStyle(Palette.muted)
             .accessibilityElement(children: .combine)
-            .accessibilityLabel(spokenLabel(item: item, state: state))
-            .accessibilityHint("Double tap to log")
+            .accessibilityHint(Copy.openHint)
+
+            confirm(item) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Spacer(minLength: 6)
+
+                    FlapWord(item: item, state: state, cellWidth: 34, cellHeight: 48, fontSize: 22, maxWidth: 126)
+                        .invalidatableContent()
+
+                    Text(Copy.status(for: state, item: item))
+                        .font(board(8.5))
+                        .foregroundStyle(Palette.color(for: state))
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 10)
+                        .invalidatableContent()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(spokenLabel(item: item, state: state))
+                .accessibilityHint(Copy.confirmHint)
+            }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
 }
 
@@ -168,11 +181,12 @@ public struct MediumFace: View {
                             .font(board(9, .medium))
                             .foregroundStyle(Palette.muted)
                     }
+                    .invalidatableContent()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(spokenLabel(item: item, state: state))
-                .accessibilityHint("Double tap to log")
+                .accessibilityHint(Copy.confirmHint)
             }
         } else {
             Color.clear
@@ -204,10 +218,12 @@ public struct CircularFace: View {
                     .font(.system(size: 16, weight: .medium))
                 Text(isUnknown ? "—" : shortAge(state))
                     .font(board(11, .bold))
+                    .invalidatableContent()
             }
             .opacity(isUnknown ? 0.55 : 1)
             .accessibilityElement(children: .combine)
             .accessibilityLabel(spokenLabel(item: item, state: state))
+            .accessibilityHint(Copy.confirmHint)
         }
     }
 }
