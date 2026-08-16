@@ -153,6 +153,12 @@ public enum Copy {
             t("Pick a size and place it."),
         ]
 
+        /// Deliberately not a sixth numbered step: placement is a sequence, this
+        /// is a footnote about a widget that is already there. The gallery now
+        /// offers one entry per item, so this only matters for changing your mind.
+        public static let whichItem =
+            t("The small widget shows one item. Long-press it → Edit Widget to change which.")
+
         public static let nudgeTitle = t("Want a nudge tomorrow morning?")
         public static let nudgeBody =
             t("We'll remind you once, around the time you'd be leaving the house. Once. Then never again.")
@@ -304,6 +310,7 @@ public enum Copy {
     public static let pickOne = t("Pick one.")
     public static let whichOneGoes = t("Which one goes?")
     public static let dismiss = t("Dismiss")
+    public static let ok = t("OK")
     public static let settings = t("Settings")
 
     /// The board's two column headings.

@@ -56,11 +56,17 @@ public struct SmallFace: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
+                // architecture §5 lists an icon here and it was missing. It is
+                // also what makes the face identifiable at a glance, before any
+                // word is read.
+                Image(systemName: item.symbol)
+                    .font(.system(size: 10, weight: .medium))
                 Text(item.name)
                     .font(board(9))
                     .tracking(2.5)
                     .textCase(.uppercase)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 Spacer(minLength: 4)
                 Text(shortAge(state))
                     .font(board(9, .medium))
@@ -230,36 +236,99 @@ public struct CircularFace: View {
 
 // MARK: - accessoryRectangular
 
-/// Summary: "3 of 4 handled" (architecture §5). Not per-item, so not tappable —
-/// it opens the app.
+/// The configured item, tappable, with the board count underneath.
+///
+/// architecture §5 specified a bare summary ("3 of 4 handled") and nothing else.
+/// On a real lock screen that fails the question the app is named after: a count
+/// does not tell you whether *the stove* is off, and with no button the one-tap
+/// promise is invisible on the surface most likely to be glanced at. The count
+/// survives as a third line, so nothing the doc asked for was lost.
+///
+/// Monochrome: iOS renders lock screen accessories tinted, so state is carried by
+/// the word and by opacity, never colour.
 public struct RectangularFace: View {
+    @Environment(\.confirmAction) private var confirm
+
+    let item: Item
     let items: [Item]
     let states: [UUID: ItemState]
 
-    public init(items: [Item], states: [UUID: ItemState]) {
+    public init(item: Item, items: [Item], states: [UUID: ItemState]) {
+        self.item = item
         self.items = items
         self.states = states
     }
+
+    var state: ItemState { states[item.id] ?? .unknown }
 
     var handled: Int {
         items.filter { (states[$0.id] ?? .unknown) != .unknown }.count
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Did I?")
-                .font(board(9, .bold))
-                .tracking(2.5)
-                .textCase(.uppercase)
-                .opacity(0.65)
-            Text(Copy.summary(handled: handled, of: items.count))
-                .font(board(13, .bold))
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+        confirm(item) {
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 4) {
+                    Image(systemName: item.symbol)
+                        .font(.system(size: 10, weight: .medium))
+                    Text(item.name)
+                        .font(board(9))
+                        .tracking(1.5)
+                        .textCase(.uppercase)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Spacer(minLength: 4)
+                    Text(shortAge(state))
+                        .font(board(9, .medium))
+                }
+                .opacity(0.7)
+
+                Text(statusWord(item: item, state: state))
+                    .font(board(14, .bold))
+                    .tracking(1)
+                    .textCase(.uppercase)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .opacity(state == .unknown ? 0.55 : 1)
+                    .invalidatableContent()
+
+                Text(Copy.summary(handled: handled, of: items.count))
+                    .font(board(8.5))
+                    .opacity(0.6)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(spokenLabel(item: item, state: state))
+            .accessibilityHint(Copy.confirmHint)
         }
+    }
+}
+
+// MARK: - Empty board
+
+/// What every single-item family shows when there is nothing to confirm.
+///
+/// Deliberately has no button, so the tap falls through and opens the app —
+/// which is the only place an item can be added. Saying only what is wrong
+/// ("Nothing on the board") and not what to do about it left the user staring at
+/// a widget with no move.
+public struct EmptyFace: View {
+    public init() {}
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(Copy.summary(handled: 0, of: 0))
+                .opacity(0.6)
+            Text(Copy.addAnItem)
+        }
+        .font(board(9))
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(Copy.summary(handled: handled, of: items.count))
+        .accessibilityHint(Copy.openHint)
     }
 }
 

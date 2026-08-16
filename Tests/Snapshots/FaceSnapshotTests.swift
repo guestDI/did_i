@@ -218,7 +218,9 @@ final class FaceSnapshotTests: XCTestCase {
         for (label, states) in cases {
             for (scheme, schemeName) in schemes {
                 assertSnapshot(
-                    of: lockScreen(RectangularFace(items: items, states: states).padding(9)),
+                    of: lockScreen(
+                        RectangularFace(item: items[0], items: items, states: states).padding(9)
+                    ),
                     size: Self.rectangular, scheme: scheme,
                     named: "rectangular-\(label)-\(schemeName)"
                 )
@@ -226,12 +228,14 @@ final class FaceSnapshotTests: XCTestCase {
         }
     }
 
-    func testRectangularFaceEmptyBoard() {
+    /// The empty board is one view shared by every single-item family, so it is
+    /// checked once at the tightest size it has to survive.
+    func testEmptyFace() {
         for (scheme, schemeName) in schemes {
             assertSnapshot(
-                of: lockScreen(RectangularFace(items: [], states: [:]).padding(9)),
+                of: lockScreen(EmptyFace().padding(9)),
                 size: Self.rectangular, scheme: scheme,
-                named: "rectangular-empty-\(schemeName)"
+                named: "empty-\(schemeName)"
             )
         }
     }

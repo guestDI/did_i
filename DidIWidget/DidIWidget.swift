@@ -42,6 +42,23 @@ struct Provider: AppIntentTimelineProvider {
         return Timeline(entries: entries, policy: .after(dates.last ?? horizon))
     }
 
+    /// One ready-made widget per item in the gallery.
+    ///
+    /// Without these, every small widget lands unconfigured and falls back to the
+    /// first item on the board, so a two-item user gets the same face twice and no
+    /// hint that it can be changed — "Edit Widget" is not something anyone thinks
+    /// to look for. Picking the item at placement time is the whole point of a
+    /// per-item widget, so the gallery has to offer it.
+    ///
+    /// Empty board returns nothing and the gallery falls back to the placeholder.
+    func recommendations() -> [AppIntentRecommendation<SelectItemIntent>] {
+        StoreIO.read().active.prefix(6).map { item in
+            let intent = SelectItemIntent()
+            intent.item = ItemEntity(id: item.id.uuidString, name: item.name)
+            return AppIntentRecommendation(intent: intent, description: Text(item.name))
+        }
+    }
+
     private func entry(at date: Date, selectedID: UUID?) -> BoardEntry {
         BoardEntry(date: date, store: StoreIO.read(), selectedID: selectedID)
     }
@@ -100,8 +117,10 @@ struct BoardWidgetView: View {
                 .containerBackground(.clear, for: .widget)
 
         default:
-            RectangularFace(items: entry.store.counted, states: entry.states)
-                .containerBackground(.clear, for: .widget)
+            single { item, _ in
+                RectangularFace(item: item, items: entry.store.counted, states: entry.states)
+            }
+            .containerBackground(.clear, for: .widget)
         }
     }
 
@@ -111,16 +130,7 @@ struct BoardWidgetView: View {
         if let item = entry.selected {
             face(item, entry.store.state(item, now: entry.date))
         } else {
-            // No button here, so the tap falls through and opens the app —
-            // which is exactly where "Add an item" has to be done.
-            VStack(alignment: .leading, spacing: 4) {
-                Text(Copy.summary(handled: 0, of: 0))
-                    .foregroundStyle(Palette.muted)
-                Text(Copy.addAnItem)
-                    .foregroundStyle(Palette.text)
-            }
-            .font(board(9))
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            EmptyFace()
         }
     }
 }

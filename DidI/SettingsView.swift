@@ -9,6 +9,7 @@ struct SettingsView: View {
     @Binding var store: Store
 
     @State private var showingWalkthrough = false
+    @State private var settingHome = false
 
     private var authorization: CLAuthorizationStatus { LocationMonitor.shared.status }
 
@@ -17,13 +18,21 @@ struct SettingsView: View {
             && authorization != .authorizedWhenInUse
     }
 
+    private var homeStep: DayTwoFlow.Step {
+        authorization == .authorizedAlways || authorization == .authorizedWhenInUse
+            ? .homeSetup : .locationAsk
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
                     if store.home == nil {
-                        Text(Copy.HomeSettings.notSet)
-                            .foregroundStyle(Palette.muted)
+                        // Dead text before this: the only route to home setup was
+                        // the day-2 sheet, which fires once. Anyone who tapped
+                        // "I'm not home right now" — or opened Settings first —
+                        // could read "Not set" forever with nothing to tap.
+                        Button(Copy.HomeSetup.set) { settingHome = true }
                     } else {
                         Text(Copy.HomeSettings.isSet)
                             .foregroundStyle(Palette.text)
@@ -55,6 +64,15 @@ struct SettingsView: View {
                 }
             }
             .sheet(isPresented: $showingWalkthrough) { WalkthroughSheet() }
+            .sheet(isPresented: $settingHome) {
+                // Reuses the day-2 sheet rather than duplicating capture, the
+                // failure line, and the `always` escalation. Skip straight to
+                // the capture step if location was already granted.
+                DayTwoFlow(step: homeStep) {
+                    settingHome = false
+                    store = StoreIO.read()
+                }
+            }
             .scrollContentBackground(.hidden)
             .background(Palette.ink)
             .navigationTitle(Copy.settings)

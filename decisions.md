@@ -685,3 +685,78 @@ next batch.
 widget to the first active one. The name is on screen so it is visible, but a
 user trained on "top-left widget = stove" will glance at green belonging to the
 door. A dead widget is worse.
+
+## Device feedback: the settings dead end and the lock screen
+
+**Settings had no way to set home.** With `home == nil` the section rendered
+`Copy.HomeSettings.notSet` as plain `Text` and nothing else — "Not set", not
+tappable, no route forward. The only path to home setup was the day-2 sheet,
+which fires once, so anyone who tapped "I'm not home right now" or opened
+Settings before day 2 was permanently stuck. It is now a button presenting
+`DayTwoFlow`, reused rather than reimplemented so the capture, the no-fix line
+and the `always` escalation all still happen. It enters at `.locationAsk` when
+authorization has not been granted and `.homeSetup` when it has.
+
+**Known remaining edge:** if location was denied in iOS Settings, the flow runs
+to `.declined` and explains the timer fallback rather than offering a jump to
+iOS Settings. Honest, but still not a way forward. Left alone for now.
+
+**The lock screen face was the wrong design, and the report proved it.** The
+device feedback was "Ready 1 from 2 or Ready 1 ... I was thinking it will show
+icon for device and I can click to confirm, but widget opens app". Those two
+strings only come from `Copy.summary`, which only `RectangularFace` renders, so
+the widgets in question were lock screen accessories.
+
+architecture §5 specified `accessoryRectangular` as a bare summary and it was
+built exactly that way. On a real lock screen it fails the question the app is
+named after: "1 of 4 handled" does not tell you whether *the stove* is off, and
+with no button the one-tap promise is invisible on the surface most likely to be
+glanced at. It now shows the configured item — symbol, name, age, status word —
+is tappable like every other per-item face, and keeps the count as a third line,
+so nothing the doc asked for was lost. **This overrides architecture §5** and is
+the one place the docs have been contradicted rather than followed; reverting is
+a single view.
+
+**`systemSmall` was missing the icon the same table specifies** ("Icon, name,
+state, relative time"). Added to the header. It costs a few characters on the
+longest name in the chip pool — "THE SPACE H…" now truncates where it did not
+before — which is accepted: the glyph does the identifying, and scaling 9pt
+tracked uppercase any further makes it unreadable.
+
+**The empty board moved into `EmptyFace` in DidICore.** It had been written
+inline in the widget target, where the snapshot suite cannot reach it, so the
+one state a new user is guaranteed to see had no coverage. Now shared by every
+single-item family and snapshotted.
+
+**`Copy.ok`.** `DayTwoFlow`'s declined step had a hard-coded `"OK"`, the last
+user-facing string outside `Copy.swift`. It became reachable from Settings with
+this change, so it was fixed rather than noted. Value equals key, so pl and ru
+resolve correctly through fallback with no translator round-trip.
+
+## The small widget always showed the same item
+
+Reported from a device: the small widget shows the front door and nothing else,
+with a two-item board. Not a rendering bug — the unknown-state snapshot proves
+the flaps do fall back to amber dashes — and not a metadata failure either;
+`Metadata.appintents` in the built appex contains `SelectItemIntent`,
+`ConfirmItemIntent` and `ItemEntity`, so configuration is registered correctly.
+
+The cause is `BoardEntry.selected` falling back to `store.active.first` for an
+unconfigured widget, which is correct code meeting a broken assumption. Nothing
+in the product ever says the widget can be configured. "Long-press → Edit Widget
+→ Item" is not a thing people go looking for, so every small widget stays on
+item one forever and a second item is unreachable.
+
+**Fixed with `AppIntentTimelineProvider.recommendations()`**, which is what the
+platform provides for exactly this. The gallery now lists one ready-made entry
+per item, so the choice happens at placement — where it belongs — instead of in
+a menu nobody opens. Capped at six to match the board cap; an empty board returns
+nothing and the gallery falls back to the placeholder.
+
+This only helps at placement time, so `Copy.Screen3.whichItem` was added to the
+walkthrough sheet for changing one already on screen. It is deliberately *not* a
+sixth numbered step — the numbering encodes a placement sequence and this is a
+footnote about a widget that already exists.
+
+**Translation delta: `Copy.Screen3.whichItem` and `Copy.openHint`** are both
+English-only pending the next translator batch.

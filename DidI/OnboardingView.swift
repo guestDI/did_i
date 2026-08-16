@@ -370,6 +370,9 @@ struct WalkthroughSheet: View {
                         .foregroundStyle(Palette.text)
                 }
             }
+            Text(Copy.Screen3.whichItem)
+                .font(.system(size: 13))
+                .foregroundStyle(Palette.sub)
             Spacer()
             Button(Copy.done) { dismiss() }
                 .buttonStyle(PrimaryButton())

@@ -218,7 +218,7 @@ struct DayTwoFlow: View {
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 16)
             Spacer(minLength: 20)
-            Button("OK") { onFinished() }
+            Button(Copy.ok) { onFinished() }
                 .buttonStyle(PrimaryButton())
         }
     }
