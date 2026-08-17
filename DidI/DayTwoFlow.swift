@@ -155,6 +155,7 @@ struct DayTwoFlow: View {
                     mark {
                         $0.home = home
                         $0.flags.homeSetupPending = false
+                        $0.flags.homeSetupDeferredUntil = nil
                     }
                     LocationMonitor.shared.monitor(home)
                     step = .alwaysEscalation
@@ -163,8 +164,9 @@ struct DayTwoFlow: View {
             .buttonStyle(PrimaryButton())
 
             Button(Copy.HomeSetup.notHome) {
-                // Prompt again on a later open rather than dropping the thread.
-                mark { $0.flags.homeSetupPending = true }
+                // Keep the route alive without showing the same prompt again on
+                // the very next open.
+                mark { $0.flags.deferHomeSetup(at: .now) }
                 onFinished()
             }
             .font(.system(size: 13))
@@ -227,6 +229,8 @@ struct DayTwoFlow: View {
         mark {
             $0.flags.locationDeclined = true
             $0.flags.settingsHintShown = true
+            $0.flags.homeSetupPending = false
+            $0.flags.homeSetupDeferredUntil = nil
         }
         step = .declined
     }

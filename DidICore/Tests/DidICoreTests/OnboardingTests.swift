@@ -117,10 +117,34 @@ import Foundation
     s.flags.practiceTapCompleted = true
     s.flags.widgetPromptOutcome = .later
     s.flags.notificationOptIn = true
+    s.flags.deferHomeSetup(at: at("2026-08-11 09:00:00"))
 
     let data = try! StoreIO.encoder.encode(s)
     let back = try! StoreIO.decoder.decode(Store.self, from: data)
     #expect(back.flags == s.flags)
+}
+
+@Test func deferredHomeSetupWaitsOneDayBeforePromptingAgain() {
+    let deferredAt = at("2026-08-11 09:00:00")
+    var flags = OnboardingFlags()
+    flags.deferHomeSetup(at: deferredAt)
+
+    #expect(!flags.shouldPromptForHomeSetup(
+        at: deferredAt.addingTimeInterval(OnboardingFlags.homeSetupDeferral - 1)
+    ))
+    #expect(flags.shouldPromptForHomeSetup(
+        at: deferredAt.addingTimeInterval(OnboardingFlags.homeSetupDeferral)
+    ))
+}
+
+@Test func legacyPendingHomeSetupStillPrompts() {
+    let flags = OnboardingFlags(homeSetupPending: true)
+    #expect(flags.shouldPromptForHomeSetup(at: .now))
+}
+
+@Test func declinedLocationSuppressesPendingHomeSetup() {
+    let flags = OnboardingFlags(locationDeclined: true, homeSetupPending: true)
+    #expect(!flags.shouldPromptForHomeSetup(at: .now))
 }
 
 @Test func aFreshStoreHasNothingOnTheBoard() {

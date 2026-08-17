@@ -92,8 +92,10 @@ public struct OnboardingFlags: Codable, Sendable, Equatable {
     public var locationDeclined: Bool
     /// The one-time "Settings → any item → Forget this after" pointer.
     public var settingsHintShown: Bool
-    /// "I'm not home right now" — ask again on a later open.
+    /// "I'm not home right now" — ask again after a quiet period, not on the
+    /// very next open.
     public var homeSetupPending: Bool
+    public var homeSetupDeferredUntil: Date?
 
     public init(
         installedAt: Date? = nil,
@@ -107,7 +109,8 @@ public struct OnboardingFlags: Codable, Sendable, Equatable {
         decayLessonShown: Bool = false,
         locationDeclined: Bool = false,
         settingsHintShown: Bool = false,
-        homeSetupPending: Bool = false
+        homeSetupPending: Bool = false,
+        homeSetupDeferredUntil: Date? = nil
     ) {
         self.installedAt = installedAt
         self.completedScreen = completedScreen
@@ -121,6 +124,7 @@ public struct OnboardingFlags: Codable, Sendable, Equatable {
         self.locationDeclined = locationDeclined
         self.settingsHintShown = settingsHintShown
         self.homeSetupPending = homeSetupPending
+        self.homeSetupDeferredUntil = homeSetupDeferredUntil
     }
 
     /// Hand-written for the same reason `Store`'s is: synthesised `Decodable`
@@ -143,9 +147,21 @@ public struct OnboardingFlags: Codable, Sendable, Equatable {
         locationDeclined = try flag(.locationDeclined)
         settingsHintShown = try flag(.settingsHintShown)
         homeSetupPending = try flag(.homeSetupPending)
+        homeSetupDeferredUntil = try c.decodeIfPresent(Date.self, forKey: .homeSetupDeferredUntil)
     }
 
     public static let lastScreen = 3
+    public static let homeSetupDeferral: TimeInterval = 24 * 60 * 60
 
     public var isComplete: Bool { completedScreen >= Self.lastScreen }
+
+    public mutating func deferHomeSetup(at date: Date) {
+        homeSetupPending = true
+        homeSetupDeferredUntil = date.addingTimeInterval(Self.homeSetupDeferral)
+    }
+
+    public func shouldPromptForHomeSetup(at date: Date) -> Bool {
+        guard homeSetupPending, !locationDeclined else { return false }
+        return homeSetupDeferredUntil.map { date >= $0 } ?? true
+    }
 }

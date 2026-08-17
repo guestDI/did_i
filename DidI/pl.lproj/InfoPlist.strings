@@ -1,0 +1,2 @@
+"NSLocationWhenInUseUsageDescription" = "Służy do czyszczenia potwierdzeń po wyjściu z domu, aby stary znacznik nigdy nie wprowadzał w błąd. Lokalizacja nigdy nie jest wysyłana na serwer.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Służy do czyszczenia potwierdzeń po wyjściu z domu, nawet gdy aplikacja jest zamknięta. Lokalizacja nigdy nie jest wysyłana na serwer.";

@@ -57,7 +57,7 @@ Only `Use my location` presents the iOS dialog. Request **`whenInUse` first**, t
 ### iOS purpose string (Info.plist)
 
 `NSLocationWhenInUseUsageDescription`:
-> Used to clear your confirmations when you leave home, so an old checkmark never fools you. Your location stays on this device.
+> Used to clear your confirmations when you leave home, so an old checkmark never fools you. Your location is never sent to a server.
 
 ### If granted
 
@@ -68,7 +68,7 @@ Only `Use my location` presents the iOS dialog. Request **`whenInUse` first**, t
 >
 > `Set as home` · `I'm not home right now`
 
-If "I'm not home right now": store a pending flag and prompt again on the next app open where the device has been stationary at a non-home location for 3+ hours overnight. Or offer the map picker as a fallback for people who want it.
+If "I'm not home right now": store a pending flag and offer setup again on the first app open at least 24 hours later. Settings remains available immediately. The cooldown avoids an immediate nag without adding continuous location tracking or a map picker to a one-tap app.
 
 Geofence radius: 150m default. Smaller and you get spurious triggers from GPS drift indoors; larger and the leaving-home nudge fires too late to be useful.
 

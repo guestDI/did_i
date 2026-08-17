@@ -116,7 +116,7 @@ struct BoardView: View {
             dayTwo = .lesson(aged)
             return
         }
-        if store.flags.homeSetupPending, !store.flags.locationDeclined {
+        if store.flags.shouldPromptForHomeSetup(at: .now) {
             dayTwo = .homeSetup
             return
         }
@@ -170,29 +170,37 @@ struct BoardView: View {
             HStack(spacing: 5) {
                 ForEach(Array("DID".enumerated()), id: \.offset) { _, c in
                     FlapCell(String(c), color: Palette.text, width: 32, height: 46, fontSize: 24)
+                        .accessibilityHidden(true)
                 }
                 Spacer().frame(width: 10)
                 ForEach(Array("I?".enumerated()), id: \.offset) { _, c in
                     FlapCell(String(c), color: Palette.text, width: 32, height: 46, fontSize: 24)
+                        .accessibilityHidden(true)
                 }
             }
+            .accessibilityHidden(true)
             HStack {
                 Text(now.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
                     .font(board(10, .medium))
                     .tracking(2)
                     .textCase(.uppercase)
                     .foregroundStyle(Palette.muted)
+                    .accessibilityHidden(true)
                 Spacer()
                 Button { adding = .init(suggestion: nil) } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Palette.muted)
+                        .frame(width: 44, height: 44)
+                        .contentShape(.rect)
                 }
                 .accessibilityLabel(Copy.addAnItem)
                 Button { showingSettings = true } label: {
                     Image(systemName: "slider.horizontal.3")
                         .font(.system(size: 14))
                         .foregroundStyle(Palette.muted)
+                        .frame(width: 44, height: 44)
+                        .contentShape(.rect)
                 }
                 .accessibilityLabel(Copy.settings)
                 .padding(.leading, 14)
@@ -212,6 +220,7 @@ struct BoardView: View {
         .tracking(3)
         .textCase(.uppercase)
         .foregroundStyle(Palette.dim)
+        .accessibilityHidden(true)
         .padding(.horizontal, 24)
         .padding(.bottom, 8)
         .overlay(alignment: .bottom) {
@@ -234,15 +243,22 @@ struct BoardView: View {
     /// The row is shared with the Day 0 practice card, so onboarding shows the
     /// same view the main screen does rather than a lookalike.
     private func row(item: Item, now: Date) -> some View {
-        BoardRow(
-            item: item,
-            state: store.state(item, now: now),
-            isAway: store.isAway,
-            onConfirm: { confirm(item) },
-            onUndo: item.lastConfirmedAt == nil ? nil : { undo(item) },
-            onEditName: { editing = item }
-        )
-        .contextMenu {
+        ZStack(alignment: .topLeading) {
+            BoardRow(
+                item: item,
+                state: store.state(item, now: now),
+                isAway: store.isAway,
+                onConfirm: { confirm(item) },
+                onUndo: item.lastConfirmedAt == nil ? nil : { undo(item) }
+            )
+            rowActions(item: item, now: now)
+                .offset(x: rowActionOffset(for: item), y: 13)
+        }
+    }
+
+    private func rowActions(item: Item, now: Date) -> some View {
+        Menu {
+            Button(Copy.forgetAfterTitle) { editing = item }
             if store.isAway, store.state(item, now: now) == .unknown {
                 Button(Copy.cantCheckRightNow) { mute(item) }
                 Button(Copy.askSomeoneAtHome) { sharing = item }
@@ -251,8 +267,21 @@ struct BoardView: View {
             if store.active.first?.id != item.id {
                 Button(Copy.moveUp) { save { $0.moveUp(item.id) } }
             }
-            Button(Copy.forgetAfterTitle) { editing = item }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Palette.dim)
+                .frame(width: 44, height: 44)
+                .contentShape(.rect)
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Copy.moreActions)
+    }
+
+    /// The title is monospaced. Cap the menu before the flap column so custom
+    /// 24-character names never collide with status cells on compact phones.
+    private func rowActionOffset(for item: Item) -> CGFloat {
+        min(22 + CGFloat(item.name.count) * 11.8, 170)
     }
 
     private func mute(_ item: Item) {

@@ -369,6 +369,13 @@ full week; the fire date is never a weekend and always 08:00.
 per row would wreck the board, so they are a long-press context menu on the row, shown
 only in that state. Discoverability is the trade; revisit if it goes unused.
 
+**Superseded after simulator user testing:** the row context menu consumed the same
+long press promised for undo, so a confirmed item could not actually be undone. Secondary
+away and ordering commands now live in a subtle 44-point ellipsis menu beside the item
+name. The whole row remains the confirm/undo target; the same menu opens item settings.
+An attempted invisible 44-point name target still failed Apple's hit-area audit and made
+the row's two tap meanings too easy to confuse, so the name is display text only.
+
 **Muted items are excluded from `counted`**, which is what `accessoryRectangular`
 summarises. `active` still includes them, so they stay on the board — the mute silences
 the count, not the item.
@@ -535,6 +542,9 @@ swaps `order` with the item above. Board order is also the medium widget's
 tap-target order (see the stable-position decision above), so a position assigned
 once at add time is not something to be stuck with. A `List` with `.onMove` would
 give free reordering but would take the departure-board layout with it.
+
+The simulator user test above supersedes only the trigger: "Move up" now lives in the
+row's ellipsis menu so long-press remains reserved for undo.
 
 **`Copy.LocationDeclined.settingsHint` is now `Copy.resetRuleHint`.** It is the
 pointer to the reset-rule editor, shown unconditionally in Settings; someone who
@@ -838,3 +848,27 @@ old sentence are now dead and the new one falls back to English. Pending keys ar
 now that footer, `Copy.openHint` and `Copy.Screen3.whichItem`. The two location
 usage strings in `project.yml` have never been localised at all — there is no
 `InfoPlist.strings` — which is a separate gap worth closing in the same batch.
+
+## Release-readiness product pass
+
+**Location denial now has a recovery route.** Once iOS location permission is
+denied, calling `requestWhenInUseAuthorization` again cannot show the system
+dialog. Settings therefore shows an explicit, localised `Open iOS Settings`
+button instead of sending the user through a sheet whose primary action could
+only fail. Authorization is refreshed both when that sheet closes and whenever
+the app becomes active again; the same recovery action is shown if permission is
+revoked after home was already set.
+
+**"I'm not home right now" has a 24-hour cooldown.** The pending flag previously
+caused the home setup sheet to return on the very next launch, including seconds
+later. The original overnight stationary-location idea was never implemented and
+would add tracking solely to decide when to ask for more tracking. A timestamped
+24-hour deferral is deterministic, testable, and leaves Settings available for
+anyone ready sooner. Existing stores with the old boolean-only pending flag still
+prompt once, preserving migration behavior.
+
+**The Polish and Russian privacy/localisation delta is closed.** The corrected
+server-based privacy promise, small-widget instruction, app-opening VoiceOver
+hint, and location-denial recovery action now have translations. Both system
+location permission dialogs also have per-locale `InfoPlist.strings`, so the most
+sensitive copy no longer falls back to English.

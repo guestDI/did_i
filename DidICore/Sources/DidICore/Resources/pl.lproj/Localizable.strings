@@ -40,7 +40,7 @@
 "%lld of %lld handled" = "Gotowe: %lld z %lld";
 "What did you last go back home to check?" = "Co ostatnio zdarzyło ci się wrócić sprawdzić?";
 "Pick one. You can add more later, but you probably won't." = "Wybierz jedno. Później można dodać więcej, ale raczej tego nie zrobisz.";
-"No account. Nothing leaves your phone." = "Bez konta. Nic nie opuszcza telefonu.";
+"No account. Nothing is sent to a server." = "Bez konta. Nic nie jest wysyłane na serwer.";
 "The garage door" = "Brama garażowa";
 "Add" = "Dodaj";
 "Try it once" = "Sprawdź raz";
@@ -61,8 +61,10 @@
 "We'll remind you once, around the time you'd be leaving the house. Once. Then never again." = "Przypomnimy raz, mniej więcej o porze wyjścia z domu. Raz. I już nigdy.";
 "Yes, once" = "Tak, raz";
 "No thanks" = "Nie, dzięki";
+"The small widget shows one item. Long-press it → Edit Widget to change which." = "Mały widżet pokazuje jeden element. Przytrzymaj go → Edytuj widżet, aby wybrać inny.";
 "Confirm %@ is %@" = "Potwierdź: %@ — %@";
 "Double tap to log" = "Stuknij dwa razy, aby zapisać";
+"Double tap to open Did I?" = "Stuknij dwa razy, aby otworzyć Did I?";
 "%@: confirmation aged out at %@" = "%@: potwierdzenie wygasło o %@";
 "%@: confirmation aged out" = "%@: potwierdzenie wygasło";
 "Your confirmations aged out at %@" = "Twoje potwierdzenia wygasły o %@";
@@ -71,7 +73,7 @@
 "Nothing went wrong. This is the app working." = "Nic się nie zepsuło. Aplikacja działa właśnie tak.";
 "Makes sense" = "Ma sens";
 "Want it to reset when you actually leave?" = "Resetować dopiero, gdy naprawdę wyjdziesz?";
-"Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it never leaves your phone." = "Zamiast o stałej porze możemy wyczyścić potwierdzenia, gdy wyjdziesz z domu — wtedy zielony znacznik zawsze znaczy „od wyjścia”. Potrzebna jest lokalizacja, ale nigdy nie opuszcza telefonu.";
+"Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it's never sent to a server." = "Zamiast o stałej porze możemy wyczyścić potwierdzenia, gdy wyjdziesz z domu — wtedy zielony znacznik zawsze znaczy „od wyjścia”. Potrzebna jest lokalizacja, ale nigdy nie jest wysyłana na serwer.";
 "Use my location" = "Użyj mojej lokalizacji";
 "Keep the timer" = "Zostaw minutnik";
 "so we can clear the board when you leave, even with the app closed" = "aby wyczyścić tablicę po wyjściu, nawet gdy aplikacja jest zamknięta";
@@ -115,6 +117,7 @@
 "Put it away" = "Schowaj";
 "It leaves the board. You can bring it back any time." = "Zniknie z tablicy. W każdej chwili można przywrócić.";
 "Move up" = "Przenieś wyżej";
+"More actions" = "Więcej działań";
 "How to add the widget" = "Jak dodać widżet";
 "A tick that never expires is a tick you can't trust." = "Znacznik, który nie wygasa, nie jest wiarygodny.";
 "Name" = "Nazwa";
@@ -130,6 +133,7 @@
 "Which one goes?" = "Który usunąć?";
 "Dismiss" = "Zamknij";
 "Settings" = "Ustawienia";
+"Undo" = "Cofnij";
 "Item" = "Element";
 "Status" = "Stan";
 "Remind me when I leave" = "Przypomnij przy wyjściu";
@@ -138,6 +142,7 @@
 "Not set" = "Nie ustawiono";
 "Home is set" = "Dom ustawiony";
 "Reset home location" = "Ustaw dom ponownie";
+"Open iOS Settings" = "Otwórz ustawienia iOS";
 "Location is off, so we're expiring things on a timer instead." = "Lokalizacja jest wyłączona, więc zamiast niej używamy minutnika.";
 "Leaving home clears the board only while the app is open." = "Wyjście z domu czyści tablicę tylko przy otwartej aplikacji.";
 "One tap on your way out." = "Jedno stuknięcie przy wyjściu.";

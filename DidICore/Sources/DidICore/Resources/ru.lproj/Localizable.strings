@@ -40,7 +40,7 @@
 "%lld of %lld handled" = "Готово: %lld из %lld";
 "What did you last go back home to check?" = "Из-за чего пришлось в последний раз вернуться домой?";
 "Pick one. You can add more later, but you probably won't." = "Выбери одно. Потом можно добавить ещё, но вряд ли ты это сделаешь.";
-"No account. Nothing leaves your phone." = "Без аккаунта. Ничего не покидает телефон.";
+"No account. Nothing is sent to a server." = "Без аккаунта. Ничего не отправляется на сервер.";
 "The garage door" = "Гаражные ворота";
 "Add" = "Добавить";
 "Try it once" = "Проверь один раз";
@@ -61,8 +61,10 @@
 "We'll remind you once, around the time you'd be leaving the house. Once. Then never again." = "Напомним один раз — примерно перед выходом из дома. Один. И больше никогда.";
 "Yes, once" = "Да, один раз";
 "No thanks" = "Нет, спасибо";
+"The small widget shows one item. Long-press it → Edit Widget to change which." = "Маленький виджет показывает один пункт. Удерживай его → Изменить виджет, чтобы выбрать другой.";
 "Confirm %@ is %@" = "Подтвердить: %@ — %@";
 "Double tap to log" = "Дважды нажми, чтобы записать";
+"Double tap to open Did I?" = "Дважды нажми, чтобы открыть Did I?";
 "%@: confirmation aged out at %@" = "%@: подтверждение истекло в %@";
 "%@: confirmation aged out" = "%@: подтверждение истекло";
 "Your confirmations aged out at %@" = "Твои подтверждения истекли в %@";
@@ -71,7 +73,7 @@
 "Nothing went wrong. This is the app working." = "Ничего не сломалось. Приложение работает именно так.";
 "Makes sense" = "Логично";
 "Want it to reset when you actually leave?" = "Сбрасывать, когда ты действительно уходишь?";
-"Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it never leaves your phone." = "Вместо фиксированного времени мы можем очищать подтверждения, когда ты уходишь из дома — тогда зелёная галочка всегда означает «после ухода». Для этого нужна геопозиция, но она не покидает телефон.";
+"Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it's never sent to a server." = "Вместо фиксированного времени мы можем очищать подтверждения, когда ты уходишь из дома — тогда зелёная галочка всегда означает «после ухода». Для этого нужна геопозиция, но она никогда не отправляется на сервер.";
 "Use my location" = "Использовать геопозицию";
 "Keep the timer" = "Оставить таймер";
 "so we can clear the board when you leave, even with the app closed" = "чтобы очистить доску после твоего ухода, даже если приложение закрыто";
@@ -115,6 +117,7 @@
 "Put it away" = "Убрать";
 "It leaves the board. You can bring it back any time." = "Исчезнет с доски. Вернуть можно в любой момент.";
 "Move up" = "Переместить выше";
+"More actions" = "Другие действия";
 "How to add the widget" = "Как добавить виджет";
 "A tick that never expires is a tick you can't trust." = "Галочке без срока нельзя доверять.";
 "Name" = "Название";
@@ -130,6 +133,7 @@
 "Which one goes?" = "Что убрать?";
 "Dismiss" = "Закрыть";
 "Settings" = "Настройки";
+"Undo" = "Отменить";
 "Item" = "Пункт";
 "Status" = "Статус";
 "Remind me when I leave" = "Напомнить при уходе";
@@ -138,6 +142,7 @@
 "Not set" = "Не задан";
 "Home is set" = "Дом задан";
 "Reset home location" = "Задать дом заново";
+"Open iOS Settings" = "Открыть настройки iOS";
 "Location is off, so we're expiring things on a timer instead." = "Геопозиция выключена, поэтому вместо неё используется таймер.";
 "Leaving home clears the board only while the app is open." = "Уход из дома очищает доску, только пока приложение открыто.";
 "One tap on your way out." = "Одно нажатие перед выходом.";

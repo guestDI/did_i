@@ -277,6 +277,7 @@ public enum Copy {
 
     /// Board order is the widget's tap-target order, so it has to be editable.
     public static let moveUp = t("Move up")
+    public static let moreActions = t("More actions")
 
     public static let widgetHelpRow = t("How to add the widget")
     public static let neverWarning = t("A tick that never expires is a tick you can't trust.")
@@ -338,6 +339,7 @@ public enum Copy {
         public static let notSet = t("Not set")
         public static let isSet = t("Home is set")
         public static let reset = t("Reset home location")
+        public static let openSystemSettings = t("Open iOS Settings")
         /// Shown when location was granted and later revoked in iOS Settings.
         public static let revoked = t("Location is off, so we're expiring things on a timer instead.")
         /// `whenInUse` without `always`: exit events only arrive in the foreground.
@@ -354,6 +356,7 @@ public enum Copy {
     /// Spoken after a hold-to-undo. Not in the docs — invented, and deliberately
     /// flat: undoing is a correction, not an achievement.
     public static let undone = t("Undone. No record now.")
+    public static let undo = t("Undo")
 
     // MARK: - Notifications
 

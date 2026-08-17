@@ -11,9 +11,9 @@ public enum Palette {
     public static let ink = Color(hex: 0x131317)        // screen background
     public static let panel = Color(hex: 0x1A1A20)      // grouped rows
     public static let text = Color(hex: 0xEBE9E1)
-    public static let sub = Color(hex: 0x84848E)
-    public static let muted = Color(hex: 0x7A7A84)
-    public static let dim = Color(hex: 0x5D5D66)
+    public static let sub = Color(hex: 0xA0A0AA)
+    public static let muted = Color(hex: 0x8A8A94)
+    public static let dim = Color(hex: 0x80808A)
     public static let rule = Color(hex: 0x212127)
     public static let ruleStrong = Color(hex: 0x26262C)
 
@@ -170,4 +170,3 @@ public struct FlapWord: View {
         }
     }
 }
-

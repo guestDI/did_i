@@ -1,17 +1,18 @@
 import SwiftUI
 import CoreLocation
+import UIKit
 import DidICore
 
 /// Only what Phase 5 forces into existence: home, and the one-line note day-2
 /// asks for when location is revoked. Tone and reminders arrive with Phase 6.
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @Binding var store: Store
 
     @State private var showingWalkthrough = false
     @State private var settingHome = false
-
-    private var authorization: CLAuthorizationStatus { LocationMonitor.shared.status }
+    @State private var authorization = LocationMonitor.shared.status
 
     private var locationRevoked: Bool {
         store.home != nil && authorization != .authorizedAlways
@@ -32,10 +33,17 @@ struct SettingsView: View {
                         // the day-2 sheet, which fires once. Anyone who tapped
                         // "I'm not home right now" — or opened Settings first —
                         // could read "Not set" forever with nothing to tap.
-                        Button(Copy.HomeSetup.set) { settingHome = true }
+                        if authorization == .denied {
+                            Button(Copy.HomeSettings.openSystemSettings) { openSystemSettings() }
+                        } else {
+                            Button(Copy.HomeSetup.set) { settingHome = true }
+                        }
                     } else {
                         Text(Copy.HomeSettings.isSet)
                             .foregroundStyle(Palette.text)
+                        if authorization == .denied {
+                            Button(Copy.HomeSettings.openSystemSettings) { openSystemSettings() }
+                        }
                         Button(Copy.HomeSettings.reset, role: .destructive) { resetHome() }
                     }
                 } header: {
@@ -71,6 +79,12 @@ struct SettingsView: View {
                 DayTwoFlow(step: homeStep) {
                     settingHome = false
                     store = StoreIO.read()
+                    authorization = LocationMonitor.shared.status
+                }
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active {
+                    authorization = LocationMonitor.shared.status
                 }
             }
             .scrollContentBackground(.hidden)
@@ -94,8 +108,14 @@ struct SettingsView: View {
             $0.lastLeftHomeAt = nil
             $0.lastEnteredHomeAt = nil
             $0.flags.homeSetupPending = true
+            $0.flags.homeSetupDeferredUntil = nil
         }
         store = StoreIO.read()
+    }
+
+    private func openSystemSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 }
 

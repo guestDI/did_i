@@ -31,9 +31,9 @@ Full reasoning: `architecture.md` §1.
 
 ## Known standing gaps (as of last check)
 
-- App Group `group.com.dihnatovich.didi` must be registered in the dev account + assigned to both targets; `DEVELOPMENT_TEAM` is unset in `project.yml`. Blocking prerequisite before any device testing.
+- `DEVELOPMENT_TEAM` is configured, but App Group `group.com.dihnatovich.didi` still needs signed-device verification against the developer account before device testing can be trusted.
 - Overnight widget timeline behavior (04:00 transition) is unverified — can't be simulated, needs a real device soak.
-- Lock screen widget has a plausible silent-failure mode: App Group file may be unreadable before first unlock (data protection), causing `StoreIO.mutate` to throw silently.
+- Store files explicitly use `completeFileProtectionUntilFirstUserAuthentication`; lock-screen behavior before and after first unlock still needs real-device verification.
 - Widget configuration sheet (item picker) reads from the extension's own bundle — untested in pl/ru.
 - IBM Plex Mono not bundled; SF Mono stands in for flap cells (not visually final).
 - Snapshot references need re-recording on any device/OS/locale change.
