@@ -8,7 +8,7 @@ import Foundation
 @Test func screenOneCopyIsVerbatim() {
     #expect(Copy.Screen1.title == "What did you last go back home to check?")
     #expect(Copy.Screen1.subtitle == "Pick one. You can add more later, but you probably won't.")
-    #expect(Copy.Screen1.footer == "No account. Nothing leaves your phone.")
+    #expect(Copy.Screen1.footer == "No account. Nothing is sent to a server.")
     #expect(Copy.Screen1.placeholder == "The garage door")
     #expect(Copy.Screen1.returnKey == "Add")
 }

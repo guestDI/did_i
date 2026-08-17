@@ -123,7 +123,14 @@ public enum Copy {
     public enum Screen1 {
         public static let title = t("What did you last go back home to check?")
         public static let subtitle = t("Pick one. You can add more later, but you probably won't.")
-        public static let footer = t("No account. Nothing leaves your phone.")
+        /// day-0-install.md says "Nothing leaves your phone." It cannot: App Group
+        /// containers are included in iCloud backups, so the store — home
+        /// coordinate included — does leave the device, encrypted, in the user's own
+        /// backup. Excluding it from backup would make the sentence true at the cost
+        /// of wiping the board on every device migration, which is a worse trade for
+        /// a promise that can simply be stated accurately instead. No account and no
+        /// server is the part that matters, and that part is absolutely true.
+        public static let footer = t("No account. Nothing is sent to a server.")
         /// A real example, not a repeat of the label.
         public static let placeholder = t("The garage door")
         public static let returnKey = t("Add")
@@ -209,8 +216,12 @@ public enum Copy {
 
     public enum LocationAsk {
         public static let title = t("Want it to reset when you actually leave?")
+        /// Same correction as `Screen1.footer`: the coordinate is in the App Group
+        /// container, which iCloud backs up, so "never leaves your phone" was the
+        /// one claim in the product that was not true — and this is the screen where
+        /// it is doing the most work.
         public static let body =
-            t("Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it never leaves your phone.")
+            t("Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it's never sent to a server.")
         public static let use = t("Use my location")
         public static let keepTimer = t("Keep the timer")
 

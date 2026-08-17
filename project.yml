@@ -34,6 +34,7 @@ targets:
       - target: DidIWidget
     settings:
       base:
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_BUNDLE_IDENTIFIER: com.dihnatovich.didi
         PRODUCT_NAME: Did I
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
@@ -58,16 +59,23 @@ targets:
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        # "stays on this device" was not quite true — the store lives in the App
+        # Group container, which iCloud backs up. Never sent to a server is the
+        # claim that is both meaningful and exactly correct.
         NSLocationWhenInUseUsageDescription: >-
           Used to clear your confirmations when you leave home, so an old checkmark
-          never fools you. Your location stays on this device.
+          never fools you. Your location is never sent to a server.
         # architecture §6: background region events require `always`, so this
         # string must be present alongside the when-in-use one.
         NSLocationAlwaysAndWhenInUseUsageDescription: >-
           Used to clear your confirmations when you leave home, even with the app
-          closed. Your location stays on this device.
-        UIBackgroundModes:
-          - location
+          closed. Your location is never sent to a server.
+        # No UIBackgroundModes. That key is for continuous background location, and
+        # nothing here asks for any: `LocationMonitor` never calls
+        # `startUpdatingLocation` and never sets `allowsBackgroundLocationUpdates`.
+        # Region monitoring delivers exits and relaunches a terminated app on its
+        # own. Declaring it anyway invites App Review questions and puts the app in
+        # the battery list under background location, for nothing.
 
   DidIWidget:
     type: app-extension

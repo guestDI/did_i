@@ -213,7 +213,7 @@ private func optedIn() -> OnboardingFlags {
 @Test func theLocationAskCopyIsVerbatim() {
     #expect(Copy.LocationAsk.title == "Want it to reset when you actually leave?")
     #expect(Copy.LocationAsk.body ==
-        "Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it never leaves your phone.")
+        "Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it's never sent to a server.")
     #expect(Copy.LocationAsk.use == "Use my location")
     #expect(Copy.LocationAsk.keepTimer == "Keep the timer")
 }

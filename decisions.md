@@ -760,3 +760,81 @@ footnote about a widget that already exists.
 
 **Translation delta: `Copy.Screen3.whichItem` and `Copy.openHint`** are both
 English-only pending the next translator batch.
+
+## Security and performance pass
+
+**The store could be wiped by a single decode failure.** `read()` could not tell
+"no file yet" from "file exists and will not decode" — both returned an empty
+`Store()`. `mutate` was built on it, so one unparseable file meant read empty,
+apply a no-op, write empty, and every item was gone. In an app whose first rule
+is that items are archived and never deleted, this was the only path that deleted
+everything, and it did it silently.
+
+`read()` still flattens failure for display, which is right — a widget cannot
+surface an error and an empty face beats a crash. But it is now a thin wrapper
+over `load()`, which seeds a genuinely absent file and throws for a corrupt one,
+and every write goes through the throwing path. The realistic trigger was never
+first-unlock (writes fail there too, so it failed safe) but schema-shaped: a
+downgrade to a build that does not know a newer `resetRule` case, or someone
+later adding a non-optional field.
+
+**`mutate` is now a single coordinated write.** It used to take one coordination
+to read and a second to write, and the gap lost updates: tap the stove and then
+the door on the medium widget, and the second read could precede the first write,
+dropping a confirmation the button had already acknowledged. The old comment
+claimed either outcome was correct, which holds only for two taps on the *same*
+item. The same gap could drop an archive under a widget tap.
+
+**The file protection class is stated rather than inherited.** It was whatever
+the container defaulted to; it is now written explicitly as
+`completeFileProtectionUntilFirstUserAuthentication`. That is deliberately not
+the strongest option: `complete` would stop the lock screen widget reading while
+locked, which is the only reason that widget exists.
+
+**"Nothing leaves your phone" was not true and is now accurate.** App Group
+containers are included in iCloud backups, so the store — home coordinate
+included — does leave the device in the user's own backup. Excluding it from
+backup would make the old sentence true at the cost of wiping the board on every
+device migration, which is a worse trade than stating the promise precisely. The
+footer and both location usage strings now say the store is never sent to a
+server, which is meaningful and exactly correct. **This overrides
+day-0-install.md's verbatim copy** — a doc cannot authorise a false privacy claim.
+
+**`UIBackgroundModes: location` removed.** That key is for continuous background
+location. `LocationMonitor` never calls `startUpdatingLocation` and never sets
+`allowsBackgroundLocationUpdates`; region monitoring delivers exits and relaunches
+a terminated app without it. Declaring it invited App Review questions and put the
+app in the battery list under background location for nothing. **Verify geofencing
+still works on device before shipping** — this is the one change here that fails
+silently if the reasoning is wrong.
+
+**History is swept, not just trimmed where touched.** `confirm` and `recordCheck`
+only ever trimmed the one item they were given, so an archived item froze with up
+to 30 days of history and its `usage.checks` key was never visited again. Items
+are never deleted, so those arrays were the only part of the file that grew
+without limit — and the file is re-parsed on every widget refresh and every tap.
+`pruneHistory` applies the existing 30-day retention to everything and rides on
+`recordBoardView`, the one frequent path never on the widget's budget. Trimming
+history is retention, not deletion: the item and its archive are untouched, which
+a test pins down.
+
+**Timeline boundaries are deduplicated and skip archived items.** A just-archived
+item kept its `lastConfirmedAt` and so kept producing boundaries for a day after
+leaving the board, and six items sharing a 04:00 reset produced six identical
+timestamps against a cap of 20.
+
+**`.prettyPrinted` is DEBUG-only** rather than shipping inflated JSON.
+
+**Deliberately not changed: synchronous store reads on the main thread.**
+`RootView` reads at init and `LocationMonitor.start()` reads during launch, both
+through file coordination, which can in principle block on the other process. The
+file is small and the window is microseconds, and the launch read *must* be
+synchronous — a region exit relaunches a terminated app and the manager has to
+exist before the first `await`. Making the rest async buys a loading state and a
+flash of empty board in exchange for a hazard nobody has measured.
+
+**Translation delta.** `Screen1.footer` changed, so the pl and ru entries for the
+old sentence are now dead and the new one falls back to English. Pending keys are
+now that footer, `Copy.openHint` and `Copy.Screen3.whichItem`. The two location
+usage strings in `project.yml` have never been localised at all — there is no
+`InfoPlist.strings` — which is a separate gap worth closing in the same batch.

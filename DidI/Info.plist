@@ -27,13 +27,9 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Used to clear your confirmations when you leave home, even with the app closed. Your location stays on this device.</string>
+	<string>Used to clear your confirmations when you leave home, even with the app closed. Your location is never sent to a server.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Used to clear your confirmations when you leave home, so an old checkmark never fools you. Your location stays on this device.</string>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>location</string>
-	</array>
+	<string>Used to clear your confirmations when you leave home, so an old checkmark never fools you. Your location is never sent to a server.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

@@ -76,12 +76,37 @@ public extension Store {
         usage.checks[key] = seen.filter { $0 > date.addingTimeInterval(-retention) }
     }
 
+    /// Applies the 30-day retention to everything, not just what was touched today.
+    ///
+    /// `confirm` and `recordCheck` only trim the item they are given, so an archived
+    /// item froze with up to 30 days of history and its `usage.checks` key was never
+    /// visited again. Items are never deleted, so those arrays were the one part of
+    /// the file that grew without limit — and the file is re-parsed on every widget
+    /// refresh and every tap. Trimming history is retention, not deletion: the item
+    /// itself, and its archive, stay exactly where they are.
+    mutating func pruneHistory(now: Date) {
+        let cutoff = now.addingTimeInterval(-retention)
+        for i in items.indices {
+            if let confirmations = items[i].confirmations {
+                items[i].confirmations = confirmations.filter { $0 > cutoff }
+            }
+        }
+        usage.checks = usage.checks
+            .mapValues { $0.filter { $0 > cutoff } }
+            .filter { !$0.value.isEmpty }
+        usage.appOpens = usage.appOpens.filter { $0 > cutoff }
+    }
+
     /// Opening the board is a look at whatever was still in question.
     ///
     /// Attributing it to every item made "checks" a copy of the app-open count,
     /// so every item tied and the counter's ranking meant nothing. If the stove
     /// already reads green, opening the board was not checking the stove.
     mutating func recordBoardView(at date: Date, calendar: Calendar = .current) {
+        // The sweep rides along here rather than on every mutation: opening the
+        // board is frequent enough to keep the file small and is the one path that
+        // is never on the widget's budget.
+        pruneHistory(now: date)
         usage.appOpens = (usage.appOpens + [date])
             .filter { $0 > date.addingTimeInterval(-retention) }
         for item in active where state(item, now: date, calendar: calendar) == .unknown {

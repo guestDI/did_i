@@ -138,9 +138,15 @@ public struct Store: Codable, Sendable {
         }
     }
 
-    /// Every future instant at which any item's state changes.
+    /// Every future instant at which any item's state changes, once each.
+    ///
+    /// `active`, not `items`: a just-archived item keeps its `lastConfirmedAt` and
+    /// so kept generating boundaries for a day after it left the board, spending
+    /// timeline entries on a state change nothing renders. Deduplicated because the
+    /// timeline is capped at 20 — six items all resetting at 04:00 produced six
+    /// identical timestamps and crowded out later ones.
     public func allBoundaries(after date: Date, calendar: Calendar = .current) -> [Date] {
-        items.flatMap { boundaries(for: $0, after: date, calendar: calendar) }.sorted()
+        Set(active.flatMap { boundaries(for: $0, after: date, calendar: calendar) }).sorted()
     }
 }
 
@@ -157,34 +163,63 @@ public enum StoreIO {
         return root.appending(path: "items.json")
     }
 
-    /// Reads the store, seeding it if the file does not exist yet.
-    /// Never throws: an unreadable store is indistinguishable from a fresh one,
-    /// and the widget has no way to surface an error anyway.
+    /// Reads the store for display, flattening any failure to an empty board.
+    ///
+    /// Safe here because nothing is written back: a widget cannot surface an error
+    /// and an empty face is a better answer than a crash. **Never build a write on
+    /// top of this** — see `mutate`.
     public static func read() -> Store {
-        var result: Store?
+        (try? load()) ?? Store()
+    }
+
+    /// The honest read: seeds a genuinely absent file, throws for one that exists
+    /// and will not decode.
+    ///
+    /// The distinction is the whole point. Treating an undecodable store as a fresh
+    /// one let `mutate` overwrite every item with nothing — a total, silent wipe in
+    /// an app whose first rule is that items are archived and never deleted.
+    public static func load() throws -> Store {
+        var result: Result<Store, Error>?
         var coordinationError: NSError?
         NSFileCoordinator().coordinate(readingItemAt: storeURL, error: &coordinationError) { url in
-            guard let data = try? Data(contentsOf: url) else { return }
-            result = try? decoder.decode(Store.self, from: data)
+            result = Result { try decode(from: url) }
         }
-        // Both processes read through here, so the board and the widget can never
-        // disagree about which language they are in. Not written back on its own —
-        // the next `mutate` persists it.
-        result?.localizeChipCopy()
-        return result ?? Store()
+        if let coordinationError { throw coordinationError }
+        // The accessor did not run and the coordinator did not say why.
+        guard let result else { throw CocoaError(.fileReadUnknown) }
+        return try result.get()
     }
 
     public static func write(_ store: Store) throws {
-        let data = try encoder.encode(store)
-        var writeError: Error?
+        try coordinatedWrite { _ in store }
+    }
+
+    /// Read, mutate, write **inside a single coordinated write**.
+    ///
+    /// Previously this was `read()` then `write()`, two separate coordinations with
+    /// a gap between them, and the gap lost updates: tap the stove and then the
+    /// door on the medium widget and the second read could precede the first write,
+    /// dropping a confirmation the button had already acknowledged. Same race
+    /// between the app and the extension — an archive could vanish under a tap.
+    public static func mutate(_ body: (inout Store) -> Void) throws {
+        try coordinatedWrite { url in
+            var store = try decode(from: url)
+            body(&store)
+            return store
+        }
+    }
+
+    /// One coordinated write around the whole read-modify-write.
+    private static func coordinatedWrite(_ body: (URL) throws -> Store) throws {
+        var thrown: Error?
         var coordinationError: NSError?
         NSFileCoordinator().coordinate(
             writingItemAt: storeURL, options: .forReplacing, error: &coordinationError
         ) { url in
-            do { try data.write(to: url, options: .atomic) } catch { writeError = error }
+            do { try encode(try body(url), to: url) } catch { thrown = error }
         }
         if let coordinationError { throw coordinationError }
-        if let writeError { throw writeError }
+        if let thrown { throw thrown }
 
         CFNotificationCenterPostNotification(
             CFNotificationCenterGetDarwinNotifyCenter(),
@@ -193,18 +228,39 @@ public enum StoreIO {
         )
     }
 
-    /// Read, mutate, write. Last write wins — two writes racing means two taps
-    /// milliseconds apart, and either outcome is correct.
-    public static func mutate(_ body: (inout Store) -> Void) throws {
-        var store = read()
-        body(&store)
-        try write(store)
+    /// Uncoordinated: both callers are already inside a coordination block, and
+    /// nesting a second coordinator on the same file deadlocks.
+    ///
+    /// Internal rather than private so the absent-versus-corrupt distinction can be
+    /// tested against a temp file. The coordination around it still needs an App
+    /// Group container and stays untestable here.
+    static func decode(from url: URL) throws -> Store {
+        // Absent is not corrupt. This is first run, and an empty store is correct.
+        guard FileManager.default.fileExists(atPath: url.path) else { return Store() }
+        var store = try decoder.decode(Store.self, from: Data(contentsOf: url))
+        // Both processes read through here, so the board and the widget can never
+        // disagree about which language they are in. Not written back on its own —
+        // the next `mutate` persists it.
+        store.localizeChipCopy()
+        return store
+    }
+
+    private static func encode(_ store: Store, to url: URL) throws {
+        // The protection class was previously whatever the container defaulted to.
+        // Stated outright now, because the choice is load-bearing: `complete` would
+        // be stronger but would stop the lock screen widget reading while locked,
+        // which is the only reason that widget exists.
+        try encoder.encode(store).write(
+            to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
+        )
     }
 
     static var encoder: JSONEncoder {
         let e = JSONEncoder()
-        e.dateEncodingStrategy = .iso8601   // inspectable during development
-        e.outputFormatting = .prettyPrinted
+        e.dateEncodingStrategy = .iso8601
+        #if DEBUG
+        e.outputFormatting = .prettyPrinted   // inspectable during development
+        #endif
         return e
     }
 
