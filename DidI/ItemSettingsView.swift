@@ -97,7 +97,12 @@ struct ItemSettingsView: View {
                                 get: { draft.leavingHomeReminder == true },
                                 set: { on in
                                     draft.leavingHomeReminder = on
-                                    if on { Task { _ = await Notifications.requestAuthorization() } }
+                                    if on {
+                                        Task {
+                                            let granted = await Notifications.requestAuthorization()
+                                            if !granted { draft.leavingHomeReminder = false }
+                                        }
+                                    }
                                 }
                             )
                         )

@@ -318,6 +318,7 @@ public enum Copy {
 
     public static let done = t("Done")
     public static let close = t("Close")
+    public static let back = t("Back")
     public static let addAnItem = t("Add an item")
     public static let pickOne = t("Pick one.")
     public static let whichOneGoes = t("Which one goes?")

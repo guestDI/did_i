@@ -104,6 +104,11 @@ private struct PickItemScreen: View {
                 .padding(.top, 12)
 
             if typing {
+                Button(Copy.back) { typing = false; custom = "" }
+                    .font(.system(size: 13))
+                    .foregroundStyle(Palette.muted)
+                    .padding(.top, 28)
+
                 // Return key stays disabled when empty. No error, no red border.
                 TextField(Copy.Screen1.placeholder, text: $custom)
                     .font(board(15))
@@ -119,7 +124,7 @@ private struct PickItemScreen: View {
                     .padding(.vertical, 16)
                     .padding(.horizontal, 18)
                     .background(Palette.panel, in: .rect(cornerRadius: 14))
-                    .padding(.top, 28)
+                    .padding(.top, 12)
                     .onAppear { focused = true }
                     .accessibilityLabel(Copy.Screen1.returnKey)
             } else {
@@ -178,6 +183,7 @@ private struct PracticeScreen: View {
     let onDone: () -> Void
 
     @State private var confirmed = false
+    @State private var advanceTask: Task<Void, Never>?
 
     private var item: Item? { store.active.first }
 
@@ -198,7 +204,8 @@ private struct PracticeScreen: View {
                     item: item,
                     state: confirmed ? .confirmed(age: 0, freshness: .fresh) : .unknown,
                     statusOverride: confirmed ? Copy.Screen2.loggedJustNow : nil,
-                    onConfirm: { confirm(item) }
+                    onConfirm: { confirm(item) },
+                    onUndo: confirmed ? { undo(item) } : nil
                 )
                 .padding(.horizontal, -26)
 
@@ -240,10 +247,24 @@ private struct PracticeScreen: View {
         withAnimation(.snappy) { confirmed = true }
         UIAccessibility.post(notification: .announcement, argument: Copy.onboardingConfirmation)
 
-        Task {
+        advanceTask = Task {
             try? await Task.sleep(for: .seconds(2.5))
+            guard !Task.isCancelled else { return }
             onDone()
         }
+    }
+
+    /// Mirrors `BoardView.undo` — same haptic, same store call, same
+    /// announcement — so the practice screen teaches the real interaction
+    /// rather than a lookalike.
+    private func undo(_ item: Item) {
+        advanceTask?.cancel()
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+        try? StoreIO.mutate { $0.undo(id: item.id) }
+        store = StoreIO.read()
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+        withAnimation(.snappy) { confirmed = false }
+        UIAccessibility.post(notification: .announcement, argument: Copy.undone)
     }
 }
 

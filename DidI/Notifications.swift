@@ -24,7 +24,7 @@ enum Notifications {
     /// Runs on every foreground. Resolves the nudge to exactly one of: scheduled,
     /// cancelled forever, or already dealt with.
     static func reconcileWidgetNudge() async {
-        var store = StoreIO.read()
+        let store = StoreIO.read()
         guard !store.flags.widgetNudgeFired else { return }
 
         let widgetInstalled = await hasInstalledWidget()
@@ -71,18 +71,6 @@ enum Notifications {
             trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
         )
         try? await center.add(request)
-        store = StoreIO.read()
-    }
-
-    /// Called when a widget appears. Cancel the pending notification, say nothing —
-    /// installing a widget is a preference, not an achievement. Marked fired so it
-    /// is never re-armed if they later remove the widget.
-    static func widgetWasInstalled() {
-        center.removePendingNotificationRequests(withIdentifiers: [widgetNudgeID])
-        try? StoreIO.mutate {
-            $0.flags.widgetNudgeFired = true
-            if $0.flags.widgetInstalledAt == nil { $0.flags.widgetInstalledAt = .now }
-        }
     }
 
     static func hasInstalledWidget() async -> Bool {

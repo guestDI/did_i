@@ -51,6 +51,13 @@ public func board(_ size: CGFloat, _ weight: Font.Weight = .semibold) -> Font {
     .system(size: size, weight: weight, design: .monospaced)
 }
 
+/// `board`'s counterpart for lock screen accessories: a fixed `size:` never
+/// grows with the user's text size setting, and on the surface most likely to
+/// be read without glasses that reads as "too small", not compact.
+public func boardScaled(_ style: Font.TextStyle, _ weight: Font.Weight = .semibold) -> Font {
+    .system(style, design: .monospaced).weight(weight)
+}
+
 /// One split-flap cell: the vertical gradient plus the hairline seam at 50%.
 public struct FlapCell: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

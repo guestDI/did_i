@@ -31,11 +31,18 @@ struct Provider: AppIntentTimelineProvider {
         entry(at: .now, selectedID: configuration.itemID)
     }
 
+    /// State boundaries alone left the "3M"/"1H" age readout frozen at whatever
+    /// it was when the entry was generated — correct at the moment, stale for
+    /// however long until the next aging/expiry transition, which reads as "the
+    /// widget only updates when you tap it". 15-minute ticks keep it moving;
+    /// state boundaries are still merged in so a transition never lands late.
     func timeline(for configuration: SelectItemIntent, in context: Context) async -> Timeline<BoardEntry> {
         let store = StoreIO.read()
         let now = Date()
         let horizon = now.addingTimeInterval(24 * 3600)
-        let dates = [now] + store.allBoundaries(after: now).filter { $0 < horizon }.prefix(20)
+        let ticks = stride(from: TimeInterval(0), to: 5 * 3600, by: 15 * 60).map { now.addingTimeInterval($0) }
+        let boundaries = store.allBoundaries(after: now).filter { $0 < horizon }
+        let dates = Set(ticks + boundaries).sorted().prefix(20)
         let entries = dates.map {
             BoardEntry(date: $0, store: store, selectedID: configuration.itemID)
         }

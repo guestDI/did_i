@@ -190,6 +190,12 @@ public struct MediumFace: View {
                     .invalidatableContent()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                // A tappable cell that's just text on the background reads as
+                // inert. The panel tint is the same "this is a row" cue the rest
+                // of the app already uses for tappable surfaces (chips, sheets).
+                .background(Palette.panel, in: .rect(cornerRadius: 10))
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(spokenLabel(item: item, state: state))
                 .accessibilityHint(Copy.confirmHint)
@@ -223,7 +229,7 @@ public struct CircularFace: View {
                 Image(systemName: item.symbol)
                     .font(.system(size: 16, weight: .medium))
                 Text(isUnknown ? "—" : shortAge(state))
-                    .font(board(11, .bold))
+                    .font(boardScaled(.caption2, .bold))
                     .invalidatableContent()
             }
             .opacity(isUnknown ? 0.55 : 1)
@@ -272,19 +278,19 @@ public struct RectangularFace: View {
                     Image(systemName: item.symbol)
                         .font(.system(size: 10, weight: .medium))
                     Text(item.name)
-                        .font(board(9))
+                        .font(boardScaled(.caption2))
                         .tracking(1.5)
                         .textCase(.uppercase)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                     Spacer(minLength: 4)
                     Text(shortAge(state))
-                        .font(board(9, .medium))
+                        .font(boardScaled(.caption2, .medium))
                 }
                 .opacity(0.7)
 
                 Text(statusWord(item: item, state: state))
-                    .font(board(14, .bold))
+                    .font(boardScaled(.footnote, .bold))
                     .tracking(1)
                     .textCase(.uppercase)
                     .lineLimit(1)
@@ -293,7 +299,7 @@ public struct RectangularFace: View {
                     .invalidatableContent()
 
                 Text(Copy.summary(handled: handled, of: items.count))
-                    .font(board(8.5))
+                    .font(boardScaled(.caption2))
                     .opacity(0.6)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
