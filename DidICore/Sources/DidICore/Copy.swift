@@ -375,7 +375,9 @@ public enum Copy {
     /// Spoken after a hold-to-undo. Not in the docs — invented, and deliberately
     /// flat: undoing is a correction, not an achievement.
     public static let undone = t("Undone. No record now.")
-    public static let undo = t("Undo")
+    public static let previousConfirmationRestored =
+        t("Latest confirmation removed. Previous one remains.")
+    public static let undo = t("Undo latest confirmation")
 
     // MARK: - Notifications
 

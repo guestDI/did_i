@@ -68,7 +68,7 @@ struct SettingsView: View {
 
                 Section {
                     Text(Copy.resetRuleHint)
-                        .font(.footnote)
+                        .appFont(13, relativeTo: .footnote)
                         .foregroundStyle(Palette.sub)
                 }
             }

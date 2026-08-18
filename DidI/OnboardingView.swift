@@ -121,10 +121,10 @@ private struct PickItemScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(Copy.Screen1.title)
-                        .font(boardScaled(.title3, .semibold))
+                        .boardFont(21, .semibold, relativeTo: .title3)
                         .foregroundStyle(Palette.text)
                     Text(Copy.Screen1.subtitle)
-                        .font(.subheadline)
+                        .appFont(13.5, relativeTo: .subheadline)
                         .foregroundStyle(Palette.sub)
                         .padding(.top, 12)
 
@@ -138,7 +138,7 @@ private struct PickItemScreen: View {
                             text: $custom,
                             prompt: Text(Copy.Screen1.placeholder)
                         )
-                        .font(boardScaled(.body))
+                        .boardFont(15, relativeTo: .body)
                         .textInputAutocapitalization(.sentences)
                         .submitLabel(.done)
                         .focused($focused)
@@ -157,7 +157,7 @@ private struct PickItemScreen: View {
 
                         if !trimmed.isEmpty && !nameIsAvailable {
                             Text(Copy.nameAlreadyUsed)
-                                .font(.footnote)
+                                .appFont(12, relativeTo: .footnote)
                                 .foregroundStyle(Palette.amber)
                                 .padding(.top, 8)
                         }
@@ -178,11 +178,11 @@ private struct PickItemScreen: View {
                         .padding(.bottom, 20)
 
                     Text(Copy.Screen1.footer)
-                        .font(.caption)
+                        .appFont(11, relativeTo: .caption)
                         .foregroundStyle(Palette.dim)
                         .frame(maxWidth: .infinity)
                 }
-                .frame(minHeight: geometry.size.height)
+                .frame(minHeight: max(0, geometry.size.height - 70))
                 .padding(.horizontal, 26)
                 .padding(.top, 40)
                 .padding(.bottom, 30)
@@ -199,7 +199,7 @@ private struct PickItemScreen: View {
                     if chip.id == Chip.somethingElse.id { typing = true } else { onPick(chip, nil) }
                 } label: {
                     Text(chip.label)
-                        .font(boardScaled(.callout))
+                        .boardFont(12, relativeTo: .callout)
                         .tracking(1.6)
                         .textCase(.uppercase)
                         .foregroundStyle(Palette.text)
@@ -232,10 +232,10 @@ private struct PracticeScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(Copy.Screen2.title)
-                        .font(boardScaled(.title3, .semibold))
+                        .boardFont(21, .semibold, relativeTo: .title3)
                         .foregroundStyle(Palette.text)
                     Text(Copy.Screen2.subtitle)
-                        .font(.subheadline)
+                        .appFont(13.5, relativeTo: .subheadline)
                         .foregroundStyle(Palette.sub)
                         .padding(.top, 12)
 
@@ -253,7 +253,7 @@ private struct PracticeScreen: View {
 
                         if confirmed {
                             Text(Copy.onboardingConfirmation)
-                                .font(boardScaled(.caption, .medium))
+                                .boardFont(11, .medium, relativeTo: .caption)
                                 .foregroundStyle(Palette.fresh)
                                 .padding(.top, 18)
                                 .transition(.opacity)
@@ -263,11 +263,11 @@ private struct PracticeScreen: View {
                     Spacer(minLength: 36)
 
                     Text(Copy.Screen2.footer)
-                        .font(.caption)
+                        .appFont(11, relativeTo: .caption)
                         .foregroundStyle(Palette.dim)
                         .frame(maxWidth: .infinity)
                 }
-                .frame(minHeight: geometry.size.height)
+                .frame(minHeight: max(0, geometry.size.height - 70))
                 .padding(.horizontal, 26)
                 .padding(.top, 40)
                 .padding(.bottom, 30)
@@ -350,10 +350,10 @@ private struct WidgetScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(Copy.Screen3.title)
-                        .font(boardScaled(.title3, .semibold))
+                        .boardFont(21, .semibold, relativeTo: .title3)
                         .foregroundStyle(Palette.text)
                     Text(Copy.Screen3.subtitle)
-                        .font(.subheadline)
+                        .appFont(13.5, relativeTo: .subheadline)
                         .foregroundStyle(Palette.sub)
                         .padding(.top, 12)
 
@@ -362,7 +362,7 @@ private struct WidgetScreen: View {
                     Spacer(minLength: 28)
 
                     Text(Copy.Screen3.steps)
-                        .font(.footnote)
+                        .appFont(12, relativeTo: .footnote)
                         .foregroundStyle(Palette.muted)
                         .padding(.bottom, 14)
 
@@ -373,7 +373,7 @@ private struct WidgetScreen: View {
                         .buttonStyle(SecondaryButton())
                         .padding(.top, 4)
                 }
-                .frame(minHeight: geometry.size.height)
+                .frame(minHeight: max(0, geometry.size.height - 70))
                 .padding(.horizontal, 26)
                 .padding(.top, 40)
                 .padding(.bottom, 30)
@@ -467,16 +467,16 @@ struct WalkthroughSheet: View {
                     ForEach(Array(Copy.Screen3.walkthrough.enumerated()), id: \.offset) { index, step in
                         HStack(alignment: .firstTextBaseline, spacing: 14) {
                             Text("\(index + 1)")
-                                .font(boardScaled(.callout, .bold))
+                                .boardFont(12, .bold, relativeTo: .callout)
                                 .foregroundStyle(Palette.amber)
                                 .frame(width: 24, alignment: .leading)
                             Text(step)
-                                .font(.body)
+                                .appFont(16, relativeTo: .body)
                                 .foregroundStyle(Palette.text)
                         }
                     }
                     Text(Copy.Screen3.whichItem)
-                        .font(.footnote)
+                        .appFont(13, relativeTo: .footnote)
                         .foregroundStyle(Palette.sub)
                     Spacer(minLength: 20)
                     Button(Copy.done) { dismiss() }
@@ -506,10 +506,10 @@ private struct NudgeSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(Copy.Screen3.nudgeTitle)
-                        .font(boardScaled(.headline, .semibold))
+                        .boardFont(18, .semibold, relativeTo: .headline)
                         .foregroundStyle(Palette.text)
                     Text(Copy.Screen3.nudgeBody)
-                        .font(.subheadline)
+                        .appFont(14, relativeTo: .subheadline)
                         .foregroundStyle(Palette.sub)
                         .padding(.top, 14)
 
@@ -554,7 +554,7 @@ struct PrimaryButton: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(boardScaled(.callout, .bold))
+            .boardFont(12, .bold, relativeTo: .callout)
             .tracking(2.5)
             .textCase(.uppercase)
             .foregroundStyle(Palette.onAmber)
@@ -570,7 +570,7 @@ struct SecondaryButton: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.subheadline.weight(.medium))
+            .appFont(13, .medium, relativeTo: .subheadline)
             .foregroundStyle(Palette.muted)
             .frame(maxWidth: .infinity, minHeight: 44, alignment: alignment)
             .opacity(configuration.isPressed ? 0.7 : 1)

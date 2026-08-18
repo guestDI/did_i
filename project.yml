@@ -116,6 +116,18 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.dihnatovich.didi.snapshots
         GENERATE_INFOPLIST_FILE: YES
 
+  DidIUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - Tests/UI
+    dependencies:
+      - target: DidI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dihnatovich.didi.uitests
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   DidI:
     build:
@@ -128,3 +140,4 @@ schemes:
       config: Debug
       targets:
         - DidICoreSnapshotTests
+        - DidIUITests

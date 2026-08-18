@@ -70,15 +70,15 @@ struct DayTwoFlow: View {
     private func lesson(_ items: [Item]) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Copy.Lesson.title(items: items, hour: resetHour(items)))
-                .font(boardScaled(.headline, .semibold))
+                .boardFont(18, .semibold, relativeTo: .headline)
                 .foregroundStyle(Palette.text)
             Text(Copy.Lesson.body)
-                .font(.subheadline)
+                .appFont(14, relativeTo: .subheadline)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 14)
             // Waking up to "unknown" reads as failure. Say plainly that it isn't.
             Text(Copy.Lesson.footer)
-                .font(.footnote)
+                .appFont(12, relativeTo: .footnote)
                 .foregroundStyle(Palette.dim)
                 .padding(.top, 16)
             Spacer(minLength: 20)
@@ -106,10 +106,10 @@ struct DayTwoFlow: View {
     private var locationAsk: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Copy.LocationAsk.title)
-                .font(boardScaled(.headline, .semibold))
+                .boardFont(18, .semibold, relativeTo: .headline)
                 .foregroundStyle(Palette.text)
             Text(Copy.LocationAsk.body)
-                .font(.subheadline)
+                .appFont(14, relativeTo: .subheadline)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 14)
             Spacer(minLength: 20)
@@ -138,15 +138,15 @@ struct DayTwoFlow: View {
     private var homeSetup: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Copy.HomeSetup.title)
-                .font(boardScaled(.headline, .semibold))
+                .boardFont(18, .semibold, relativeTo: .headline)
                 .foregroundStyle(Palette.text)
             Text(Copy.HomeSetup.body)
-                .font(.subheadline)
+                .appFont(14, relativeTo: .subheadline)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 14)
             if homeCaptureFailed {
                 Text(Copy.HomeSetup.noFix)
-                    .font(.footnote)
+                    .appFont(12, relativeTo: .footnote)
                     .foregroundStyle(Palette.amber)
                     .padding(.top, 14)
             }
@@ -191,14 +191,14 @@ struct DayTwoFlow: View {
     private var alwaysEscalation: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Copy.HomeSetup.saved)
-                .font(boardScaled(.subheadline, .semibold))
+                .boardFont(15, .semibold, relativeTo: .subheadline)
                 .foregroundStyle(Palette.fresh)
             Text(Copy.LocationAsk.alwaysTitle)
-                .font(boardScaled(.headline, .semibold))
+                .boardFont(18, .semibold, relativeTo: .headline)
                 .foregroundStyle(Palette.text)
                 .padding(.top, 20)
             Text(Copy.LocationAsk.alwaysReason)
-                .font(.subheadline)
+                .appFont(14, relativeTo: .subheadline)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 12)
             Spacer(minLength: 20)
@@ -219,10 +219,10 @@ struct DayTwoFlow: View {
     private var limited: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Copy.HomeSetup.saved)
-                .font(boardScaled(.headline, .semibold))
+                .boardFont(18, .semibold, relativeTo: .headline)
                 .foregroundStyle(Palette.fresh)
             Text(Copy.HomeSettings.foregroundOnly)
-                .font(.subheadline)
+                .appFont(14, relativeTo: .subheadline)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 14)
             Spacer(minLength: 20)
@@ -236,11 +236,11 @@ struct DayTwoFlow: View {
     private var declined: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Copy.LocationDeclined.message)
-                .font(boardScaled(.subheadline, .semibold))
+                .boardFont(15, .semibold, relativeTo: .subheadline)
                 .foregroundStyle(Palette.text)
             // Shown silently, once.
             Text(Copy.resetRuleHint)
-                .font(.footnote)
+                .appFont(13, relativeTo: .footnote)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 16)
             Spacer(minLength: 20)

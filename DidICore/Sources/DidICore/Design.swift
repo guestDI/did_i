@@ -58,6 +58,56 @@ public func boardScaled(_ style: Font.TextStyle, _ weight: Font.Weight = .semibo
     .system(style, design: .monospaced).weight(weight)
 }
 
+/// Preserves the design's tuned point size at the default text setting while
+/// still following Dynamic Type. Replacing a 9pt/12pt/21pt hierarchy with the
+/// nearest semantic presets changes the default UI; `@ScaledMetric` lets the
+/// original hierarchy and accessibility coexist.
+private struct ScaledBoardFontModifier: ViewModifier {
+    @ScaledMetric private var size: CGFloat
+    let weight: Font.Weight
+
+    init(size: CGFloat, weight: Font.Weight, relativeTo style: Font.TextStyle) {
+        _size = ScaledMetric(wrappedValue: size, relativeTo: style)
+        self.weight = weight
+    }
+
+    func body(content: Content) -> some View {
+        content.font(board(size, weight))
+    }
+}
+
+private struct ScaledAppFontModifier: ViewModifier {
+    @ScaledMetric private var size: CGFloat
+    let weight: Font.Weight
+
+    init(size: CGFloat, weight: Font.Weight, relativeTo style: Font.TextStyle) {
+        _size = ScaledMetric(wrappedValue: size, relativeTo: style)
+        self.weight = weight
+    }
+
+    func body(content: Content) -> some View {
+        content.font(.system(size: size, weight: weight))
+    }
+}
+
+public extension View {
+    func boardFont(
+        _ size: CGFloat,
+        _ weight: Font.Weight = .semibold,
+        relativeTo style: Font.TextStyle = .body
+    ) -> some View {
+        modifier(ScaledBoardFontModifier(size: size, weight: weight, relativeTo: style))
+    }
+
+    func appFont(
+        _ size: CGFloat,
+        _ weight: Font.Weight = .regular,
+        relativeTo style: Font.TextStyle = .body
+    ) -> some View {
+        modifier(ScaledAppFontModifier(size: size, weight: weight, relativeTo: style))
+    }
+}
+
 /// One split-flap cell: the vertical gradient plus the hairline seam at 50%.
 public struct FlapCell: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

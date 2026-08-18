@@ -134,6 +134,8 @@
 "Dismiss" = "Закрыть";
 "Settings" = "Настройки";
 "Undo" = "Отменить";
+"Undo latest confirmation" = "Отменить последнее подтверждение";
+"Latest confirmation removed. Previous one remains." = "Последнее подтверждение удалено. Предыдущее осталось.";
 "Item" = "Пункт";
 "Status" = "Статус";
 "Remind me when I leave" = "Напомнить при уходе";
@@ -187,3 +189,6 @@
 "%lld checks recorded. The latest ones are on the board." = "Записано проверок: %lld. Последние видны на доске.";
 "A week of confirmations, kept on your phone." = "Неделя подтверждений сохранена на телефоне.";
 "%@. You've been checking this a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to put it away." = "%@. В последнее время ты часто это проверяешь. Приложение должно прекращать проверки, а не становиться ещё одной вещью для проверки. Если оно не помогает, этот пункт можно убрать.";
+"Back" = "Назад";
+"OK" = "ОК";
+"Put %@ away?" = "Убрать «%@»?";

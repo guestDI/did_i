@@ -68,10 +68,10 @@ struct AddItemSheet: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 Text(suggestion != nil ? Copy.SecondItemPrompt.title : Copy.addAnItem)
-                    .font(boardScaled(.headline, .semibold))
+                    .boardFont(18, .semibold, relativeTo: .headline)
                     .foregroundStyle(Palette.text)
                 Text(suggestion != nil ? Copy.SecondItemPrompt.body : Copy.pickOne)
-                    .font(.subheadline)
+                    .appFont(14, relativeTo: .subheadline)
                     .foregroundStyle(Palette.sub)
                     .padding(.top, 10)
 
@@ -81,7 +81,7 @@ struct AddItemSheet: View {
                         text: $custom,
                         prompt: Text(Copy.Screen1.placeholder)
                     )
-                        .font(boardScaled(.body))
+                        .boardFont(15, relativeTo: .body)
                         .submitLabel(.done)
                         .focused($focused)
                         .onChange(of: custom) { _, new in
@@ -101,7 +101,7 @@ struct AddItemSheet: View {
 
                     if !trimmedCustom.isEmpty && !customNameIsAvailable {
                         Text(Copy.nameAlreadyUsed)
-                            .font(.footnote)
+                            .appFont(12, relativeTo: .footnote)
                             .foregroundStyle(Palette.amber)
                             .padding(.top, 8)
                     }
@@ -130,7 +130,7 @@ struct AddItemSheet: View {
                     if chip.id == Chip.somethingElse.id { typing = true } else { add(chip) }
                 } label: {
                     Text(chip.label)
-                        .font(boardScaled(.callout))
+                        .boardFont(12, relativeTo: .callout)
                         .tracking(1.6)
                         .textCase(.uppercase)
                         .foregroundStyle(Palette.text)
@@ -150,10 +150,10 @@ struct AddItemSheet: View {
     private var capReached: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Copy.Cap.title)
-                .font(boardScaled(.headline, .semibold))
+                .boardFont(18, .semibold, relativeTo: .headline)
                 .foregroundStyle(Palette.text)
             Text(Copy.Cap.body)
-                .font(.subheadline)
+                .appFont(14, relativeTo: .subheadline)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 14)
             Spacer()
@@ -173,7 +173,7 @@ struct AddItemSheet: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 Text(Copy.whichOneGoes)
-                    .font(boardScaled(.headline, .semibold))
+                    .boardFont(18, .semibold, relativeTo: .headline)
                     .foregroundStyle(Palette.text)
                     .padding(.bottom, 8)
 
@@ -181,7 +181,7 @@ struct AddItemSheet: View {
                     Button { swapOut(item) } label: {
                         HStack {
                             Text(Copy.Cap.usage(item: item, now: .now))
-                                .font(.subheadline)
+                                .appFont(14, relativeTo: .subheadline)
                                 .foregroundStyle(Palette.text)
                                 .multilineTextAlignment(.leading)
                             Spacer()
@@ -250,7 +250,7 @@ struct PreviouslyList: View {
         if !archived.isEmpty {
             VStack(alignment: .leading, spacing: 0) {
                 Text(Copy.previouslySection)
-                    .font(boardScaled(.caption2))
+                    .boardFont(9, relativeTo: .caption2)
                     .tracking(3)
                     .textCase(.uppercase)
                     .foregroundStyle(Palette.dim)
@@ -260,7 +260,7 @@ struct PreviouslyList: View {
                     Button { onRestore(item) } label: {
                         HStack {
                             Text(item.name)
-                                .font(boardScaled(.subheadline))
+                                .boardFont(13, relativeTo: .subheadline)
                                 .foregroundStyle(Palette.text)
                             Spacer()
                             Image(systemName: "arrow.uturn.backward")
@@ -290,7 +290,7 @@ struct ParanoiaCard: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(Copy.Paranoia.title)
-                    .font(boardScaled(.caption2))
+                    .boardFont(9, relativeTo: .caption2)
                     .tracking(3)
                     .textCase(.uppercase)
                     .foregroundStyle(Palette.dim)
@@ -316,7 +316,7 @@ struct ParanoiaCard: View {
                 .foregroundStyle(Palette.amber)
                 .padding(.top, 6)
         }
-        .font(.footnote)
+        .appFont(13, relativeTo: .footnote)
         // Every line here is a joke; a clipped punchline is worse than no card.
         .fixedSize(horizontal: false, vertical: true)
         .padding(18)

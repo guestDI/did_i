@@ -42,7 +42,7 @@ public struct BoardRow: View {
                 // Two lines: the away line runs to 62 characters and is the one
                 // sentence in the app that must never be clipped.
                 Text(status)
-                    .font(boardScaled(.caption, .medium))
+                    .boardFont(9.5, .medium, relativeTo: .caption)
                     .foregroundStyle(Palette.sub)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -91,7 +91,7 @@ public struct BoardRow: View {
 
     private var name: some View {
         Text(item.name)
-            .font(boardScaled(.body))
+            .boardFont(15, relativeTo: .body)
             .tracking(2.5)
             .textCase(.uppercase)
             .foregroundStyle(Palette.text)

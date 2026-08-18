@@ -27,10 +27,10 @@ struct RootView: View {
             if loadFailed {
                 VStack(spacing: 16) {
                     Text(Copy.loadFailedTitle)
-                        .font(boardScaled(.headline, .semibold))
+                        .boardFont(18, .semibold, relativeTo: .headline)
                         .foregroundStyle(Palette.text)
                     Text(Copy.loadFailedBody)
-                        .font(.subheadline)
+                        .appFont(14, relativeTo: .subheadline)
                         .foregroundStyle(Palette.sub)
                         .multilineTextAlignment(.center)
                     Button(Copy.tryAgain) { reload() }

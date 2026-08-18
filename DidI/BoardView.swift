@@ -16,6 +16,7 @@ struct BoardView: View {
     @State private var guardrailItem: Item?
     @State private var staleItem: Item?
     @State private var removing: Item?
+    @State private var undoFeedback: [UUID: String] = [:]
     @State private var showingSaveError = false
     @Environment(\.requestReview) private var requestReview
 
@@ -209,7 +210,7 @@ struct BoardView: View {
             .accessibilityHidden(true)
             HStack {
                 Text(now.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
-                    .font(boardScaled(.caption2, .medium))
+                    .boardFont(10, .medium, relativeTo: .caption2)
                     .tracking(2)
                     .textCase(.uppercase)
                     .foregroundStyle(Palette.muted)
@@ -244,7 +245,7 @@ struct BoardView: View {
             Spacer()
             Text(Copy.columnStatus)
         }
-        .font(boardScaled(.caption2))
+        .boardFont(9, relativeTo: .caption2)
         .tracking(3)
         .textCase(.uppercase)
         .foregroundStyle(Palette.dim)
@@ -258,7 +259,7 @@ struct BoardView: View {
 
     private var footer: some View {
         Text(Copy.boardFooter)
-            .font(boardScaled(.caption2, .medium))
+            .boardFont(8.5, .medium, relativeTo: .caption2)
             .tracking(2.2)
             .textCase(.uppercase)
             .foregroundStyle(Palette.dim)
@@ -276,6 +277,7 @@ struct BoardView: View {
                 BoardRow(
                     item: item,
                     state: store.state(item, now: now),
+                    statusOverride: undoFeedback[item.id],
                     isAway: store.isAway,
                     onConfirm: { confirm(item) },
                     onUndo: item.lastConfirmedAt == nil ? nil : { undo(item) }
@@ -294,7 +296,7 @@ struct BoardView: View {
         HStack(spacing: 8) {
             if item.mutedUntilHome == true {
                 Text(Copy.mutedUntilHome)
-                    .font(.footnote)
+                    .appFont(12, relativeTo: .footnote)
                     .foregroundStyle(Palette.sub)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
@@ -358,6 +360,7 @@ struct BoardView: View {
 
     private func confirm(_ item: Item) {
         guard save({ $0.confirm(id: item.id, at: .now) }) else { return }
+        undoFeedback[item.id] = nil
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         if let line = store.items.first(where: { $0.id == item.id })?.confirmationLine {
             UIAccessibility.post(notification: .announcement, argument: line)
@@ -375,8 +378,31 @@ struct BoardView: View {
 
     private func undo(_ item: Item) {
         guard save({ $0.undo(id: item.id) }) else { return }
+        let previousRemains = store.items
+            .first(where: { $0.id == item.id })?
+            .lastConfirmedAt != nil
+        if previousRemains {
+            showUndoFeedback(for: item.id)
+        } else {
+            undoFeedback[item.id] = nil
+        }
         UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
-        UIAccessibility.post(notification: .announcement, argument: Copy.undone)
+        UIAccessibility.post(
+            notification: .announcement,
+            argument: previousRemains ? Copy.previousConfirmationRestored : Copy.undone
+        )
+    }
+
+    /// Undoing a repeated tap can legitimately leave an older green record in
+    /// place. Say that visibly so the unchanged flap cannot read as a dead button.
+    private func showUndoFeedback(for itemID: UUID) {
+        let message = Copy.previousConfirmationRestored
+        withAnimation(.snappy(duration: 0.2)) { undoFeedback[itemID] = message }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2.5))
+            guard undoFeedback[itemID] == message else { return }
+            withAnimation(.snappy(duration: 0.2)) { undoFeedback[itemID] = nil }
+        }
     }
 
     @discardableResult
@@ -410,7 +436,7 @@ struct BoardView: View {
 private struct ContextButton: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.footnote.weight(.semibold))
+            .appFont(13, .semibold, relativeTo: .footnote)
             .foregroundStyle(Palette.text)
             .frame(maxWidth: .infinity, minHeight: 44)
             .background(Palette.panel, in: .rect(cornerRadius: 10))
