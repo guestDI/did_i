@@ -5,7 +5,7 @@ import DidICore
 
 struct BoardView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @State private var store = StoreIO.read()
+    @State private var store: Store
     @State private var editing: Item?
     @State private var dayTwo: DayTwoFlow.Step?
     @State private var sharing: Item?
@@ -15,30 +15,38 @@ struct BoardView: View {
     @State private var weeklyCard: ParanoiaCounter.Card?
     @State private var guardrailItem: Item?
     @State private var staleItem: Item?
+    @State private var removing: Item?
+    @State private var showingSaveError = false
     @Environment(\.requestReview) private var requestReview
+
+    init(initialStore: Store) {
+        _store = State(initialValue: initialStore)
+    }
 
     var body: some View {
         // TimelineView supplies `now`. Nothing stores display state.
         TimelineView(.periodic(from: .now, by: 60)) { context in
-            VStack(alignment: .leading, spacing: 0) {
-                header(now: context.date)
-                // The board is top-anchored, not bottom-anchored as design 1a
-                // draws it: day-2 requires the list stay visible behind the
-                // lesson sheet, and the sheet lands exactly where the design
-                // parks the rows.
-                if let weeklyCard {
-                    ParanoiaCard(card: weeklyCard) { dismissWeeklyCard() }
-                        .padding(.top, 22)
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    header(now: context.date)
+                    // The board is top-anchored, not bottom-anchored as design 1a
+                    // draws it: day-2 requires the list stay visible behind the
+                    // lesson sheet, and the sheet lands exactly where the design
+                    // parks the rows.
+                    if let weeklyCard {
+                        ParanoiaCard(card: weeklyCard) { dismissWeeklyCard() }
+                            .padding(.top, 22)
+                    }
+                    columnHeadings
+                        .padding(.top, 26)
+                    ForEach(store.active) { item in
+                        row(item: item, now: context.date)
+                    }
+                    footer
                 }
-                columnHeadings
-                    .padding(.top, 26)
-                ForEach(store.active) { item in
-                    row(item: item, now: context.date)
-                }
-                footer
-                Spacer(minLength: 0)
+                .padding(.bottom, 30)
             }
-            .padding(.bottom, 30)
+            .scrollIndicators(.hidden)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Palette.ink)
@@ -52,14 +60,14 @@ struct BoardView: View {
             ItemSettingsView(
                 item: item,
                 hasHome: store.home != nil,
+                existingItems: store.items,
                 save: { updated in
                     save { store in
                         guard let i = store.items.firstIndex(where: { $0.id == updated.id })
                         else { return }
                         store.items[i] = updated
                     }
-                },
-                archive: { save { $0.archive(item.id, at: .now) } }
+                }
             )
         }
         .sheet(item: $sharing) { item in
@@ -76,7 +84,7 @@ struct BoardView: View {
             "",
             isPresented: Binding(get: { guardrailItem != nil }, set: { if !$0 { guardrailItem = nil } })
         ) {
-            Button("OK") { dismissGuardrail() }
+            Button(Copy.ok) { dismissGuardrail() }
         } message: {
             if let guardrailItem { Text(Copy.escalatingChecks(item: guardrailItem)) }
         }
@@ -91,6 +99,17 @@ struct BoardView: View {
         } message: {
             Text(Copy.StaleItem.body)
         }
+        .confirmationDialog(
+            removing.map { Copy.putItAwayTitle(item: $0) } ?? "",
+            isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }),
+            titleVisibility: .visible
+        ) {
+            if let removing {
+                Button(Copy.putItAway) { archive(removing) }
+            }
+        } message: {
+            Text(Copy.putItAwayFooter)
+        }
         .onReceive(NotificationCenter.default.publisher(for: AppDelegate.openWalkthrough)) { _ in
             // The nudge deep-links to the install instructions, not here.
             showingWalkthrough = true
@@ -101,6 +120,11 @@ struct BoardView: View {
                 reload()
             }
         }
+        .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
+            Button(Copy.ok) {}
+        } message: {
+            Text(Copy.saveFailedBody)
+        }
         .task { await onOpen() }
     }
 
@@ -108,8 +132,12 @@ struct BoardView: View {
     /// schedule. If they do not open the app for a week, it fires the day they do.
     private func onOpen() async {
         await Notifications.reconcileWidgetNudge()
-        try? StoreIO.mutate { $0.recordBoardView(at: .now) }
-        reload()
+        do {
+            try StoreIO.mutate { $0.recordBoardView(at: .now) }
+            reload()
+        } catch {
+            reportSaveError()
+        }
 
         let aged = DecayLesson.agedOut(in: store, now: .now)
         if !aged.isEmpty {
@@ -131,7 +159,7 @@ struct BoardView: View {
             return
         }
         if let trigger = SecondItem.shouldSuggest(in: store, now: .now) {
-            try? StoreIO.mutate { $0.usage.lastSuggestedAt = .now }
+            guard save({ $0.usage.lastSuggestedAt = .now }) else { return }
             adding = .init(suggestion: trigger)
             return
         }
@@ -141,25 +169,25 @@ struct BoardView: View {
 
     /// Offered once, whatever they answer.
     private func answerStaleOffer(_ item: Item, archiving: Bool) {
-        save { store in
+        guard save({ store in
             guard let i = store.items.firstIndex(where: { $0.id == item.id }) else { return }
             store.items[i].archiveOfferedAt = .now
             if archiving { store.archive(item.id, at: .now) }
-        }
+        }) else { return }
         staleItem = nil
     }
 
     /// One honest sentence, once, and then get out of the way.
     private func dismissGuardrail() {
-        save {
+        guard save({
             $0.usage.guardrailShown = true
             $0.usage.paranoiaSuppressed = true
-        }
+        }) else { return }
         guardrailItem = nil
     }
 
     private func dismissWeeklyCard() {
-        save { $0.usage.weeklyCardDismissedAt = .now }
+        guard save({ $0.usage.weeklyCardDismissedAt = .now }) else { return }
         weeklyCard = nil
     }
 
@@ -181,7 +209,7 @@ struct BoardView: View {
             .accessibilityHidden(true)
             HStack {
                 Text(now.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
-                    .font(board(10, .medium))
+                    .font(boardScaled(.caption2, .medium))
                     .tracking(2)
                     .textCase(.uppercase)
                     .foregroundStyle(Palette.muted)
@@ -216,7 +244,7 @@ struct BoardView: View {
             Spacer()
             Text(Copy.columnStatus)
         }
-        .font(board(9))
+        .font(boardScaled(.caption2))
         .tracking(3)
         .textCase(.uppercase)
         .foregroundStyle(Palette.dim)
@@ -230,7 +258,7 @@ struct BoardView: View {
 
     private var footer: some View {
         Text(Copy.boardFooter)
-            .font(board(8.5, .medium))
+            .font(boardScaled(.caption2, .medium))
             .tracking(2.2)
             .textCase(.uppercase)
             .foregroundStyle(Palette.dim)
@@ -243,22 +271,50 @@ struct BoardView: View {
     /// The row is shared with the Day 0 practice card, so onboarding shows the
     /// same view the main screen does rather than a lookalike.
     private func row(item: Item, now: Date) -> some View {
-        ZStack(alignment: .topLeading) {
-            BoardRow(
-                item: item,
-                state: store.state(item, now: now),
-                isAway: store.isAway,
-                onConfirm: { confirm(item) },
-                onUndo: item.lastConfirmedAt == nil ? nil : { undo(item) }
-            )
-            rowActions(item: item, now: now)
-                .offset(x: rowActionOffset(for: item), y: 13)
+        VStack(spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                BoardRow(
+                    item: item,
+                    state: store.state(item, now: now),
+                    isAway: store.isAway,
+                    onConfirm: { confirm(item) },
+                    onUndo: item.lastConfirmedAt == nil ? nil : { undo(item) }
+                )
+                rowActions(item: item, now: now)
+                    .offset(x: rowActionOffset(for: item), y: 13)
+            }
+            if store.isAway, store.state(item, now: now) == .unknown {
+                awayActions(item)
+            }
         }
+    }
+
+    @ViewBuilder
+    private func awayActions(_ item: Item) -> some View {
+        HStack(spacing: 8) {
+            if item.mutedUntilHome == true {
+                Text(Copy.mutedUntilHome)
+                    .font(.footnote)
+                    .foregroundStyle(Palette.sub)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Button(Copy.cantCheckRightNow) { mute(item) }
+                    .buttonStyle(ContextButton())
+            }
+            Button(Copy.askSomeoneAtHome) { sharing = item }
+                .buttonStyle(ContextButton())
+        }
+        .padding(.horizontal, 22)
+        .padding(.vertical, 6)
     }
 
     private func rowActions(item: Item, now: Date) -> some View {
         Menu {
             Button(Copy.forgetAfterTitle) { editing = item }
+            if item.lastConfirmedAt != nil {
+                Button(Copy.undo, systemImage: "arrow.uturn.backward") { undo(item) }
+            }
+            Button(Copy.putItAway, systemImage: "archivebox") { removing = item }
             if store.isAway, store.state(item, now: now) == .unknown {
                 Button(Copy.cantCheckRightNow) { mute(item) }
                 Button(Copy.askSomeoneAtHome) { sharing = item }
@@ -284,6 +340,13 @@ struct BoardView: View {
         min(22 + CGFloat(item.name.count) * 11.8, 170)
     }
 
+    private func archive(_ item: Item) {
+        // Dismiss first: archiving the last item swaps the whole hierarchy
+        // (board → onboarding) out from under this dialog.
+        removing = nil
+        save { $0.archive(item.id, at: .now) }
+    }
+
     private func mute(_ item: Item) {
         save { store in
             guard let i = store.items.firstIndex(where: { $0.id == item.id }) else { return }
@@ -294,8 +357,8 @@ struct BoardView: View {
     // MARK: - Actions
 
     private func confirm(_ item: Item) {
+        guard save({ $0.confirm(id: item.id, at: .now) }) else { return }
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-        save { $0.confirm(id: item.id, at: .now) }
         if let line = store.items.first(where: { $0.id == item.id })?.confirmationLine {
             UIAccessibility.post(notification: .announcement, argument: line)
         }
@@ -306,23 +369,52 @@ struct BoardView: View {
     /// and at most once every 120. Never while they're wondering about the stove.
     private func askForReviewIfThingsAreGood() {
         guard ReviewPrompt.shouldAsk(in: store, now: .now) else { return }
-        save { $0.usage.lastReviewPromptAt = .now }
+        guard save({ $0.usage.lastReviewPromptAt = .now }) else { return }
         requestReview()
     }
 
     private func undo(_ item: Item) {
+        guard save({ $0.undo(id: item.id) }) else { return }
         UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
-        save { $0.undo(id: item.id) }
         UIAccessibility.post(notification: .announcement, argument: Copy.undone)
     }
 
-    private func save(_ change: (inout Store) -> Void) {
-        try? StoreIO.mutate(change)
-        withAnimation(.snappy(duration: 0.28)) { store = StoreIO.read() }
-        WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+    @discardableResult
+    private func save(_ change: (inout Store) -> Void) -> Bool {
+        do {
+            try StoreIO.mutate(change)
+            let updated = try StoreIO.load()
+            withAnimation(.snappy(duration: 0.28)) { store = updated }
+            WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+            return true
+        } catch {
+            reportSaveError()
+            return false
+        }
     }
 
     private func reload() {
-        store = StoreIO.read()
+        do {
+            store = try StoreIO.load()
+        } catch {
+            reportSaveError()
+        }
+    }
+
+    private func reportSaveError() {
+        showingSaveError = true
+        UIAccessibility.post(notification: .announcement, argument: Copy.saveFailedBody)
+    }
+}
+
+private struct ContextButton: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(Palette.text)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(Palette.panel, in: .rect(cornerRadius: 10))
+            .opacity(configuration.isPressed ? 0.8 : 1)
+            .contentShape(.rect)
     }
 }

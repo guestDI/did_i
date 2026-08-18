@@ -220,11 +220,7 @@ private func escalatingStore() -> Store {
 @Test func theGuardrailMessageIsVerbatimAndNamesTheItem() {
     var iron = item(); iron.name = "Iron"
     #expect(Copy.escalatingChecks(item: iron) ==
-        "Iron. You've been checking this a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to delete it — it'll still be off.")
-
-    // The closing clause used to say "off" for every item, including doors.
-    var door = item(word: "Locked"); door.name = "Front door"
-    #expect(Copy.escalatingChecks(item: door).hasSuffix("it'll still be locked."))
+        "Iron. You've been checking this a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to put it away.")
 }
 
 // MARK: - The paranoia counter
@@ -251,7 +247,7 @@ private func goodWeek() -> Store {
     #expect(card != nil)
     #expect(card?.topChecks == 14)
     #expect(card?.runnerUpChecks == 6)
-    #expect(Copy.Paranoia.closing.contains(card?.closingLine ?? ""))
+    #expect(Copy.Paranoia.closing(totalChecks: 20).contains(card?.closingLine ?? ""))
 }
 
 @Test func noCardBeforeTheFirstWeekIsOut() {
@@ -299,15 +295,19 @@ private func goodWeek() -> Store {
     #expect(ParanoiaCounter.card(for: s, now: now, calendar: utc) != nil)
 }
 
-@Test func theCardCopyReadsAsTheDocWroteIt() {
+@Test func theCardCopyReportsOnlyObservedFacts() {
     var iron = item(); iron.name = "Iron"
     var door = item(); door.name = "Front door"
     var stove = item(); stove.name = "The stove"
-    #expect(Copy.Paranoia.topWorry(item: iron, checks: 34) == "Top worry: Iron. 34 checks.")
+    #expect(Copy.Paranoia.topWorry(item: iron, checks: 34) == "Most checked: Iron. 34 checks.")
     #expect(Copy.Paranoia.runnerUp(item: door, checks: 12)
-        == "Runner-up: Front door, a modest 12.")
+        == "Next: Front door. 12 checks.")
     #expect(Copy.Paranoia.reassurance(item: stove)
-        == "The stove: fine every single time. It always is.")
+        == "The stove: confirmed at least once this week.")
+    for line in Copy.Paranoia.closing(totalChecks: 46) {
+        #expect(!line.contains("61"))
+        #expect(!line.contains("off"))
+    }
 }
 
 // MARK: - Retention

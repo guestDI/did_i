@@ -103,23 +103,23 @@ Onboarding-specific:
 > Nice. Now go about your day, you magnificent adult.
 
 General pool, used everywhere after:
-- Logged. The stove is off. The world is safe. Ish.
-- Done. Future you says thanks and means it.
-- Noted. You're doing better than you think.
+- Logged. Your confirmation is on the record.
+- Done. Future you has a timestamp now.
+- Noted. One less thing to remember.
 - Confirmed. Look at you, adulting.
-- Got it. Nothing is on fire, probably because of you.
-- Recorded for posterity and for your peace of mind.
-- Yep. Consider it handled.
-- Marked. Your past self was reliable after all.
-- Filed under "things that are fine".
+- Got it. The board has your back.
+- Recorded for posterity and peace of mind.
+- Yep. Consider the check logged.
+- Marked. Past you left a receipt.
+- Filed under "confirmed".
 - Done. That's one less thing rattling around in there.
 - Locked in. Go be somewhere else now.
 - Confirmed. Genuinely, well done.
 
 Escalation lines, used only when the same item is confirmed 3+ times in one day:
-- Third time today. It was off the first time too, but sure.
-- We've done this. I'm not judging. I'm barely even counting.
-- Still off. Still fine. Still you.
+- Third confirmation today. Latest one logged.
+- Confirmed again. The newest timestamp is on the board.
+- Updated. This confirmation replaces the last.
 
 Keep every line under 60 characters so it fits one line on the smallest supported device.
 
@@ -133,13 +133,13 @@ Keep every line under 60 characters so it fits one line on the smallest supporte
 **Subtitle**
 > The widget answers without opening anything.
 
-**Body:** a short looping video (4–6s, muted, autoplay) of the actual flow — long-press home screen → Edit → Add widget → search → place. Not written steps. Nobody follows written steps for a five-step manual task.
+**Body:** a live medium-widget preview of the user's board, followed by the five installation steps in a readable sheet. A video can replace the sheet later when a real, localised asset exists.
 
 **Fallback text under the video, 12px:**
 > Long-press your home screen → Edit → Add widget → search "Did I?"
 
 **Buttons**
-- Primary: `Show me` — plays the video full-size with captions
+- Primary: `View steps` — opens the installation steps in a scrollable sheet
 - Secondary: `Later`
 
 ### Why this is the real conversion event

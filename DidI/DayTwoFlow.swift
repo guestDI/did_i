@@ -12,6 +12,7 @@ struct DayTwoFlow: View {
         case locationAsk
         case homeSetup
         case alwaysEscalation
+        case limited
         case declined
 
         var id: String {
@@ -20,6 +21,7 @@ struct DayTwoFlow: View {
             case .locationAsk: "locationAsk"
             case .homeSetup: "homeSetup"
             case .alwaysEscalation: "alwaysEscalation"
+            case .limited: "limited"
             case .declined: "declined"
             }
         }
@@ -31,23 +33,36 @@ struct DayTwoFlow: View {
     /// A one-shot fix can come back empty indoors or in airplane mode. Without
     /// this the primary button silently does nothing and reads as broken.
     @State private var homeCaptureFailed = false
+    @State private var showingSaveError = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            switch step {
-            case .lesson(let items): lesson(items)
-            case .locationAsk: locationAsk
-            case .homeSetup: homeSetup
-            case .alwaysEscalation: alwaysEscalation
-            case .declined: declined
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    switch step {
+                    case .lesson(let items): lesson(items)
+                    case .locationAsk: locationAsk
+                    case .homeSetup: homeSetup
+                    case .alwaysEscalation: alwaysEscalation
+                    case .limited: limited
+                    case .declined: declined
+                    }
+                }
+                .padding(30)
+                .frame(minHeight: geometry.size.height, alignment: .topLeading)
             }
+            .scrollIndicators(.hidden)
         }
-        .padding(30)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Palette.ink)
-        .presentationDetents([.height(360)])
+        .presentationDetents([.medium, .large])
         .presentationDragIndicator(.hidden)
         .interactiveDismissDisabled()
+        .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
+            Button(Copy.ok) {}
+        } message: {
+            Text(Copy.saveFailedBody)
+        }
     }
 
     // MARK: - The lesson
@@ -55,21 +70,20 @@ struct DayTwoFlow: View {
     private func lesson(_ items: [Item]) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Copy.Lesson.title(items: items, hour: resetHour(items)))
-                .font(board(18, .semibold))
+                .font(boardScaled(.headline, .semibold))
                 .foregroundStyle(Palette.text)
             Text(Copy.Lesson.body)
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 14)
             // Waking up to "unknown" reads as failure. Say plainly that it isn't.
             Text(Copy.Lesson.footer)
-                .font(.system(size: 12))
+                .font(.footnote)
                 .foregroundStyle(Palette.dim)
                 .padding(.top, 16)
             Spacer(minLength: 20)
             Button(Copy.Lesson.button) {
-                mark { $0.flags.decayLessonShown = true }
-                step = .locationAsk
+                if mark({ $0.flags.decayLessonShown = true }) { step = .locationAsk }
             }
             .buttonStyle(PrimaryButton())
         }
@@ -92,10 +106,10 @@ struct DayTwoFlow: View {
     private var locationAsk: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Copy.LocationAsk.title)
-                .font(board(18, .semibold))
+                .font(boardScaled(.headline, .semibold))
                 .foregroundStyle(Palette.text)
             Text(Copy.LocationAsk.body)
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 14)
             Spacer(minLength: 20)
@@ -114,10 +128,8 @@ struct DayTwoFlow: View {
             .buttonStyle(PrimaryButton())
 
             Button(Copy.LocationAsk.keepTimer) { decline() }
-                .font(.system(size: 13))
-                .foregroundStyle(Palette.muted)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 16)
+                .buttonStyle(SecondaryButton())
+                .padding(.top, 4)
         }
     }
 
@@ -126,15 +138,15 @@ struct DayTwoFlow: View {
     private var homeSetup: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Copy.HomeSetup.title)
-                .font(board(18, .semibold))
+                .font(boardScaled(.headline, .semibold))
                 .foregroundStyle(Palette.text)
             Text(Copy.HomeSetup.body)
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 14)
             if homeCaptureFailed {
                 Text(Copy.HomeSetup.noFix)
-                    .font(.system(size: 12))
+                    .font(.footnote)
                     .foregroundStyle(Palette.amber)
                     .padding(.top, 14)
             }
@@ -152,11 +164,11 @@ struct DayTwoFlow: View {
                     let home = HomeLocation(
                         latitude: coordinate.latitude, longitude: coordinate.longitude
                     )
-                    mark {
+                    guard mark({
                         $0.home = home
                         $0.flags.homeSetupPending = false
                         $0.flags.homeSetupDeferredUntil = nil
-                    }
+                    }) else { return }
                     LocationMonitor.shared.monitor(home)
                     step = .alwaysEscalation
                 }
@@ -166,13 +178,10 @@ struct DayTwoFlow: View {
             Button(Copy.HomeSetup.notHome) {
                 // Keep the route alive without showing the same prompt again on
                 // the very next open.
-                mark { $0.flags.deferHomeSetup(at: .now) }
-                onFinished()
+                if mark({ $0.flags.deferHomeSetup(at: .now) }) { onFinished() }
             }
-            .font(.system(size: 13))
-            .foregroundStyle(Palette.muted)
-            .frame(maxWidth: .infinity)
-            .padding(.top, 16)
+            .buttonStyle(SecondaryButton())
+            .padding(.top, 4)
         }
     }
 
@@ -181,29 +190,44 @@ struct DayTwoFlow: View {
     /// refusal degrades silently to the 24h ceiling. No banner, no badgering.
     private var alwaysEscalation: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(Copy.HomeSetup.confirmed)
-                .font(board(15, .semibold))
+            Text(Copy.HomeSetup.saved)
+                .font(boardScaled(.subheadline, .semibold))
                 .foregroundStyle(Palette.fresh)
             Text(Copy.LocationAsk.alwaysTitle)
-                .font(board(18, .semibold))
+                .font(boardScaled(.headline, .semibold))
                 .foregroundStyle(Palette.text)
                 .padding(.top, 20)
             Text(Copy.LocationAsk.alwaysReason)
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 12)
             Spacer(minLength: 20)
 
             Button(Copy.LocationAsk.alwaysButton) {
-                LocationMonitor.shared.requestAlways { _ in onFinished() }
+                LocationMonitor.shared.requestAlways { status in
+                    if status == .authorizedAlways { onFinished() } else { step = .limited }
+                }
             }
             .buttonStyle(PrimaryButton())
 
-            Button(Copy.LocationAsk.alwaysSkip) { onFinished() }
-                .font(.system(size: 13))
-                .foregroundStyle(Palette.muted)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 16)
+            Button(Copy.LocationAsk.alwaysSkip) { step = .limited }
+                .buttonStyle(SecondaryButton())
+                .padding(.top, 4)
+        }
+    }
+
+    private var limited: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(Copy.HomeSetup.saved)
+                .font(boardScaled(.headline, .semibold))
+                .foregroundStyle(Palette.fresh)
+            Text(Copy.HomeSettings.foregroundOnly)
+                .font(.subheadline)
+                .foregroundStyle(Palette.sub)
+                .padding(.top, 14)
+            Spacer(minLength: 20)
+            Button(Copy.done) { onFinished() }
+                .buttonStyle(PrimaryButton())
         }
     }
 
@@ -212,11 +236,11 @@ struct DayTwoFlow: View {
     private var declined: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Copy.LocationDeclined.message)
-                .font(board(15, .semibold))
+                .font(boardScaled(.subheadline, .semibold))
                 .foregroundStyle(Palette.text)
             // Shown silently, once.
             Text(Copy.resetRuleHint)
-                .font(.system(size: 13))
+                .font(.footnote)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 16)
             Spacer(minLength: 20)
@@ -226,17 +250,24 @@ struct DayTwoFlow: View {
     }
 
     private func decline() {
-        mark {
+        guard mark({
             $0.flags.locationDeclined = true
             $0.flags.settingsHintShown = true
             $0.flags.homeSetupPending = false
             $0.flags.homeSetupDeferredUntil = nil
-        }
+        }) else { return }
         step = .declined
     }
 
-    private func mark(_ change: (inout Store) -> Void) {
-        try? StoreIO.mutate(change)
-        WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+    private func mark(_ change: (inout Store) -> Void) -> Bool {
+        do {
+            try StoreIO.mutate(change)
+            WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+            return true
+        } catch {
+            showingSaveError = true
+            UIAccessibility.post(notification: .announcement, argument: Copy.saveFailedBody)
+            return false
+        }
     }
 }

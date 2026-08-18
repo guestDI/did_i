@@ -61,11 +61,6 @@ public struct Chip: Identifiable, Sendable, Equatable {
     }
 }
 
-public extension Item {
-    /// Longer names break the widget.
-    static let maxNameLength = 24
-}
-
 /// Local-only counters (day-1 doc). Never transmitted — there is no backend and
 /// that is a selling point. They exist to gate the Day 1, 2 and 3 logic.
 public struct OnboardingFlags: Codable, Sendable, Equatable {
@@ -90,7 +85,7 @@ public struct OnboardingFlags: Codable, Sendable, Equatable {
     /// Set when the user picks "Keep the timer". Never ask again — not on day 5,
     /// not on a settings banner, not with a "you're missing out" card.
     public var locationDeclined: Bool
-    /// The one-time "Settings → any item → Forget this after" pointer.
+    /// The one-time "board → More → Forget this after" pointer.
     public var settingsHintShown: Bool
     /// "I'm not home right now" — ask again after a quiet period, not on the
     /// very next open.

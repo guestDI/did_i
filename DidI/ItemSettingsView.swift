@@ -11,25 +11,38 @@ struct ItemSettingsView: View {
     /// Kept to tell an edit from an untouched field on the way out.
     private let original: Item
     let hasHome: Bool
-    let save: (Item) -> Void
-    /// The only way off the board short of hitting the six-item cap. Without it
-    /// a three-item list is permanent.
-    let archive: () -> Void
+    let existingItems: [Item]
+    let save: (Item) -> Bool
+    @State private var showingSaveError = false
 
     init(
         item: Item,
         hasHome: Bool,
-        save: @escaping (Item) -> Void,
-        archive: @escaping () -> Void
+        existingItems: [Item],
+        save: @escaping (Item) -> Bool
     ) {
         _draft = State(initialValue: item)
         self.original = item
         self.hasHome = hasHome
+        self.existingItems = existingItems
         self.save = save
-        self.archive = archive
     }
 
-    private let maxNameLength = 24
+    private var trimmedName: String {
+        draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var trimmedWord: String {
+        draft.word.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var nameIsAvailable: Bool {
+        Item.isNameAvailable(trimmedName, among: existingItems, excluding: draft.id)
+    }
+
+    private var canSave: Bool {
+        !trimmedName.isEmpty && !trimmedWord.isEmpty && nameIsAvailable
+    }
 
     var body: some View {
         NavigationStack {
@@ -37,14 +50,19 @@ struct ItemSettingsView: View {
                 Section {
                     TextField(Copy.nameFieldTitle, text: $draft.name)
                         .onChange(of: draft.name) { _, new in
-                            if new.count > maxNameLength {
-                                draft.name = String(new.prefix(maxNameLength))
+                            if new.count > Item.maxNameLength {
+                                draft.name = String(new.prefix(Item.maxNameLength))
                             }
                         }
                 } header: {
                     Text(Copy.nameFieldTitle)
                 } footer: {
-                    Text(Copy.nameFieldFooter)
+                    if !trimmedName.isEmpty && !nameIsAvailable {
+                        Text(Copy.nameAlreadyUsed)
+                            .foregroundStyle(Palette.amber)
+                    } else {
+                        Text(Copy.nameFieldFooter)
+                    }
                 }
 
                 Section {
@@ -58,7 +76,12 @@ struct ItemSettingsView: View {
                 } header: {
                     Text(Copy.wordFieldTitle)
                 } footer: {
-                    Text(Copy.wordFieldFooter)
+                    if trimmedWord.isEmpty {
+                        Text(Copy.wordFieldRequired)
+                            .foregroundStyle(Palette.amber)
+                    } else {
+                        Text(Copy.wordFieldFooter)
+                    }
                 }
 
                 Section {
@@ -112,16 +135,6 @@ struct ItemSettingsView: View {
                     }
                 }
 
-                Section {
-                    Button(Copy.putItAway, role: .destructive) {
-                        // Dismiss first: archiving the last item swaps the whole
-                        // hierarchy out from under this sheet.
-                        dismiss()
-                        archive()
-                    }
-                } footer: {
-                    Text(Copy.putItAwayFooter)
-                }
             }
             .scrollContentBackground(.hidden)
             .background(Palette.ink)
@@ -131,18 +144,28 @@ struct ItemSettingsView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(Copy.done) {
                         var edited = draft
+                        edited.name = trimmedName
+                        edited.word = trimmedWord
                         // Once they have written their own words, the text is
                         // theirs and must never be relocalized out from under them.
                         if edited.name != original.name || edited.word != original.word {
                             edited.chipID = nil
                         }
-                        save(edited)
-                        dismiss()
+                        if save(edited) {
+                            dismiss()
+                        } else {
+                            showingSaveError = true
+                        }
                     }
-                    .disabled(draft.name.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(!canSave)
                 }
             }
         }
         .presentationDetents([.medium, .large])
+        .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
+            Button(Copy.ok) {}
+        } message: {
+            Text(Copy.saveFailedBody)
+        }
     }
 }

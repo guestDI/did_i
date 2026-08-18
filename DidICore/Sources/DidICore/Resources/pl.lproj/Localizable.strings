@@ -154,3 +154,36 @@
 "Quick one before you head out" = "Szybka rzecz przed wyjściem";
 "Add the widget so you never have to open this app again. Long-press → Edit → Add widget." = "Dodaj widżet, żeby już nie otwierać tej aplikacji. Przytrzymaj → Edytuj → Dodaj widżet.";
 "No record for %@" = "Brak wpisu dla %@";
+
+/* UX hardening: factual confirmation, recovery and validation copy. */
+"Logged. Your confirmation is on the record." = "Zapisane. Twoje potwierdzenie jest w rejestrze.";
+"Done. Future you has a timestamp now." = "Gotowe. Twoje przyszłe ja ma teraz znacznik czasu.";
+"Noted. One less thing to remember." = "Odnotowane. O jedną rzecz mniej do pamiętania.";
+"Got it. The board has your back." = "Mam. Tablica zachowała ten wpis.";
+"Recorded for posterity and peace of mind." = "Zapisane dla potomności i świętego spokoju.";
+"Yep. Consider the check logged." = "Tak. Uznaj sprawdzenie za zapisane.";
+"Marked. Past you left a receipt." = "Zaznaczone. Twoje wcześniejsze ja zostawiło potwierdzenie.";
+"Filed under \"confirmed\"." = "W teczce „potwierdzone”.";
+"Third confirmation today. Latest one logged." = "Trzecie potwierdzenie dzisiaj. Najnowsze zapisane.";
+"Confirmed again. The newest timestamp is on the board." = "Potwierdzone ponownie. Najnowszy czas jest na tablicy.";
+"Updated. This confirmation replaces the last." = "Zaktualizowano. To potwierdzenie zastępuje poprzednie.";
+"Green means a current confirmation · amber means no current record" = "Zielony = aktualne potwierdzenie · bursztynowy = brak aktualnego wpisu";
+"View steps" = "Pokaż kroki";
+"Home saved." = "Dom zapisany.";
+"Home is set. Leaving home clears the board automatically." = "Dom jest ustawiony. Wyjście automatycznie czyści tablicę.";
+"Muted from the summary until you're home." = "Wyciszono w podsumowaniu do powrotu do domu.";
+"On the board, open an item's More menu → \"Forget this after\"." = "Na tablicy otwórz menu Więcej przy elemencie → „Zapomnij po”.";
+"That name is already on your board or in Previously." = "Ta nazwa jest już na tablicy lub w sekcji Wcześniej.";
+"Add a status word so the confirmed state stays clear." = "Dodaj słowo stanu, aby potwierdzenie było czytelne.";
+"Couldn't save that" = "Nie udało się zapisać";
+"Your previous record is unchanged. Try again." = "Poprzedni wpis pozostał bez zmian. Spróbuj ponownie.";
+"Couldn't open your board" = "Nie udało się otworzyć tablicy";
+"We didn't change your records. Try again." = "Twoje wpisy nie zostały zmienione. Spróbuj ponownie.";
+"Try again" = "Spróbuj ponownie";
+"Most checked: %@. %lld checks." = "Najczęściej sprawdzane: %@. Sprawdzenia: %lld.";
+"Next: %@. %lld checks." = "Następne: %@. Sprawdzenia: %lld.";
+"%@: confirmed at least once this week." = "%@: potwierdzono co najmniej raz w tym tygodniu.";
+"%lld checks this week. Each one has a timestamp." = "%lld sprawdzeń w tym tygodniu. Każde ma znacznik czasu.";
+"%lld checks recorded. The latest ones are on the board." = "Zapisane sprawdzenia: %lld. Najnowsze są na tablicy.";
+"A week of confirmations, kept on your phone." = "Tydzień potwierdzeń zapisany na telefonie.";
+"%@. You've been checking this a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to put it away." = "%@. Ostatnio często to sprawdzasz. Ta aplikacja ma kończyć sprawdzanie, a nie stać się kolejną rzeczą do sprawdzania. Jeśli nie pomaga, możesz schować ten element.";

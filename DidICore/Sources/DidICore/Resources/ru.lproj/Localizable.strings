@@ -154,3 +154,36 @@
 "Quick one before you head out" = "Быстрое дело перед выходом";
 "Add the widget so you never have to open this app again. Long-press → Edit → Add widget." = "Добавь виджет, чтобы больше не открывать приложение. Удерживай → Изменить → Добавить виджет.";
 "No record for %@" = "Нет записи для %@";
+
+/* UX hardening: factual confirmation, recovery and validation copy. */
+"Logged. Your confirmation is on the record." = "Записано. Подтверждение сохранено.";
+"Done. Future you has a timestamp now." = "Готово. У будущего тебя теперь есть отметка времени.";
+"Noted. One less thing to remember." = "Записано. Одной вещью для памяти меньше.";
+"Got it. The board has your back." = "Принято. Запись сохранена на доске.";
+"Recorded for posterity and peace of mind." = "Записано для истории и душевного спокойствия.";
+"Yep. Consider the check logged." = "Ага. Считай проверку записанной.";
+"Marked. Past you left a receipt." = "Отмечено. Прошлый ты оставил подтверждение.";
+"Filed under \"confirmed\"." = "В папку «подтверждено».";
+"Third confirmation today. Latest one logged." = "Третье подтверждение за сегодня. Последнее записано.";
+"Confirmed again. The newest timestamp is on the board." = "Подтверждено снова. Новая отметка времени уже на доске.";
+"Updated. This confirmation replaces the last." = "Обновлено. Это подтверждение заменяет предыдущее.";
+"Green means a current confirmation · amber means no current record" = "Зелёный = актуальное подтверждение · янтарный = актуальной записи нет";
+"View steps" = "Показать шаги";
+"Home saved." = "Дом сохранён.";
+"Home is set. Leaving home clears the board automatically." = "Дом задан. При уходе доска очищается автоматически.";
+"Muted from the summary until you're home." = "Скрыто из сводки до возвращения домой.";
+"On the board, open an item's More menu → \"Forget this after\"." = "На доске открой меню «Другие действия» у пункта → «Забыть через».";
+"That name is already on your board or in Previously." = "Такое название уже есть на доске или в разделе «Раньше».";
+"Add a status word so the confirmed state stays clear." = "Добавь слово статуса, чтобы подтверждение было понятным.";
+"Couldn't save that" = "Не удалось сохранить";
+"Your previous record is unchanged. Try again." = "Предыдущая запись не изменилась. Попробуй ещё раз.";
+"Couldn't open your board" = "Не удалось открыть доску";
+"We didn't change your records. Try again." = "Записи не были изменены. Попробуй ещё раз.";
+"Try again" = "Попробовать ещё раз";
+"Most checked: %@. %lld checks." = "Чаще всего проверялось: %@. Проверок: %lld.";
+"Next: %@. %lld checks." = "Далее: %@. Проверок: %lld.";
+"%@: confirmed at least once this week." = "%@: подтверждено хотя бы раз за эту неделю.";
+"%lld checks this week. Each one has a timestamp." = "%lld проверок за неделю. У каждой есть отметка времени.";
+"%lld checks recorded. The latest ones are on the board." = "Записано проверок: %lld. Последние видны на доске.";
+"A week of confirmations, kept on your phone." = "Неделя подтверждений сохранена на телефоне.";
+"%@. You've been checking this a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to put it away." = "%@. В последнее время ты часто это проверяешь. Приложение должно прекращать проверки, а не становиться ещё одной вещью для проверки. Если оно не помогает, этот пункт можно убрать.";

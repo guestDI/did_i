@@ -15,10 +15,23 @@ struct AddItemSheet: View {
     @State private var swapping = false
     @State private var custom = ""
     @State private var typing = false
+    @State private var showingSaveError = false
     @FocusState private var focused: Bool
 
     /// Chips they do not already have, on the board or in the archive.
     private var available: [Chip] { Chip.available(excluding: store.items) }
+
+    private var trimmedCustom: String {
+        custom.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var customNameIsAvailable: Bool {
+        Item.isNameAvailable(trimmedCustom, among: store.items)
+    }
+
+    private var canAddCustom: Bool {
+        !trimmedCustom.isEmpty && customNameIsAvailable
+    }
 
     var body: some View {
         NavigationStack {
@@ -36,12 +49,16 @@ struct AddItemSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(suggestion != nil ? Copy.SecondItemPrompt.decline : Copy.close) {
-                        if suggestion != nil { decline() }
-                        dismiss()
+                        if suggestion == nil || decline() { dismiss() }
                     }
                     .foregroundStyle(Palette.muted)
                 }
             }
+        }
+        .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
+            Button(Copy.ok) {}
+        } message: {
+            Text(Copy.saveFailedBody)
         }
     }
 
@@ -51,16 +68,20 @@ struct AddItemSheet: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 Text(suggestion != nil ? Copy.SecondItemPrompt.title : Copy.addAnItem)
-                    .font(board(18, .semibold))
+                    .font(boardScaled(.headline, .semibold))
                     .foregroundStyle(Palette.text)
                 Text(suggestion != nil ? Copy.SecondItemPrompt.body : Copy.pickOne)
-                    .font(.system(size: 14))
+                    .font(.subheadline)
                     .foregroundStyle(Palette.sub)
                     .padding(.top, 10)
 
                 if typing {
-                    TextField(Copy.Screen1.placeholder, text: $custom)
-                        .font(board(15))
+                    TextField(
+                        Copy.nameFieldTitle,
+                        text: $custom,
+                        prompt: Text(Copy.Screen1.placeholder)
+                    )
+                        .font(boardScaled(.body))
                         .submitLabel(.done)
                         .focused($focused)
                         .onChange(of: custom) { _, new in
@@ -69,14 +90,28 @@ struct AddItemSheet: View {
                             }
                         }
                         .onSubmit {
-                            let trimmed = custom.trimmingCharacters(in: .whitespacesAndNewlines)
-                            if !trimmed.isEmpty { add(.somethingElse, named: trimmed) }
+                            if canAddCustom { add(.somethingElse, named: trimmedCustom) }
                         }
                         .padding(.vertical, 16)
                         .padding(.horizontal, 18)
                         .background(Palette.panel, in: .rect(cornerRadius: 14))
                         .padding(.top, 22)
                         .onAppear { focused = true }
+                        .accessibilityLabel(Copy.nameFieldTitle)
+
+                    if !trimmedCustom.isEmpty && !customNameIsAvailable {
+                        Text(Copy.nameAlreadyUsed)
+                            .font(.footnote)
+                            .foregroundStyle(Palette.amber)
+                            .padding(.top, 8)
+                    }
+
+                    Button(Copy.Screen1.returnKey) {
+                        add(.somethingElse, named: trimmedCustom)
+                    }
+                    .buttonStyle(PrimaryButton())
+                    .disabled(!canAddCustom)
+                    .padding(.top, 14)
                 } else {
                     chips.padding(.top, 22)
                 }
@@ -95,7 +130,7 @@ struct AddItemSheet: View {
                     if chip.id == Chip.somethingElse.id { typing = true } else { add(chip) }
                 } label: {
                     Text(chip.label)
-                        .font(board(12))
+                        .font(boardScaled(.callout))
                         .tracking(1.6)
                         .textCase(.uppercase)
                         .foregroundStyle(Palette.text)
@@ -115,10 +150,10 @@ struct AddItemSheet: View {
     private var capReached: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Copy.Cap.title)
-                .font(board(18, .semibold))
+                .font(boardScaled(.headline, .semibold))
                 .foregroundStyle(Palette.text)
             Text(Copy.Cap.body)
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundStyle(Palette.sub)
                 .padding(.top, 14)
             Spacer()
@@ -127,10 +162,8 @@ struct AddItemSheet: View {
             Button(Copy.Cap.swap) { swapping = true }
                 .buttonStyle(PrimaryButton())
             Button(Copy.Cap.neverMind) { dismiss() }
-                .font(.system(size: 13))
-                .foregroundStyle(Palette.muted)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 16)
+                .buttonStyle(SecondaryButton())
+                .padding(.top, 4)
         }
         .padding(30)
     }
@@ -140,7 +173,7 @@ struct AddItemSheet: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 Text(Copy.whichOneGoes)
-                    .font(board(18, .semibold))
+                    .font(boardScaled(.headline, .semibold))
                     .foregroundStyle(Palette.text)
                     .padding(.bottom, 8)
 
@@ -148,7 +181,7 @@ struct AddItemSheet: View {
                     Button { swapOut(item) } label: {
                         HStack {
                             Text(Copy.Cap.usage(item: item, now: .now))
-                                .font(.system(size: 14))
+                                .font(.subheadline)
                                 .foregroundStyle(Palette.text)
                                 .multilineTextAlignment(.leading)
                             Spacer()
@@ -169,32 +202,40 @@ struct AddItemSheet: View {
     // MARK: - Actions
 
     private func add(_ chip: Chip, named name: String? = nil) {
-        save { $0.add(chip.item(named: name, createdAt: .now)) }
+        guard save({ $0.add(chip.item(named: name, createdAt: .now)) }) else { return }
         dismiss()
     }
 
     private func restore(_ item: Item) {
-        save { $0.unarchive(item.id) }
+        guard save({ $0.unarchive(item.id) }) else { return }
         dismiss()
     }
 
     /// Archive, never delete.
     private func swapOut(_ item: Item) {
-        save { $0.archive(item.id, at: .now) }
+        guard save({ $0.archive(item.id, at: .now) }) else { return }
         swapping = false
     }
 
-    private func decline() {
+    private func decline() -> Bool {
         save {
             $0.usage.declineCount += 1
             $0.usage.lastDeclinedAt = .now
         }
     }
 
-    private func save(_ change: (inout Store) -> Void) {
-        try? StoreIO.mutate(change)
-        store = StoreIO.read()
-        WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+    @discardableResult
+    private func save(_ change: (inout Store) -> Void) -> Bool {
+        do {
+            try StoreIO.mutate(change)
+            store = try StoreIO.load()
+            WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+            return true
+        } catch {
+            showingSaveError = true
+            UIAccessibility.post(notification: .announcement, argument: Copy.saveFailedBody)
+            return false
+        }
     }
 }
 
@@ -209,7 +250,7 @@ struct PreviouslyList: View {
         if !archived.isEmpty {
             VStack(alignment: .leading, spacing: 0) {
                 Text(Copy.previouslySection)
-                    .font(board(9))
+                    .font(boardScaled(.caption2))
                     .tracking(3)
                     .textCase(.uppercase)
                     .foregroundStyle(Palette.dim)
@@ -219,7 +260,7 @@ struct PreviouslyList: View {
                     Button { onRestore(item) } label: {
                         HStack {
                             Text(item.name)
-                                .font(board(13))
+                                .font(boardScaled(.subheadline))
                                 .foregroundStyle(Palette.text)
                             Spacer()
                             Image(systemName: "arrow.uturn.backward")
@@ -249,7 +290,7 @@ struct ParanoiaCard: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(Copy.Paranoia.title)
-                    .font(board(9))
+                    .font(boardScaled(.caption2))
                     .tracking(3)
                     .textCase(.uppercase)
                     .foregroundStyle(Palette.dim)
@@ -258,6 +299,8 @@ struct ParanoiaCard: View {
                     Image(systemName: "xmark")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(Palette.dim)
+                        .frame(width: 44, height: 44)
+                        .contentShape(.rect)
                 }
                 .accessibilityLabel(Copy.dismiss)
             }
@@ -273,7 +316,7 @@ struct ParanoiaCard: View {
                 .foregroundStyle(Palette.amber)
                 .padding(.top, 6)
         }
-        .font(.system(size: 13))
+        .font(.footnote)
         // Every line here is a joke; a clipped punchline is worse than no card.
         .fixedSize(horizontal: false, vertical: true)
         .padding(18)

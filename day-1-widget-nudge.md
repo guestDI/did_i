@@ -75,7 +75,7 @@ Do not send a "your stove confirmation expired" notification. It's alarming, it'
 
 **They install the widget, then remove it later.** Do not re-arm the nudge. They've made an informed choice.
 
-**They tapped "Show me" on Day 0 but never installed.** Same as any other non-install: the nudge fires as scheduled.
+**They tapped "View steps" on Day 0 but never installed.** Same as any other non-install: the nudge fires as scheduled.
 
 **Notification permission granted, then revoked in Settings.** iOS drops the notification silently. Mark the nudge as fired anyway on next app open. Never surface "notifications are off" as a warning banner — it's their phone.
 

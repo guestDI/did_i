@@ -872,3 +872,41 @@ server-based privacy promise, small-widget instruction, app-opening VoiceOver
 hint, and location-denial recovery action now have translations. Both system
 location permission dialogs also have per-locale `InfoPlist.strings`, so the most
 sensitive copy no longer falls back to English.
+
+## UX hardening pass
+
+**Every user-initiated store write is transactional in the UI.** Confirming,
+undoing, adding, editing, archiving, restoring, setting home and completing a
+setup step now advance, dismiss, animate and fire success haptics only after the
+write succeeds. A failed initial read shows a retry state instead of pretending
+the user has an empty board. Background best-effort bookkeeping remains quiet.
+
+**Confirmation copy records evidence, not physical truth.** A tap proves that the
+user made a confirmation at a time; it cannot prove a stove is currently off, a
+door is locked, or that nothing bad happened. The general, escalation, weekly and
+guardrail lines now describe timestamps and observed app activity only. Weekly
+totals are interpolated from the real count. Legacy localisation keys remain in
+the string files so an old persisted confirmation line can still be translated.
+
+**The existing feature set stays intact, with recovery paths made visible.** Undo
+remains on long-press and is also in the row's More menu. Away-state mute and
+share actions remain and are now visible below the affected row. Archiving,
+restoring, suggestions, decay education, location setup and the weekly card are
+unchanged in scope. Destructive semantic roles were removed because they rendered
+red, which violates the product's standing colour rule; confirmation remains.
+
+**Small screens and accessibility sizes scroll instead of clipping.** Onboarding,
+setup sheets and the board use semantic type and scrollable containers, with
+44-point secondary controls. At accessibility sizes the board swaps the decorative
+flap word for readable semantic text. Custom names are trimmed, case-insensitive
+duplicates across active and archived items are rejected, and a blank custom
+status word cannot be saved.
+
+**The six-item medium widget is a 3 × 2 grid.** All six items remain visible, but
+the previous 2 × 3 layout made each tappable row too short. Two rows preserve a
+minimum 44-point hit target without changing the cap or removing configuration.
+
+**The widget onboarding action says what exists.** There is still no video asset,
+so `View steps` opens the existing captioned walkthrough. Calling it `Show me`
+implied a video the app did not contain. This is a copy correction, not a removed
+flow; a real localised video can replace the sheet later.

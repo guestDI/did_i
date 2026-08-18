@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var showingWalkthrough = false
     @State private var settingHome = false
     @State private var authorization = LocationMonitor.shared.status
+    @State private var showingSaveError = false
 
     private var locationRevoked: Bool {
         store.home != nil && authorization != .authorizedAlways
@@ -44,7 +45,7 @@ struct SettingsView: View {
                         if authorization == .denied {
                             Button(Copy.HomeSettings.openSystemSettings) { openSystemSettings() }
                         }
-                        Button(Copy.HomeSettings.reset, role: .destructive) { resetHome() }
+                        Button(Copy.HomeSettings.reset) { resetHome() }
                     }
                 } header: {
                     Text(Copy.HomeSettings.section)
@@ -67,7 +68,7 @@ struct SettingsView: View {
 
                 Section {
                     Text(Copy.resetRuleHint)
-                        .font(.system(size: 13))
+                        .font(.footnote)
                         .foregroundStyle(Palette.sub)
                 }
             }
@@ -78,7 +79,11 @@ struct SettingsView: View {
                 // the capture step if location was already granted.
                 DayTwoFlow(step: homeStep) {
                     settingHome = false
-                    store = StoreIO.read()
+                    do {
+                        store = try StoreIO.load()
+                    } catch {
+                        showingSaveError = true
+                    }
                     authorization = LocationMonitor.shared.status
                 }
             }
@@ -96,21 +101,31 @@ struct SettingsView: View {
                     Button(Copy.done) { dismiss() }
                 }
             }
+            .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
+                Button(Copy.ok) {}
+            } message: {
+                Text(Copy.saveFailedBody)
+            }
         }
     }
 
     /// day-2: "They set home at the office by mistake." Provide the reset; do not
     /// try to detect it.
     private func resetHome() {
-        LocationMonitor.shared.stopMonitoring()
-        try? StoreIO.mutate {
-            $0.home = nil
-            $0.lastLeftHomeAt = nil
-            $0.lastEnteredHomeAt = nil
-            $0.flags.homeSetupPending = true
-            $0.flags.homeSetupDeferredUntil = nil
+        do {
+            try StoreIO.mutate {
+                $0.home = nil
+                $0.lastLeftHomeAt = nil
+                $0.lastEnteredHomeAt = nil
+                $0.flags.homeSetupPending = true
+                $0.flags.homeSetupDeferredUntil = nil
+            }
+            LocationMonitor.shared.stopMonitoring()
+            store = try StoreIO.load()
+        } catch {
+            showingSaveError = true
+            UIAccessibility.post(notification: .announcement, argument: Copy.saveFailedBody)
         }
-        store = StoreIO.read()
     }
 
     private func openSystemSettings() {

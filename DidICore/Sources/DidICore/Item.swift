@@ -1,6 +1,8 @@
 import Foundation
 
 public struct Item: Codable, Identifiable, Sendable, Equatable {
+    public static let maxNameLength = 24
+
     public let id: UUID
     public var name: String            // max 24 chars, widget-safe
     public var word: String            // board status word: OFF, LOCKED, DOWN
@@ -73,5 +75,27 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
         self.mutedUntilHome = mutedUntilHome
         self.archiveOfferedAt = archiveOfferedAt
         self.chipID = chipID
+    }
+
+    /// Widget configuration is a name-only picker. Two visually identical names
+    /// make it impossible to know which item a widget will confirm, so uniqueness
+    /// is checked across both the board and Previously.
+    public static func isNameAvailable(
+        _ candidate: String,
+        among items: [Item],
+        excluding excludedID: UUID? = nil,
+        locale: Locale = .current
+    ) -> Bool {
+        let normalized = normalizedName(candidate, locale: locale)
+        guard !normalized.isEmpty else { return false }
+        return !items.contains {
+            $0.id != excludedID && normalizedName($0.name, locale: locale) == normalized
+        }
+    }
+
+    private static func normalizedName(_ value: String, locale: Locale) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: locale)
     }
 }

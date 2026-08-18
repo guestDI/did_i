@@ -144,9 +144,14 @@ public extension Store {
         items[i].archivedAt = date
     }
 
+    /// Coming back means "off" again, not "still whatever it was when it left".
+    /// `lastConfirmedAt` otherwise survives the archive untouched, so a door put
+    /// away confirmed reappears confirmed — a stale green with no way to earn it.
     mutating func unarchive(_ id: UUID) {
         guard let i = items.firstIndex(where: { $0.id == id }) else { return }
         items[i].archivedAt = nil
+        items[i].lastConfirmedAt = nil
+        items[i].archiveOfferedAt = nil
     }
 
     /// Surfaced in the add-item sheet under a quiet "Previously" section, so
@@ -308,13 +313,14 @@ public enum ParanoiaCounter {
         // Something amusing to show means at least one item checked 10+ times.
         guard let top = ranked.first, top.1 >= 10 else { return nil }
 
+        let closing = Copy.Paranoia.closing(totalChecks: thisWeek)
         return Card(
             topWorry: top.0,
             topChecks: top.1,
             runnerUp: ranked.count > 1 ? ranked[1].0 : nil,
             runnerUpChecks: ranked.count > 1 ? ranked[1].1 : 0,
             reassurance: ranked.last?.0 ?? top.0,
-            closingLine: Copy.Paranoia.closing.randomElement() ?? Copy.Paranoia.closing[0]
+            closingLine: closing.randomElement() ?? closing[0]
         )
     }
 }

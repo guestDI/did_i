@@ -10,6 +10,7 @@ struct OnboardingView: View {
 
     @State private var store: Store
     @State private var screen: Int
+    @State private var showingSaveError = false
     let finished: () -> Void
 
     init(store: Store, finished: @escaping () -> Void) {
@@ -33,6 +34,11 @@ struct OnboardingView: View {
             }
         }
         .animation(.snappy, value: screen)
+        .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
+            Button(Copy.ok) {}
+        } message: {
+            Text(Copy.saveFailedBody)
+        }
     }
 
     // MARK: - Screen 1 → 2
@@ -42,12 +48,12 @@ struct OnboardingView: View {
         // of the way. day-3 is explicit that we never re-onboard.
         let returning = store.flags.isComplete
         let item = chip.item(named: name, createdAt: .now)
-        save {
+        guard save({
             if $0.flags.installedAt == nil { $0.flags.installedAt = .now }
             if $0.flags.firstItemType == nil { $0.flags.firstItemType = chip.id }
             $0.add(item)
             if !returning { $0.flags.completedScreen = 1 }
-        }
+        }) else { return }
         if returning { finished() } else { screen = 2 }
     }
 
@@ -55,24 +61,33 @@ struct OnboardingView: View {
     /// sheet — which an empty board can never reach. Without this, archiving your
     /// last item strands everything you ever archived.
     private func restore(_ item: Item) {
-        save { $0.unarchive(item.id) }
+        guard save({ $0.unarchive(item.id) }) else { return }
         if store.flags.isComplete { finished() } else { screen = 2 }
     }
 
     private func advance(from finishedScreen: Int) {
-        save { $0.flags.completedScreen = max($0.flags.completedScreen, finishedScreen) }
+        guard save({
+            $0.flags.completedScreen = max($0.flags.completedScreen, finishedScreen)
+        }) else { return }
         screen = finishedScreen + 1
     }
 
     private func finish() {
-        save { $0.flags.completedScreen = OnboardingFlags.lastScreen }
+        guard save({ $0.flags.completedScreen = OnboardingFlags.lastScreen }) else { return }
         finished()
     }
 
-    private func save(_ change: (inout Store) -> Void) {
-        try? StoreIO.mutate(change)
-        store = StoreIO.read()
-        WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+    private func save(_ change: (inout Store) -> Void) -> Bool {
+        do {
+            try StoreIO.mutate(change)
+            store = try StoreIO.load()
+            WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+            return true
+        } catch {
+            showingSaveError = true
+            UIAccessibility.post(notification: .announcement, argument: Copy.saveFailedBody)
+            return false
+        }
     }
 }
 
@@ -93,63 +108,87 @@ private struct PickItemScreen: View {
         custom.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var nameIsAvailable: Bool {
+        Item.isNameAvailable(trimmed, among: items)
+    }
+
+    private var canAddCustom: Bool {
+        !trimmed.isEmpty && nameIsAvailable
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(Copy.Screen1.title)
-                .font(board(21, .semibold))
-                .foregroundStyle(Palette.text)
-            Text(Copy.Screen1.subtitle)
-                .font(.system(size: 13.5))
-                .foregroundStyle(Palette.sub)
-                .padding(.top, 12)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(Copy.Screen1.title)
+                        .font(boardScaled(.title3, .semibold))
+                        .foregroundStyle(Palette.text)
+                    Text(Copy.Screen1.subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(Palette.sub)
+                        .padding(.top, 12)
 
-            if typing {
-                Button(Copy.back) { typing = false; custom = "" }
-                    .font(.system(size: 13))
-                    .foregroundStyle(Palette.muted)
-                    .padding(.top, 28)
+                    if typing {
+                        Button(Copy.back) { typing = false; custom = "" }
+                            .buttonStyle(SecondaryButton(alignment: .leading))
+                            .padding(.top, 16)
 
-                // Return key stays disabled when empty. No error, no red border.
-                TextField(Copy.Screen1.placeholder, text: $custom)
-                    .font(board(15))
-                    .textInputAutocapitalization(.sentences)
-                    .submitLabel(.done)
-                    .focused($focused)
-                    .onChange(of: custom) { _, new in
-                        if new.count > Item.maxNameLength {
-                            custom = String(new.prefix(Item.maxNameLength))
+                        TextField(
+                            Copy.nameFieldTitle,
+                            text: $custom,
+                            prompt: Text(Copy.Screen1.placeholder)
+                        )
+                        .font(boardScaled(.body))
+                        .textInputAutocapitalization(.sentences)
+                        .submitLabel(.done)
+                        .focused($focused)
+                        .onChange(of: custom) { _, new in
+                            if new.count > Item.maxNameLength {
+                                custom = String(new.prefix(Item.maxNameLength))
+                            }
                         }
-                    }
-                    .onSubmit { if !trimmed.isEmpty { onPick(.somethingElse, trimmed) } }
-                    .padding(.vertical, 16)
-                    .padding(.horizontal, 18)
-                    .background(Palette.panel, in: .rect(cornerRadius: 14))
-                    .padding(.top, 12)
-                    .onAppear { focused = true }
-                    .accessibilityLabel(Copy.Screen1.returnKey)
-            } else {
-                chips.padding(.top, 28)
-            }
+                        .onSubmit { if canAddCustom { onPick(.somethingElse, trimmed) } }
+                        .padding(.vertical, 16)
+                        .padding(.horizontal, 18)
+                        .background(Palette.panel, in: .rect(cornerRadius: 14))
+                        .padding(.top, 8)
+                        .onAppear { focused = true }
+                        .accessibilityLabel(Copy.nameFieldTitle)
 
-            if archived.isEmpty {
-                Spacer()
-            } else {
-                // Can grow past the screen, unlike the fixed chip grid.
-                ScrollView {
+                        if !trimmed.isEmpty && !nameIsAvailable {
+                            Text(Copy.nameAlreadyUsed)
+                                .font(.footnote)
+                                .foregroundStyle(Palette.amber)
+                                .padding(.top, 8)
+                        }
+
+                        Button(Copy.Screen1.returnKey) {
+                            onPick(.somethingElse, trimmed)
+                        }
+                        .buttonStyle(PrimaryButton())
+                        .disabled(!canAddCustom)
+                        .padding(.top, 14)
+                    } else {
+                        chips.padding(.top, 28)
+                    }
+
+                    Spacer(minLength: 24)
                     PreviouslyList(archived: archived, onRestore: onRestore)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .padding(.bottom, 20)
-            }
+                        .padding(.bottom, 20)
 
-            Text(Copy.Screen1.footer)
-                .font(.system(size: 11))
-                .foregroundStyle(Palette.dim)
-                .frame(maxWidth: .infinity)
+                    Text(Copy.Screen1.footer)
+                        .font(.caption)
+                        .foregroundStyle(Palette.dim)
+                        .frame(maxWidth: .infinity)
+                }
+                .frame(minHeight: geometry.size.height)
+                .padding(.horizontal, 26)
+                .padding(.top, 40)
+                .padding(.bottom, 30)
+            }
+            .scrollIndicators(.hidden)
         }
-        .padding(.horizontal, 26)
-        .padding(.top, 40)
-        .padding(.bottom, 30)
     }
 
     private var chips: some View {
@@ -160,7 +199,7 @@ private struct PickItemScreen: View {
                     if chip.id == Chip.somethingElse.id { typing = true } else { onPick(chip, nil) }
                 } label: {
                     Text(chip.label)
-                        .font(board(12))
+                        .font(boardScaled(.callout))
                         .tracking(1.6)
                         .textCase(.uppercase)
                         .foregroundStyle(Palette.text)
@@ -184,64 +223,81 @@ private struct PracticeScreen: View {
 
     @State private var confirmed = false
     @State private var advanceTask: Task<Void, Never>?
+    @State private var showingSaveError = false
 
     private var item: Item? { store.active.first }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(Copy.Screen2.title)
-                .font(board(21, .semibold))
-                .foregroundStyle(Palette.text)
-            Text(Copy.Screen2.subtitle)
-                .font(.system(size: 13.5))
-                .foregroundStyle(Palette.sub)
-                .padding(.top, 12)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(Copy.Screen2.title)
+                        .font(boardScaled(.title3, .semibold))
+                        .foregroundStyle(Palette.text)
+                    Text(Copy.Screen2.subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(Palette.sub)
+                        .padding(.top, 12)
 
-            Spacer()
+                    Spacer(minLength: 36)
 
-            if let item {
-                BoardRow(
-                    item: item,
-                    state: confirmed ? .confirmed(age: 0, freshness: .fresh) : .unknown,
-                    statusOverride: confirmed ? Copy.Screen2.loggedJustNow : nil,
-                    onConfirm: { confirm(item) },
-                    onUndo: confirmed ? { undo(item) } : nil
-                )
-                .padding(.horizontal, -26)
+                    if let item {
+                        BoardRow(
+                            item: item,
+                            state: confirmed ? .confirmed(age: 0, freshness: .fresh) : .unknown,
+                            statusOverride: confirmed ? Copy.Screen2.loggedJustNow : nil,
+                            onConfirm: { confirm(item) },
+                            onUndo: confirmed ? { undo(item) } : nil
+                        )
+                        .padding(.horizontal, -26)
 
-                if confirmed {
-                    Text(Copy.onboardingConfirmation)
-                        .font(board(11, .medium))
-                        .foregroundStyle(Palette.fresh)
-                        .padding(.top, 18)
-                        .transition(.opacity)
+                        if confirmed {
+                            Text(Copy.onboardingConfirmation)
+                                .font(boardScaled(.caption, .medium))
+                                .foregroundStyle(Palette.fresh)
+                                .padding(.top, 18)
+                                .transition(.opacity)
+                        }
+                    }
+
+                    Spacer(minLength: 36)
+
+                    Text(Copy.Screen2.footer)
+                        .font(.caption)
+                        .foregroundStyle(Palette.dim)
+                        .frame(maxWidth: .infinity)
                 }
+                .frame(minHeight: geometry.size.height)
+                .padding(.horizontal, 26)
+                .padding(.top, 40)
+                .padding(.bottom, 30)
+                .contentShape(.rect)
+                // Auto-advance after 2.5s, or on tap of anywhere.
+                .onTapGesture { if confirmed { onDone() } }
             }
-
-            Spacer()
-
-            Text(Copy.Screen2.footer)
-                .font(.system(size: 11))
-                .foregroundStyle(Palette.dim)
-                .frame(maxWidth: .infinity)
+            .scrollIndicators(.hidden)
         }
-        .padding(.horizontal, 26)
-        .padding(.top, 40)
-        .padding(.bottom, 30)
-        .contentShape(.rect)
-        // Auto-advance after 2.5s, or on tap of anywhere.
-        .onTapGesture { if confirmed { onDone() } }
+        .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
+            Button(Copy.ok) {}
+        } message: {
+            Text(Copy.saveFailedBody)
+        }
     }
 
     /// Not a simulation: real haptic, real entry in the real store.
     private func confirm(_ item: Item) {
         guard !confirmed else { return onDone() }
-        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-        try? StoreIO.mutate {
-            $0.confirm(id: item.id, at: .now)
-            $0.flags.practiceTapCompleted = true
+        do {
+            try StoreIO.mutate {
+                $0.confirm(id: item.id, at: .now)
+                $0.flags.practiceTapCompleted = true
+            }
+            store = try StoreIO.load()
+        } catch {
+            reportSaveError()
+            return
         }
-        store = StoreIO.read()
+        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
 
         withAnimation(.snappy) { confirmed = true }
@@ -259,12 +315,22 @@ private struct PracticeScreen: View {
     /// rather than a lookalike.
     private func undo(_ item: Item) {
         advanceTask?.cancel()
+        do {
+            try StoreIO.mutate { $0.undo(id: item.id) }
+            store = try StoreIO.load()
+        } catch {
+            reportSaveError()
+            return
+        }
         UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
-        try? StoreIO.mutate { $0.undo(id: item.id) }
-        store = StoreIO.read()
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
         withAnimation(.snappy) { confirmed = false }
         UIAccessibility.post(notification: .announcement, argument: Copy.undone)
+    }
+
+    private func reportSaveError() {
+        showingSaveError = true
+        UIAccessibility.post(notification: .announcement, argument: Copy.saveFailedBody)
     }
 }
 
@@ -277,48 +343,51 @@ private struct WidgetScreen: View {
 
     @State private var showingWalkthrough = false
     @State private var askingAboutNudge = false
+    @State private var showingSaveError = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(Copy.Screen3.title)
-                .font(board(21, .semibold))
-                .foregroundStyle(Palette.text)
-            Text(Copy.Screen3.subtitle)
-                .font(.system(size: 13.5))
-                .foregroundStyle(Palette.sub)
-                .padding(.top, 12)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(Copy.Screen3.title)
+                        .font(boardScaled(.title3, .semibold))
+                        .foregroundStyle(Palette.text)
+                    Text(Copy.Screen3.subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(Palette.sub)
+                        .padding(.top, 12)
 
-            Spacer()
-            widgetPreview
-            Spacer()
+                    Spacer(minLength: 28)
+                    widgetPreview
+                    Spacer(minLength: 28)
 
-            Text(Copy.Screen3.steps)
-                .font(.system(size: 12))
-                .foregroundStyle(Palette.muted)
-                .padding(.bottom, 22)
+                    Text(Copy.Screen3.steps)
+                        .font(.footnote)
+                        .foregroundStyle(Palette.muted)
+                        .padding(.bottom, 14)
 
-            Button(Copy.Screen3.showMe) { showingWalkthrough = true }
-                .buttonStyle(PrimaryButton())
+                    Button(Copy.Screen3.showMe) { showingWalkthrough = true }
+                        .buttonStyle(PrimaryButton())
 
-            Button(Copy.Screen3.later) { askingAboutNudge = true }
-                .font(.system(size: 12))
-                .foregroundStyle(Palette.muted)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 14)
+                    Button(Copy.Screen3.later) { askingAboutNudge = true }
+                        .buttonStyle(SecondaryButton())
+                        .padding(.top, 4)
+                }
+                .frame(minHeight: geometry.size.height)
+                .padding(.horizontal, 26)
+                .padding(.top, 40)
+                .padding(.bottom, 30)
+            }
+            .scrollIndicators(.hidden)
         }
-        .padding(.horizontal, 26)
-        .padding(.top, 40)
-        .padding(.bottom, 30)
         .sheet(isPresented: $showingWalkthrough) { WalkthroughSheet() }
         .sheet(isPresented: $askingAboutNudge) {
             NudgeSheet(
                 onYes: { optIn in
-                    record(.later, notificationOptIn: optIn)
-                    onDone()
+                    if record(.later, notificationOptIn: optIn) { onDone() }
                 },
                 onNo: {
-                    record(.later, notificationOptIn: false)
-                    onDone()
+                    if record(.later, notificationOptIn: false) { onDone() }
                 }
             )
         }
@@ -326,6 +395,11 @@ private struct WidgetScreen: View {
             if phase == .active { checkForInstalledWidget() }
         }
         .task { await checkForInstalledWidgetAsync() }
+        .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
+            Button(Copy.ok) {}
+        } message: {
+            Text(Copy.saveFailedBody)
+        }
     }
 
     /// A live preview of what they are being asked to install.
@@ -357,19 +431,27 @@ private struct WidgetScreen: View {
             }
         }
         guard installed else { return }
-        record(.installed, notificationOptIn: store.flags.notificationOptIn)
-        onDone()
+        if record(.installed, notificationOptIn: store.flags.notificationOptIn) {
+            onDone()
+        }
     }
 
-    private func record(_ outcome: OnboardingFlags.WidgetPrompt, notificationOptIn: Bool) {
-        try? StoreIO.mutate {
-            $0.flags.widgetPromptOutcome = outcome
-            $0.flags.notificationOptIn = notificationOptIn
-            if outcome == .installed, $0.flags.widgetInstalledAt == nil {
-                $0.flags.widgetInstalledAt = .now
+    private func record(_ outcome: OnboardingFlags.WidgetPrompt, notificationOptIn: Bool) -> Bool {
+        do {
+            try StoreIO.mutate {
+                $0.flags.widgetPromptOutcome = outcome
+                $0.flags.notificationOptIn = notificationOptIn
+                if outcome == .installed, $0.flags.widgetInstalledAt == nil {
+                    $0.flags.widgetInstalledAt = .now
+                }
             }
+            store = try StoreIO.load()
+            return true
+        } catch {
+            showingSaveError = true
+            UIAccessibility.post(notification: .announcement, argument: Copy.saveFailedBody)
+            return false
         }
-        store = StoreIO.read()
     }
 }
 
@@ -379,29 +461,35 @@ struct WalkthroughSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            ForEach(Array(Copy.Screen3.walkthrough.enumerated()), id: \.offset) { index, step in
-                HStack(alignment: .firstTextBaseline, spacing: 14) {
-                    Text("\(index + 1)")
-                        .font(board(12, .bold))
-                        .foregroundStyle(Palette.amber)
-                        .frame(width: 18, alignment: .leading)
-                    Text(step)
-                        .font(.system(size: 16))
-                        .foregroundStyle(Palette.text)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    ForEach(Array(Copy.Screen3.walkthrough.enumerated()), id: \.offset) { index, step in
+                        HStack(alignment: .firstTextBaseline, spacing: 14) {
+                            Text("\(index + 1)")
+                                .font(boardScaled(.callout, .bold))
+                                .foregroundStyle(Palette.amber)
+                                .frame(width: 24, alignment: .leading)
+                            Text(step)
+                                .font(.body)
+                                .foregroundStyle(Palette.text)
+                        }
+                    }
+                    Text(Copy.Screen3.whichItem)
+                        .font(.footnote)
+                        .foregroundStyle(Palette.sub)
+                    Spacer(minLength: 20)
+                    Button(Copy.done) { dismiss() }
+                        .buttonStyle(PrimaryButton())
                 }
+                .padding(30)
+                .frame(minHeight: geometry.size.height, alignment: .topLeading)
             }
-            Text(Copy.Screen3.whichItem)
-                .font(.system(size: 13))
-                .foregroundStyle(Palette.sub)
-            Spacer()
-            Button(Copy.done) { dismiss() }
-                .buttonStyle(PrimaryButton())
+            .scrollIndicators(.hidden)
         }
-        .padding(30)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background(Palette.ink)
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
     }
 }
 
@@ -414,36 +502,40 @@ private struct NudgeSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(Copy.Screen3.nudgeTitle)
-                .font(board(18, .semibold))
-                .foregroundStyle(Palette.text)
-            Text(Copy.Screen3.nudgeBody)
-                .font(.system(size: 14))
-                .foregroundStyle(Palette.sub)
-                .padding(.top, 14)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(Copy.Screen3.nudgeTitle)
+                        .font(boardScaled(.headline, .semibold))
+                        .foregroundStyle(Palette.text)
+                    Text(Copy.Screen3.nudgeBody)
+                        .font(.subheadline)
+                        .foregroundStyle(Palette.sub)
+                        .padding(.top, 14)
 
-            Spacer()
+                    Spacer(minLength: 24)
 
-            Button(Copy.Screen3.yesOnce) {
-                Task {
-                    let granted = (try? await UNUserNotificationCenter.current()
-                        .requestAuthorization(options: [.alert, .sound])) ?? false
-                    onYes(granted)
+                    Button(Copy.Screen3.yesOnce) {
+                        Task {
+                            let granted = (try? await UNUserNotificationCenter.current()
+                                .requestAuthorization(options: [.alert, .sound])) ?? false
+                            onYes(granted)
+                        }
+                    }
+                    .buttonStyle(PrimaryButton())
+
+                    Button(Copy.Screen3.noThanks) { onNo() }
+                        .buttonStyle(SecondaryButton())
+                        .padding(.top, 4)
                 }
+                .padding(30)
+                .frame(minHeight: geometry.size.height, alignment: .topLeading)
             }
-            .buttonStyle(PrimaryButton())
-
-            Button(Copy.Screen3.noThanks) { onNo() }
-                .font(.system(size: 13))
-                .foregroundStyle(Palette.muted)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 16)
+            .scrollIndicators(.hidden)
         }
-        .padding(30)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background(Palette.ink)
-        .presentationDetents([.height(280)])
+        .presentationDetents([.medium, .large])
         .task {
             // Reinstall with a prior OS-level denial: skip the sheet entirely
             // rather than offer something we cannot deliver.
@@ -458,15 +550,30 @@ private struct NudgeSheet: View {
 // MARK: - Shared
 
 struct PrimaryButton: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(board(12, .bold))
+            .font(boardScaled(.callout, .bold))
             .tracking(2.5)
             .textCase(.uppercase)
             .foregroundStyle(Palette.onAmber)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity, minHeight: 52)
             .background(Palette.amber, in: .rect(cornerRadius: 14))
-            .opacity(configuration.isPressed ? 0.85 : 1)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
+            .contentShape(.rect)
+    }
+}
+
+struct SecondaryButton: ButtonStyle {
+    var alignment: Alignment = .center
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(Palette.muted)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: alignment)
+            .opacity(configuration.isPressed ? 0.7 : 1)
+            .contentShape(.rect)
     }
 }

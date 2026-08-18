@@ -122,7 +122,11 @@ extension LocationMonitor: CLLocationManagerDelegate {
         _ manager: CLLocationManager, didExitRegion region: CLRegion
     ) {
         MainActor.assumeIsolated {
-            try? StoreIO.mutate { $0.leftHome(at: .now) }
+            do {
+                try StoreIO.mutate { $0.leftHome(at: .now) }
+            } catch {
+                return
+            }
             WidgetCenter.shared.reloadAllTimelines()
             Notifications.scheduleLeavingHomeReminders()
         }
@@ -133,7 +137,11 @@ extension LocationMonitor: CLLocationManagerDelegate {
         _ manager: CLLocationManager, didEnterRegion region: CLRegion
     ) {
         MainActor.assumeIsolated {
-            try? StoreIO.mutate { $0.arrivedHome(at: .now) }
+            do {
+                try StoreIO.mutate { $0.arrivedHome(at: .now) }
+            } catch {
+                return
+            }
             WidgetCenter.shared.reloadAllTimelines()
         }
     }

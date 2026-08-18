@@ -224,20 +224,22 @@ private func optedIn() -> OnboardingFlags {
         "Tap \"Set as home\" while you're there. We'll remember the spot, not the address.")
     #expect(Copy.HomeSetup.set == "Set as home")
     #expect(Copy.HomeSetup.notHome == "I'm not home right now")
+    #expect(Copy.HomeSetup.saved == "Home saved.")
     #expect(Copy.HomeSetup.confirmed ==
-        "Home set. From now on, leaving the house clears the board.")
+        "Home is set. Leaving home clears the board automatically.")
 }
 
 @Test func theDeclineCopyIsVerbatim() {
     #expect(Copy.LocationDeclined.message ==
         "No problem. We'll keep expiring things overnight instead.")
     #expect(Copy.resetRuleHint ==
-        "You can change how each item expires in Settings → any item → \"Forget this after\".")
+        "On the board, open an item's More menu → \"Forget this after\".")
 }
 
 @Test func theEscapeHatchCopyIsVerbatim() {
     #expect(Copy.cantCheckRightNow == "Can't check right now")
     #expect(Copy.askSomeoneAtHome == "Ask someone at home")
+    #expect(Copy.mutedUntilHome == "Muted from the summary until you're home.")
     #expect(Copy.shareMessage(item: item()) == "Random question — is The stove off?")
 }
 

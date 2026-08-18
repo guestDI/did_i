@@ -168,6 +168,18 @@ import Foundation
     #expect(labels.contains(Chip.somethingElse.label))
 }
 
+@Test func itemNamesMustStayDistinctAcrossBoardAndPreviously() {
+    var s = Store()
+    s.add(Chip.all[0].item(createdAt: at("2026-08-01 00:00:00")))
+    s.add(Chip.somethingElse.item(named: "Café door", createdAt: at("2026-08-01 00:00:00")))
+    s.archive(s.items[1].id, at: at("2026-08-02 00:00:00"))
+
+    #expect(!Item.isNameAvailable(" the STOVE ", among: s.items))
+    #expect(!Item.isNameAvailable("Cafe door", among: s.items))
+    #expect(Item.isNameAvailable("Garage door", among: s.items))
+    #expect(Item.isNameAvailable("The stove", among: s.items, excluding: s.items[0].id))
+}
+
 // MARK: - Chip copy follows the language, user copy does not
 
 @Test func aChipItemIsTaggedAndATypedOneIsNot() {

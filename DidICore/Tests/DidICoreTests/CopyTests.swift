@@ -18,6 +18,22 @@ import Foundation
     #expect(Set(Copy.general).count == 12)   // no accidental duplicates
 }
 
+@Test func confirmationCopyNeverClaimsADeviceStateOrNamesTheWrongItem() {
+    let all = Copy.general + Copy.escalation
+    for line in all {
+        #expect(!line.localizedCaseInsensitiveContains("stove"))
+        #expect(!line.localizedCaseInsensitiveContains("still off"))
+        #expect(!line.localizedCaseInsensitiveContains("was off"))
+    }
+}
+
+@Test func boardLegendIsTrueForEveryResetRule() {
+    #expect(Copy.boardFooter ==
+        "Green means a current confirmation · amber means no current record")
+    #expect(!Copy.boardFooter.localizedCaseInsensitiveContains("overnight"))
+    #expect(!Copy.boardFooter.localizedCaseInsensitiveContains("left"))
+}
+
 @Test func confirmationLineNeverRepeatsTwiceInARow() {
     var previous: String?
     for _ in 0..<500 {

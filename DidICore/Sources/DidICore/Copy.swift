@@ -26,15 +26,15 @@ public enum Copy {
 
     /// The general pool, used everywhere after onboarding.
     public static let general = [
-        t("Logged. The stove is off. The world is safe. Ish."),
-        t("Done. Future you says thanks and means it."),
-        t("Noted. You're doing better than you think."),
+        t("Logged. Your confirmation is on the record."),
+        t("Done. Future you has a timestamp now."),
+        t("Noted. One less thing to remember."),
         t("Confirmed. Look at you, adulting."),
-        t("Got it. Nothing is on fire, probably because of you."),
-        t("Recorded for posterity and for your peace of mind."),
-        t("Yep. Consider it handled."),
-        t("Marked. Your past self was reliable after all."),
-        t("Filed under \"things that are fine\"."),
+        t("Got it. The board has your back."),
+        t("Recorded for posterity and peace of mind."),
+        t("Yep. Consider the check logged."),
+        t("Marked. Past you left a receipt."),
+        t("Filed under \"confirmed\"."),
         t("Done. That's one less thing rattling around in there."),
         t("Locked in. Go be somewhere else now."),
         t("Confirmed. Genuinely, well done."),
@@ -42,9 +42,9 @@ public enum Copy {
 
     /// Used only when the same item is confirmed 3+ times in one day.
     public static let escalation = [
-        t("Third time today. It was off the first time too, but sure."),
-        t("We've done this. I'm not judging. I'm barely even counting."),
-        t("Still off. Still fine. Still you."),
+        t("Third confirmation today. Latest one logged."),
+        t("Confirmed again. The newest timestamp is on the board."),
+        t("Updated. This confirmation replaces the last."),
     ]
 
     /// Rotating and random, never the same line twice in a row.
@@ -107,7 +107,8 @@ public enum Copy {
         return t("\(minutes / 60)H")
     }
 
-    public static let boardFooter = t("Ticks expire overnight · green means since you left")
+    public static let boardFooter =
+        t("Green means a current confirmation · amber means no current record")
 
     /// accessoryRectangular's whole content. Counts records, never behaviour —
     /// "handled" means there is a confirmation, not that anything was done.
@@ -147,7 +148,7 @@ public enum Copy {
         public static let title = t("Put it where you'll look")
         public static let subtitle = t("The widget answers without opening anything.")
         public static let steps = t("Long-press your home screen → Edit → Add widget → search \"Did I?\"")
-        public static let showMe = t("Show me")
+        public static let showMe = t("View steps")
         public static let later = t("Later")
 
         /// The doc calls for a 4–6s looping video here. There is no asset, so the
@@ -240,7 +241,9 @@ public enum Copy {
             t("Tap \"Set as home\" while you're there. We'll remember the spot, not the address.")
         public static let set = t("Set as home")
         public static let notHome = t("I'm not home right now")
-        public static let confirmed = t("Home set. From now on, leaving the house clears the board.")
+        public static let saved = t("Home saved.")
+        public static let confirmed =
+            t("Home is set. Leaving home clears the board automatically.")
         /// A fix can fail indoors or in airplane mode. Say so; do not guess.
         public static let noFix = t("Couldn't get a location just now. Try again from here, or later.")
     }
@@ -252,6 +255,7 @@ public enum Copy {
     /// The escape hatch, always available on an unknown item while away.
     public static let cantCheckRightNow = t("Can't check right now")
     public static let askSomeoneAtHome = t("Ask someone at home")
+    public static let mutedUntilHome = t("Muted from the summary until you're home.")
 
     /// Pre-fills a share sheet. Names that do not start with an article read a
     /// little clipped ("is front door locked?"); it is an editable draft, not a
@@ -269,11 +273,18 @@ public enum Copy {
     /// The pointer to the editor. Belongs to the reset rule, not to the location
     /// branch it used to live in — someone who granted location needs it too.
     public static let resetRuleHint =
-        t("You can change how each item expires in Settings → any item → \"Forget this after\".")
+        t("On the board, open an item's More menu → \"Forget this after\".")
 
     /// Archive, never delete. The footer is the promise that makes the button safe.
     public static let putItAway = t("Put it away")
     public static let putItAwayFooter = t("It leaves the board. You can bring it back any time.")
+
+    /// Confirmation before the menu action takes effect — one tap in a menu has
+    /// no undo affordance of its own, so the promise from `putItAwayFooter` has
+    /// to land before the tap, not after it.
+    public static func putItAwayTitle(item: Item) -> String {
+        t("Put \(item.name) away?")
+    }
 
     /// Board order is the widget's tap-target order, so it has to be editable.
     public static let moveUp = t("Move up")
@@ -283,10 +294,12 @@ public enum Copy {
     public static let neverWarning = t("A tick that never expires is a tick you can't trust.")
     public static let nameFieldTitle = t("Name")
     public static let nameFieldFooter = t("Keep it short — long names break the widget.")
+    public static let nameAlreadyUsed = t("That name is already on your board or in Previously.")
 
     /// The word the board spells out. Not in the docs; the design's board needs it.
     public static let wordFieldTitle = t("Status word")
     public static let wordFieldFooter = t("What the board says when this is confirmed.")
+    public static let wordFieldRequired = t("Add a status word so the confirmed state stays clear.")
 
     /// `locale` is injected for the same reason `now` and `calendar` are: the
     /// hour renders as "4 AM" or "04" depending on the region, so a test that
@@ -325,6 +338,11 @@ public enum Copy {
     public static let dismiss = t("Dismiss")
     public static let ok = t("OK")
     public static let settings = t("Settings")
+    public static let saveFailedTitle = t("Couldn't save that")
+    public static let saveFailedBody = t("Your previous record is unchanged. Try again.")
+    public static let loadFailedTitle = t("Couldn't open your board")
+    public static let loadFailedBody = t("We didn't change your records. Try again.")
+    public static let tryAgain = t("Try again")
 
     /// The board's two column headings.
     public static let columnItem = t("Item")
@@ -438,22 +456,24 @@ public extension Copy {
         public static let title = t("This week")
 
         public static func topWorry(item: Item, checks: Int) -> String {
-            t("Top worry: \(item.name). \(checks) checks.")
+            t("Most checked: \(item.name). \(checks) checks.")
         }
 
         public static func runnerUp(item: Item, checks: Int) -> String {
-            t("Runner-up: \(item.name), a modest \(checks).")
+            t("Next: \(item.name). \(checks) checks.")
         }
 
         public static func reassurance(item: Item) -> String {
-            t("\(item.name): fine every single time. It always is.")
+            t("\(item.name): confirmed at least once this week.")
         }
 
-        public static let closing = [
-            t("You checked 61 times. It was off 61 times. Just saying."),
-            t("Perfect record. Zero disasters. One slightly tired phone."),
-            t("Everything was fine, every time, all week."),
-        ]
+        public static func closing(totalChecks: Int) -> [String] {
+            [
+                t("\(totalChecks) checks this week. Each one has a timestamp."),
+                t("\(totalChecks) checks recorded. The latest ones are on the board."),
+                t("A week of confirmations, kept on your phone."),
+            ]
+        }
     }
 
     /// One honest sentence, once, and then get out of the way. No resources, no
@@ -462,7 +482,7 @@ public extension Copy {
     /// clause used to say "will still be off" for every item, which was wrong for
     /// a door; it takes the item's own word now.
     static func escalatingChecks(item: Item) -> String {
-        t("\(item.name). You've been checking this a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to delete it — it'll still be \(item.word.lowercased()).")
+        t("\(item.name). You've been checking this a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to put it away.")
     }
 
     enum StaleItem {

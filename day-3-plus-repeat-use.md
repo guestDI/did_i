@@ -62,14 +62,16 @@ Unlocked quietly on the first week's end, only if there's something amusing to s
 Weekly card on the main screen, dismissible, never a notification:
 
 > **This week**
-> Top worry: the iron. 34 checks.
-> Runner-up: the door, a modest 12.
-> The stove was fine every single time. It's always fine.
+> Most checked: the iron, 34 times.
+> Next: the door, 12 times.
+> Every item above was confirmed at least once this week.
 
 Rotating closing lines:
-- You checked 61 times. It was off 61 times. Just saying.
-- Perfect record. Zero disasters. One slightly tired phone.
-- Everything was fine, every time, all week.
+- 61 checks this week. Each one has a timestamp.
+- 61 checks recorded. The latest ones are on the board.
+- A week of confirmations, kept on your phone.
+
+The first line interpolates the real weekly total; it never uses a fixed example count.
 
 **Hard rule:** the counter is only ever shown as a joke about a *good* record. If the week contains items that genuinely went unconfirmed, or the check count is climbing week over week, don't show the card. A stat that reads as "look how anxious you were" is not a feature.
 
@@ -77,7 +79,7 @@ Rotating closing lines:
 
 If checks-per-day for a single item trend upward across three consecutive weeks, suppress the counter permanently and show this once instead:
 
-> You've been checking the iron a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to delete it — the iron will still be off.
+> You've been checking the iron a lot lately. This app is meant to end the checking, not become the thing you check. If it isn't helping, it's fine to put it away for now.
 
 Then never mention it again. No resources, no diagnosis, no follow-up. One honest sentence and then get out of the way.
 

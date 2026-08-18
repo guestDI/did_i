@@ -72,8 +72,10 @@ If "I'm not home right now": store a pending flag and offer setup again on the f
 
 Geofence radius: 150m default. Smaller and you get spurious triggers from GPS drift indoors; larger and the leaving-home nudge fires too late to be useful.
 
-**Confirmation copy:**
-> Home set. From now on, leaving the house clears the board.
+**Confirmation sequence:** persist the captured coordinate first, then begin monitoring. Show `Home saved.` after the first permission level is granted. After the app has background location access, show:
+> Home is set. Leaving home clears the board automatically.
+
+If iOS does not grant background access, explain that automatic leaving-home resets are not active and keep timer resets working. Never claim the automation is enabled before the required permission exists.
 
 ### If declined
 
@@ -82,8 +84,8 @@ Never ask again. Not on day 5, not on a settings banner, not with a "you're miss
 **Copy on decline:**
 > No problem. We'll keep expiring things overnight instead.
 
-Then silently show where the setting lives, once:
-> You can change how each item expires in Settings → any item → "Forget this after".
+Then show where the setting actually lives, once:
+> On the board, open an item's More menu → "Forget this after".
 
 That's it. The app is slightly dumber and entirely functional.
 

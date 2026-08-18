@@ -104,9 +104,9 @@ public struct SmallFace: View {
 
 // MARK: - systemMedium
 
-/// Two columns (architecture §5). Two rows for a board of four or fewer, three
-/// once it grows past that — the cap is six and `prefix(4)` silently hid the last
-/// two, which on a "did I?" board is the worst possible thing to hide.
+/// Two columns for a board of four or fewer; three columns once it grows past
+/// that. Keeping two rows gives every interactive cell at least 44 points of
+/// height while still showing all six items.
 ///
 /// Board order, never state order: cells that reshuffle on a timeline refresh
 /// would move the target out from under a finger already on its way down.
@@ -125,7 +125,8 @@ public struct MediumFace: View {
 
     var shown: [Item] { Array(items.prefix(6)) }
 
-    private var rowCount: Int { shown.count > 4 ? 3 : 2 }
+    private var columnCount: Int { shown.count > 4 ? 3 : 2 }
+    private var rowCount: Int { 2 }
 
     public var body: some View {
         VStack(spacing: 0) {
@@ -147,11 +148,12 @@ public struct MediumFace: View {
                 Rectangle().fill(Palette.ruleStrong).frame(height: 1)
             }
 
-            Grid(horizontalSpacing: 14, verticalSpacing: 0) {
+            Grid(horizontalSpacing: shown.count > 4 ? 8 : 14, verticalSpacing: 0) {
                 ForEach(0..<rowCount, id: \.self) { row in
                     GridRow {
-                        cell(at: row * 2)
-                        cell(at: row * 2 + 1)
+                        ForEach(0..<columnCount, id: \.self) { column in
+                            cell(at: row * columnCount + column)
+                        }
                     }
                 }
             }
@@ -190,6 +192,7 @@ public struct MediumFace: View {
                     .invalidatableContent()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .frame(minWidth: 44, minHeight: 44)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
                 // A tappable cell that's just text on the background reads as

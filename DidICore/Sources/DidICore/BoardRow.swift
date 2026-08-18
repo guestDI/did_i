@@ -6,6 +6,8 @@ import SwiftUI
 /// The row confirms and a hold undoes. Secondary controls are layered beside
 /// it by the app so this shared view remains one coherent accessibility element.
 public struct BoardRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let item: Item
     let state: ItemState
     let statusOverride: String?
@@ -40,7 +42,7 @@ public struct BoardRow: View {
                 // Two lines: the away line runs to 62 characters and is the one
                 // sentence in the app that must never be clipped.
                 Text(status)
-                    .font(board(9.5, .medium))
+                    .font(boardScaled(.caption, .medium))
                     .foregroundStyle(Palette.sub)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -53,11 +55,19 @@ public struct BoardRow: View {
                 width: 22, height: 28, fontSize: 13
             )
             .accessibilityHidden(true)
-            FlapWord(
-                item: item, state: state,
-                cellWidth: 18, cellHeight: 28, fontSize: 12.5, maxWidth: 150
-            )
-            .accessibilityHidden(true)
+            if dynamicTypeSize.isAccessibilitySize {
+                Text(state == .unknown ? "———" : item.word.uppercased())
+                    .font(boardScaled(.headline, .bold))
+                    .foregroundStyle(Palette.color(for: state))
+                    .multilineTextAlignment(.trailing)
+                    .accessibilityHidden(true)
+            } else {
+                FlapWord(
+                    item: item, state: state,
+                    cellWidth: 18, cellHeight: 28, fontSize: 12.5, maxWidth: 150
+                )
+                .accessibilityHidden(true)
+            }
         }
         .padding(.horizontal, 22)
         .padding(.vertical, 15)
@@ -81,11 +91,11 @@ public struct BoardRow: View {
 
     private var name: some View {
         Text(item.name)
-            .font(board(15))
+            .font(boardScaled(.body))
             .tracking(2.5)
             .textCase(.uppercase)
             .foregroundStyle(Palette.text)
-            .lineLimit(1)
+            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
     }
 }
 
