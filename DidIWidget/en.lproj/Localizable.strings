@@ -9,3 +9,12 @@
 
 /* Shortcuts app: the name of the tap-to-confirm action. Not user-discoverable. */
 "Confirm" = "Confirm";
+
+/* Control Center gallery: description shown under the control before it's added. */
+"Confirm an item without opening the app. Add it again for each item you track." = "Confirm an item without opening the app. Add it again for each item you track.";
+
+/* Control Center toggle: current-state label and parameter title, when on. */
+"Confirmed" = "Confirmed";
+
+/* Control Center toggle: current-state label, when off. */
+"Not confirmed" = "Not confirmed";

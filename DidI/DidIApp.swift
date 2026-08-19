@@ -12,6 +12,7 @@ struct DidIApp: App {
         }
         #endif
         StoreChange.startListening()
+        WatchSync.shared.start()
     }
 
     var body: some Scene {

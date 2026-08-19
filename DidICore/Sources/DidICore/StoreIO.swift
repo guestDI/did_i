@@ -255,6 +255,21 @@ public enum StoreIO {
         )
     }
 
+    /// For carrying a `Store` somewhere with no App Group container of its own —
+    /// the watch, over `WCSession`. Same wire format as the file on disk, just
+    /// without the file.
+    public static func encoded(_ store: Store) throws -> Data {
+        try encoder.encode(store)
+    }
+
+    /// The watch has no file to coordinate around, so this is `decode(from:)`
+    /// without the `NSFileCoordinator` half.
+    public static func decoded(_ data: Data) throws -> Store {
+        var store = try decoder.decode(Store.self, from: data)
+        store.localizeChipCopy()
+        return store
+    }
+
     static var encoder: JSONEncoder {
         let e = JSONEncoder()
         e.dateEncodingStrategy = .iso8601

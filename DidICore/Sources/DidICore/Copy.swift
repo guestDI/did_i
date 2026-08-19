@@ -291,6 +291,13 @@ public enum Copy {
     public static let moreActions = t("More actions")
 
     public static let widgetHelpRow = t("How to add the widget")
+
+    /// The Control Center control is single-item and offers no in-place way to
+    /// say "add another" — the gallery just shows "Did I?" once. Without this,
+    /// nothing hints that adding it again with a different item is the way to
+    /// cover more than one thing from Control Center.
+    public static let controlCenterHint =
+        t("Also works from Control Center — add it again for each item you want to confirm from there.")
     public static let neverWarning = t("A tick that never expires is a tick you can't trust.")
     public static let nameFieldTitle = t("Name")
     public static let nameFieldFooter = t("Keep it short — long names break the widget.")

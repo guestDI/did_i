@@ -146,5 +146,9 @@ struct BoardWidgetView: View {
 struct DidIWidgetBundle: WidgetBundle {
     var body: some Widget {
         DidIWidget()
+
+        if #available(iOSApplicationExtension 18.0, *) {
+            ConfirmControl()
+        }
     }
 }

@@ -64,6 +64,8 @@ struct SettingsView: View {
                 // route to these instructions, and the widget is the product.
                 Section {
                     Button(Copy.widgetHelpRow) { showingWalkthrough = true }
+                } footer: {
+                    Text(Copy.controlCenterHint)
                 }
 
                 Section {

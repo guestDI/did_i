@@ -85,7 +85,14 @@ struct ItemSettingsView: View {
                 }
 
                 Section {
-                    ForEach(ResetRule.choices(hasHome: hasHome), id: \.self) { rule in
+                    // `hasHome` alone would drop "leaving home" off the list the
+                    // moment home is removed in Settings — for an item already
+                    // using it, that reads as the rule silently vanishing rather
+                    // than the picker honestly showing what it's still set to.
+                    ForEach(
+                        ResetRule.choices(hasHome: hasHome || draft.resetRule == .onLeavingHome),
+                        id: \.self
+                    ) { rule in
                         Button {
                             draft.resetRule = rule
                         } label: {
@@ -123,7 +130,18 @@ struct ItemSettingsView: View {
                                     if on {
                                         Task {
                                             let granted = await Notifications.requestAuthorization()
-                                            if !granted { draft.leavingHomeReminder = false }
+                                            guard granted else {
+                                                draft.leavingHomeReminder = false
+                                                return
+                                            }
+                                            // The reminder is delivered from a region-exit
+                                            // background wake, which never arrives on "When
+                                            // In Use" — this is the first moment asking for
+                                            // "Always" buys the user something concrete.
+                                            if LocationMonitor.shared.status != .authorizedAlways {
+                                                let always = await requestAlwaysLocation()
+                                                if !always { draft.leavingHomeReminder = false }
+                                            }
                                         }
                                     }
                                 }
@@ -166,6 +184,14 @@ struct ItemSettingsView: View {
             Button(Copy.ok) {}
         } message: {
             Text(Copy.saveFailedBody)
+        }
+    }
+
+    private func requestAlwaysLocation() async -> Bool {
+        await withCheckedContinuation { continuation in
+            LocationMonitor.shared.requestAlways { status in
+                continuation.resume(returning: status == .authorizedAlways)
+            }
         }
     }
 }

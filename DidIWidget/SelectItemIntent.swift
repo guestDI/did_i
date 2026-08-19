@@ -15,6 +15,27 @@ struct SelectItemIntent: WidgetConfigurationIntent {
     @Parameter(title: "Item") var item: ItemEntity?
 }
 
+/// Control Center's counterpart to `SelectItemIntent`. Same picker, same
+/// entity — `ControlConfigurationIntent` is a distinct protocol from
+/// `WidgetConfigurationIntent` (and, unlike it, requires `perform()`), so it
+/// cannot just reuse the widget's intent type.
+@available(iOS 18.0, *)
+struct SelectControlItemIntent: ControlConfigurationIntent {
+    static let title: LocalizedStringResource = "Choose item"
+    static let description = IntentDescription("Pick which item this widget shows.")
+
+    @Parameter(title: "Item") var item: ItemEntity?
+
+    init() {}
+    init(item: ItemEntity?) {
+        self.item = item
+    }
+
+    func perform() async throws -> some IntentResult {
+        .result()
+    }
+}
+
 struct ItemEntity: AppEntity {
     let id: String
     let name: String

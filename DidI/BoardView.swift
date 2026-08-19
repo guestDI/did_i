@@ -85,6 +85,9 @@ struct BoardView: View {
             "",
             isPresented: Binding(get: { guardrailItem != nil }, set: { if !$0 { guardrailItem = nil } })
         ) {
+            if let guardrailItem {
+                Button(Copy.putItAway) { archiveGuardrailItem(guardrailItem) }
+            }
             Button(Copy.ok) { dismissGuardrail() }
         } message: {
             if let guardrailItem { Text(Copy.escalatingChecks(item: guardrailItem)) }
@@ -155,10 +158,12 @@ struct BoardView: View {
             guardrailItem = escalating
             return
         }
-        if let card = ParanoiaCounter.card(for: store, now: .now) {
-            weeklyCard = card
-            return
-        }
+        // Set unconditionally, not just inside the `if let`: a card shown on an
+        // earlier open and never dismissed would otherwise linger on screen —
+        // stale — while this open goes on to show a different alert on top of it.
+        let card = ParanoiaCounter.card(for: store, now: .now)
+        weeklyCard = card
+        if card != nil { return }
         if let trigger = SecondItem.shouldSuggest(in: store, now: .now) {
             guard save({ $0.usage.lastSuggestedAt = .now }) else { return }
             adding = .init(suggestion: trigger)
@@ -170,21 +175,34 @@ struct BoardView: View {
 
     /// Offered once, whatever they answer.
     private func answerStaleOffer(_ item: Item, archiving: Bool) {
-        guard save({ store in
+        // Dismiss first: archiving the last item swaps the whole hierarchy
+        // (board → onboarding) out from under this alert.
+        staleItem = nil
+        save { store in
             guard let i = store.items.firstIndex(where: { $0.id == item.id }) else { return }
             store.items[i].archiveOfferedAt = .now
             if archiving { store.archive(item.id, at: .now) }
-        }) else { return }
-        staleItem = nil
+        }
     }
 
     /// One honest sentence, once, and then get out of the way.
     private func dismissGuardrail() {
-        guard save({
+        guardrailItem = nil
+        save {
             $0.usage.guardrailShown = true
             $0.usage.paranoiaSuppressed = true
-        }) else { return }
+        }
+    }
+
+    /// The guardrail's copy tells them it's fine to put the item away — this is
+    /// that sentence's action, not just a dead end that says "OK".
+    private func archiveGuardrailItem(_ item: Item) {
         guardrailItem = nil
+        save {
+            $0.usage.guardrailShown = true
+            $0.usage.paranoiaSuppressed = true
+            $0.archive(item.id, at: .now)
+        }
     }
 
     private func dismissWeeklyCard() {
