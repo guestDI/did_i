@@ -52,7 +52,16 @@ struct BoardView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Palette.ink)
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { reload() }
+            if phase == .active {
+                reload()
+                // Permission can change from iOS Settings while the app is
+                // backgrounded. `didFinishLaunching` only re-registers the
+                // geofence once, at cold launch — without this, granting
+                // "Always" there and walking out the door without reopening
+                // the app first leaves the region monitored under whatever
+                // authorization it last saw.
+                LocationMonitor.shared.start()
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: StoreChange.name)) { _ in
             reload()
