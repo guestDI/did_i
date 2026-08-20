@@ -121,13 +121,13 @@ import Foundation
     #expect(reminder.body == Copy.unknownAway)
 }
 
-// MARK: - The "Forget this after" editor (day-2)
+// MARK: - Confirmation expiry (day-2)
 
 /// Pinned to en_US, because the hour renders as "4 AM" there and "04" in any
 /// 24-hour region. The ambient locale is not a fact about this app's copy.
 private let enUS = Locale(identifier: "en_US")
-private func forgetAfterEN(_ rule: ResetRule) -> String {
-    plainSpaces(Copy.forgetAfter(rule, locale: enUS))
+private func confirmationExpiryEN(_ rule: ResetRule) -> String {
+    plainSpaces(Copy.confirmationExpiry(rule, locale: enUS))
 }
 
 /// `Date.FormatStyle` separates the hour from the meridiem with U+202F, a narrow
@@ -137,23 +137,27 @@ func plainSpaces(_ text: String) -> String {
     text.replacingOccurrences(of: "\u{202F}", with: " ")
 }
 
-@Test func forgetAfterOffersTheDocsOptionsInOrder() {
-    #expect(ResetRule.choices(hasHome: true).map(forgetAfterEN) == [
-        "When I leave home", "4 hours", "12 hours", "Every night at 4 AM", "Never",
+@Test func confirmationExpiryOffersTheDocsOptionsInOrder() {
+    #expect(ResetRule.choices(canDetectLeavingHome: true).map(confirmationExpiryEN) == [
+        "When I leave home, or after 24 hours",
+        "4 hours after confirming",
+        "12 hours after confirming",
+        "Next 4 AM",
+        "Until I confirm again",
     ])
 }
 
 @Test func leavingHomeIsHiddenWithoutAHome() {
-    let choices = ResetRule.choices(hasHome: false)
+    let choices = ResetRule.choices(canDetectLeavingHome: false)
     #expect(!choices.contains(.onLeavingHome))
-    #expect(choices.map(forgetAfterEN) == [
-        "4 hours", "12 hours", "Every night at 4 AM", "Never",
+    #expect(choices.map(confirmationExpiryEN) == [
+        "4 hours after confirming", "12 hours after confirming", "Next 4 AM", "Until I confirm again",
     ])
 }
 
 @Test func theDefaultRuleIsNightlyAtFour() {
     #expect(ResetRule.default == .dailyAt(hour: 4))
-    #expect(ResetRule.choices(hasHome: false).contains(.default))
+    #expect(ResetRule.choices(canDetectLeavingHome: false).contains(.default))
 }
 
 @Test func neverCarriesItsWarning() {
@@ -161,13 +165,13 @@ func plainSpaces(_ text: String) -> String {
 }
 
 @Test func clockHoursReadAsClockTimes() {
-    #expect(forgetAfterEN(.dailyAt(hour: 4)) == "Every night at 4 AM")
-    #expect(forgetAfterEN(.dailyAt(hour: 0)) == "Every night at 12 AM")
-    #expect(forgetAfterEN(.dailyAt(hour: 13)) == "Every night at 1 PM")
+    #expect(confirmationExpiryEN(.dailyAt(hour: 4)) == "Next 4 AM")
+    #expect(confirmationExpiryEN(.dailyAt(hour: 0)) == "Next 12 AM")
+    #expect(confirmationExpiryEN(.dailyAt(hour: 13)) == "Next 1 PM")
 }
 
 /// The whole reason the meridiem is no longer glued on by hand.
 @Test func aTwentyFourHourRegionGetsATwentyFourHourClock() {
-    #expect(Copy.forgetAfter(.dailyAt(hour: 13), locale: Locale(identifier: "en_GB"))
-        == "Every night at 13")
+    #expect(Copy.confirmationExpiry(.dailyAt(hour: 13), locale: Locale(identifier: "en_GB"))
+        == "Next 13")
 }

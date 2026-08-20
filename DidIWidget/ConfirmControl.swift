@@ -91,7 +91,9 @@ struct SetConfirmedIntent: SetValueIntent {
                 store.confirm(id: id, at: .now)
             } else if let i = store.items.firstIndex(where: { $0.id == id }) {
                 store.items[i].lastConfirmedAt = nil
+                store.items[i].lastConfirmationRule = nil
                 store.items[i].confirmations = []
+                store.items[i].confirmationRules = []
                 store.items[i].confirmationLine = nil
             }
         }

@@ -42,6 +42,26 @@
 			<string>%lld часа</string>
 		</dict>
 	</dict>
+	<key>%lld hours after confirming</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%lld час после подтверждения</string>
+			<key>few</key>
+			<string>%lld часа после подтверждения</string>
+			<key>many</key>
+			<string>%lld часов после подтверждения</string>
+			<key>other</key>
+			<string>%lld часа после подтверждения</string>
+		</dict>
+	</dict>
 	<key>%lld days</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

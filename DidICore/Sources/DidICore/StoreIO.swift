@@ -79,8 +79,17 @@ public struct Store: Codable, Sendable {
     public mutating func confirm(id: UUID, at date: Date, calendar: Calendar = .current) {
         guard let i = items.firstIndex(where: { $0.id == id }) else { return }
 
-        let history = (items[i].confirmations ?? [])
-            .filter { $0 > date.addingTimeInterval(-30 * 86_400) } + [date]
+        let fallbackRule = items[i].lastConfirmationRule ?? items[i].resetRule
+        let existingHistory = items[i].confirmations ?? []
+        let existingRules = items[i].confirmationRules ?? []
+        let retained: [(date: Date, rule: ResetRule)] = existingHistory.enumerated().compactMap {
+            index, confirmation in
+            guard confirmation > date.addingTimeInterval(-30 * 86_400) else { return nil }
+            let rule = existingRules.indices.contains(index) ? existingRules[index] : fallbackRule
+            return (date: confirmation, rule: rule)
+        }
+        let history = retained.map(\.date) + [date]
+        let rules = retained.map(\.rule) + [items[i].resetRule]
         let today = history.filter { calendar.isDate($0, inSameDayAs: date) }
 
         let line = Copy.confirmationLine(
@@ -89,7 +98,9 @@ public struct Store: Codable, Sendable {
         )
 
         items[i].confirmations = history
+        items[i].confirmationRules = rules
         items[i].lastConfirmedAt = date
+        items[i].lastConfirmationRule = items[i].resetRule
         items[i].confirmationLine = line
         lastConfirmationLine = line
 
@@ -109,10 +120,40 @@ public struct Store: Codable, Sendable {
     public mutating func undo(id: UUID) {
         guard let i = items.firstIndex(where: { $0.id == id }) else { return }
         var history = items[i].confirmations ?? []
-        if !history.isEmpty { history.removeLast() }
+        let storedRules = items[i].confirmationRules ?? []
+        let fallbackRule = items[i].lastConfirmationRule ?? items[i].resetRule
+        var rules = history.indices.map { index in
+            storedRules.indices.contains(index) ? storedRules[index] : fallbackRule
+        }
+        if !history.isEmpty {
+            history.removeLast()
+            if !rules.isEmpty { rules.removeLast() }
+        }
         items[i].confirmations = history
+        items[i].confirmationRules = rules
         items[i].lastConfirmedAt = history.last
+        items[i].lastConfirmationRule = rules.last
         items[i].confirmationLine = nil
+    }
+
+    /// Replaces editable item settings without reinterpreting the confirmation
+    /// already on the board. Legacy stores have no rule snapshot, so capture the
+    /// old configured rule before accepting the new one.
+    public mutating func update(_ updated: Item) {
+        guard let i = items.firstIndex(where: { $0.id == updated.id }) else { return }
+        let existing = items[i]
+        var updated = updated
+        if existing.lastConfirmedAt != nil, existing.lastConfirmationRule == nil {
+            updated.lastConfirmationRule = existing.resetRule
+        }
+        if let confirmations = existing.confirmations {
+            let storedRules = existing.confirmationRules ?? []
+            let fallbackRule = existing.lastConfirmationRule ?? existing.resetRule
+            updated.confirmationRules = confirmations.indices.map { index in
+                storedRules.indices.contains(index) ? storedRules[index] : fallbackRule
+            }
+        }
+        items[i] = updated
     }
 
     public func state(_ item: Item, now: Date, calendar: Calendar = .current) -> ItemState {

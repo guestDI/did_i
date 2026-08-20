@@ -44,13 +44,14 @@ public func resolve(
     calendar: Calendar = .current
 ) -> ItemState {
     guard let last = item.lastConfirmedAt else { return .unknown }
+    let rule = item.lastConfirmationRule ?? item.resetRule
 
-    if item.resetRule == .onLeavingHome, let left = lastLeftHome, left > last {
+    if rule == .onLeavingHome, let left = lastLeftHome, left > last {
         return .unknown
     }
 
     let age = now.timeIntervalSince(last)
-    guard let end = expiry(for: item.resetRule, confirmedAt: last, calendar: calendar) else {
+    guard let end = expiry(for: rule, confirmedAt: last, calendar: calendar) else {
         return .confirmed(age: age, freshness: .fresh)
     }
     if now >= end { return .unknown }

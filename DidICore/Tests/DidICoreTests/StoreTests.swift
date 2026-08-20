@@ -15,6 +15,8 @@ private func store(_ rule: ResetRule = .dailyAt(hour: 4)) -> Store {
     s.confirm(id: id, at: at("2026-08-11 09:00:00"), calendar: utc)
 
     #expect(s.items[0].lastConfirmedAt == at("2026-08-11 09:00:00"))
+    #expect(s.items[0].lastConfirmationRule == .dailyAt(hour: 4))
+    #expect(s.items[0].confirmationRules == [.dailyAt(hour: 4)])
     #expect(Copy.general.contains(s.items[0].confirmationLine ?? ""))
     #expect(s.lastConfirmationLine == s.items[0].confirmationLine)
 }
@@ -77,6 +79,49 @@ private func store(_ rule: ResetRule = .dailyAt(hour: 4)) -> Store {
     s.confirm(id: s.items[0].id, at: at("2026-08-11 08:00:00"), calendar: utc)
     s.lastLeftHomeAt = at("2026-08-11 08:42:00")
     #expect(s.state(s.items[0], now: at("2026-08-11 09:00:00"), calendar: utc) == .unknown)
+}
+
+@Test func changingExpiryCannotResurrectAnExpiredConfirmation() {
+    var s = store(.afterHours(4))
+    let id = s.items[0].id
+    s.confirm(id: id, at: at("2026-08-11 08:00:00"), calendar: utc)
+    #expect(s.state(s.items[0], now: at("2026-08-11 13:00:00"), calendar: utc) == .unknown)
+
+    var updated = s.items[0]
+    updated.resetRule = .never
+    s.update(updated)
+
+    #expect(s.items[0].resetRule == .never)
+    #expect(s.items[0].lastConfirmationRule == .afterHours(4))
+    #expect(s.state(s.items[0], now: at("2026-08-11 13:00:00"), calendar: utc) == .unknown)
+}
+
+@Test func changedExpiryStartsWithTheNextConfirmation() {
+    var s = store(.afterHours(4))
+    let id = s.items[0].id
+    s.confirm(id: id, at: at("2026-08-11 08:00:00"), calendar: utc)
+
+    var updated = s.items[0]
+    updated.resetRule = .afterHours(12)
+    s.update(updated)
+    #expect(s.state(s.items[0], now: at("2026-08-11 13:00:00"), calendar: utc) == .unknown)
+
+    s.confirm(id: id, at: at("2026-08-11 14:00:00"), calendar: utc)
+    #expect(s.items[0].lastConfirmationRule == .afterHours(12))
+    #expect(s.state(s.items[0], now: at("2026-08-12 01:00:00"), calendar: utc) != .unknown)
+}
+
+@Test func editingALegacyItemSnapshotsItsOldRule() {
+    var legacy = item(confirmedAt: at("2026-08-11 08:00:00"), rule: .afterHours(4))
+    legacy.confirmations = [at("2026-08-11 08:00:00")]
+    var s = Store(items: [legacy])
+
+    var updated = legacy
+    updated.resetRule = .never
+    s.update(updated)
+
+    #expect(s.items[0].lastConfirmationRule == .afterHours(4))
+    #expect(s.items[0].confirmationRules == [.afterHours(4)])
 }
 
 @Test func allBoundariesMergesEveryItemInOrder() {
@@ -148,6 +193,22 @@ private func store(_ rule: ResetRule = .dailyAt(hour: 4)) -> Store {
 
     #expect(s.items[0].lastConfirmedAt == at("2026-08-11 08:00:00"))
     #expect(s.items[0].confirmations?.count == 1)
+}
+
+@Test func undoRestoresThePreviousConfirmationsExpiryRule() {
+    var s = store(.afterHours(4))
+    let id = s.items[0].id
+    s.confirm(id: id, at: at("2026-08-11 08:00:00"), calendar: utc)
+
+    var updated = s.items[0]
+    updated.resetRule = .afterHours(12)
+    s.update(updated)
+    s.confirm(id: id, at: at("2026-08-11 10:00:00"), calendar: utc)
+    s.undo(id: id)
+
+    #expect(s.items[0].lastConfirmedAt == at("2026-08-11 08:00:00"))
+    #expect(s.items[0].lastConfirmationRule == .afterHours(4))
+    #expect(s.state(s.items[0], now: at("2026-08-11 13:00:00"), calendar: utc) == .unknown)
 }
 
 @Test func undoDeEscalatesTheNextLine() {

@@ -1,9 +1,8 @@
 import SwiftUI
 import DidICore
 
-/// Reached by tapping an item's name. day-2 is explicit that this is where the
-/// reset rule becomes discoverable, and not before: "how long until this expires?"
-/// is an easy question about something that already happened to you this morning.
+/// General item editing. Confirmation expiry has its own focused editor because
+/// changing a validity rule should not require navigating unrelated text fields.
 struct ItemSettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -81,39 +80,6 @@ struct ItemSettingsView: View {
                             .foregroundStyle(Palette.amber)
                     } else {
                         Text(Copy.wordFieldFooter)
-                    }
-                }
-
-                Section {
-                    // `hasHome` alone would drop "leaving home" off the list the
-                    // moment home is removed in Settings — for an item already
-                    // using it, that reads as the rule silently vanishing rather
-                    // than the picker honestly showing what it's still set to.
-                    ForEach(
-                        ResetRule.choices(hasHome: hasHome || draft.resetRule == .onLeavingHome),
-                        id: \.self
-                    ) { rule in
-                        Button {
-                            draft.resetRule = rule
-                        } label: {
-                            HStack {
-                                Text(Copy.forgetAfter(rule))
-                                    .foregroundStyle(Palette.text)
-                                Spacer()
-                                if draft.resetRule == rule {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(Palette.amber)
-                                }
-                            }
-                            .contentShape(.rect)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                } header: {
-                    Text(Copy.forgetAfterTitle)
-                } footer: {
-                    if draft.resetRule == .never {
-                        Text(Copy.neverWarning)
                     }
                 }
 

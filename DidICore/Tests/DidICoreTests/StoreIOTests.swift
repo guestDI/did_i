@@ -50,6 +50,7 @@ private func tempURL() -> URL {
     var s = Store(items: [item()])
     let id = s.items[0].id
     s.items[0].confirmations = [old, recent]
+    s.items[0].confirmationRules = [.afterHours(4), .afterHours(12)]
     s.usage.checks[id.uuidString] = [old, recent]
     s.usage.checks["a-dead-archived-item"] = [old]
     s.usage.appOpens = [old, recent]
@@ -57,6 +58,7 @@ private func tempURL() -> URL {
     s.pruneHistory(now: now)
 
     #expect(s.items[0].confirmations == [recent])
+    #expect(s.items[0].confirmationRules == [.afterHours(12)])
     #expect(s.usage.checks[id.uuidString] == [recent])
     // An archived item whose every check has aged out leaves no key behind.
     #expect(s.usage.checks["a-dead-archived-item"] == nil)

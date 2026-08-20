@@ -15,6 +15,12 @@ final class WatchStore: NSObject {
     private(set) var store = Store()
 
     func start() {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-appStoreScreenshotBoard") {
+            store = Self.appStoreScreenshotStore(now: .now)
+            return
+        }
+        #endif
         guard WCSession.isSupported() else { return }
         WCSession.default.delegate = self
         WCSession.default.activate()
@@ -22,6 +28,23 @@ final class WatchStore: NSObject {
             apply(data)
         }
     }
+
+    #if DEBUG
+    private static func appStoreScreenshotStore(now: Date) -> Store {
+        let items = Array(Chip.all.prefix(3)).enumerated().map { order, chip in
+            var item = chip.item(createdAt: now.addingTimeInterval(-14 * 86_400))
+            item.order = order
+            return item
+        }
+        var store = Store(items: items)
+        store.confirm(id: items[0].id, at: now.addingTimeInterval(-5 * 60))
+        store.confirm(id: items[1].id, at: now.addingTimeInterval(-2 * 3600))
+        for index in 0..<2 {
+            store.items[index].confirmationLine = nil
+        }
+        return store
+    }
+    #endif
 
     private func apply(_ data: Data) {
         guard let decoded = try? StoreIO.decoded(data) else { return }

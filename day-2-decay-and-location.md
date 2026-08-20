@@ -85,7 +85,7 @@ Never ask again. Not on day 5, not on a settings banner, not with a "you're miss
 > No problem. We'll keep expiring things overnight instead.
 
 Then show where the setting actually lives, once:
-> On the board, open an item's More menu → "Forget this after".
+> On the board, open an item's More menu → "Confirmation expiry".
 
 That's it. The app is slightly dumber and entirely functional.
 
@@ -93,14 +93,28 @@ That's it. The app is slightly dumber and entirely functional.
 
 ## Introducing the reset rule editor
 
-Now — and only now — the per-item reset setting becomes discoverable. Tapping an item's name (not the big confirm area) opens:
+Now — and only now — the per-item reset setting becomes discoverable. The item's
+More menu opens a focused editor:
 
-**Forget this after**
-- When I leave home *(only shown if location granted)*
-- 4 hours
-- 12 hours
-- Every night at 4am *(default)*
-- Never *(with a warning: "A tick that never expires is a tick you can't trust.")*
+**Confirmation expiry**
+
+> New confirmations stay current until
+
+- When I leave home, or after 24 hours *(only offered when Always Location is active)*
+- 4 hours after confirming
+- 12 hours after confirming
+- Next 4am *(default)*
+- Until I confirm again *(with a warning: "A tick that never expires is a tick you can't trust.")*
+
+The footer says: "Applies to future confirmations. The status currently on the
+board will not change." A rule change must never revive or shorten the current
+confirmation. The rule is captured when the user confirms; the newly configured
+rule starts with the next tap.
+
+If an item already uses leaving-home expiry and Always Location later becomes
+unavailable, keep the selected choice visible but disabled, explain why, and
+offer the iOS Settings recovery route. Do not present an unavailable automation
+as a working choice.
 
 "How long until this expires?" is an unanswerable question about a thing you've owned for nine seconds. It's an easy question about something that already happened to you this morning. That's the whole reason it lives on Day 2.
 

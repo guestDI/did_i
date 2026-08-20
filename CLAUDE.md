@@ -9,8 +9,8 @@ the actual content instead of guessing from the one-liners below.
 
 ## Load-bearing decision
 
-Display state is never stored, it's derived from `lastConfirmedAt` + `ResetRule` +
-now. Nothing runs at 04:00; the widget shows amber because 04:00 arrived, not
+Display state is never stored, it's derived from `lastConfirmedAt` + the rule
+captured with that confirmation + now. Nothing runs at 04:00; the widget shows amber because 04:00 arrived, not
 because code executed. Everything else in the architecture follows from this.
 Full reasoning: `architecture.md` §1.
 

@@ -8,11 +8,11 @@ public enum ResetRule: Codable, Sendable, Equatable, Hashable {
 
     public static let `default` = ResetRule.dailyAt(hour: 4)
 
-    /// The "Forget this after" menu, in the day-2 doc's order. `onLeavingHome`
-    /// only appears once a home exists — offering a geofence reset with no
-    /// geofence would be a switch that does nothing.
-    public static func choices(hasHome: Bool) -> [ResetRule] {
-        (hasHome ? [.onLeavingHome] : []) + [
+    /// The confirmation-expiry menu, in the Day 2 doc's order.
+    /// `onLeavingHome` only appears when background exit detection is actually
+    /// available; a saved coordinate alone cannot fulfil that promise.
+    public static func choices(canDetectLeavingHome: Bool) -> [ResetRule] {
+        (canDetectLeavingHome ? [.onLeavingHome] : []) + [
             .afterHours(4), .afterHours(12), .default, .never,
         ]
     }

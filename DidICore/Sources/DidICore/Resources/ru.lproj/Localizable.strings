@@ -114,6 +114,12 @@
 "Previously" = "Раньше";
 "Forget this after" = "Забыть через";
 "You can change how each item expires in Settings → any item → \"Forget this after\"." = "Срок каждого пункта можно изменить: Настройки → любой пункт → «Забыть через».";
+"Confirmation expiry" = "Срок подтверждения";
+"New confirmations stay current until" = "Новые подтверждения актуальны до";
+"Applies to future confirmations. The status currently on the board will not change." = "Относится к будущим подтверждениям. Текущий статус на доске не изменится.";
+"Leaving-home expiry needs Always Location access." = "Для сброса при уходе нужен постоянный доступ к геопозиции.";
+"Edit item" = "Изменить пункт";
+"On the board, open an item's More menu → \"Confirmation expiry\"." = "На доске открой меню «Другие действия» у пункта → «Срок подтверждения».";
 "Put it away" = "Убрать";
 "It leaves the board. You can bring it back any time." = "Исчезнет с доски. Вернуть можно в любой момент.";
 "Move up" = "Переместить выше";
@@ -127,7 +133,11 @@
 "When I leave home" = "Когда я ухожу из дома";
 "Every night at %@" = "Каждую ночь в %@";
 "Never" = "Никогда";
+"When I leave home, or after 24 hours" = "Когда я уйду из дома или через 24 часа";
+"Next %@" = "Ближайшее время: %@";
+"Until I confirm again" = "До следующего подтверждения";
 "Close" = "Закрыть";
+"Cancel" = "Отмена";
 "Add an item" = "Добавить пункт";
 "Pick one." = "Выбери.";
 "Which one goes?" = "Что убрать?";

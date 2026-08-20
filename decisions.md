@@ -910,3 +910,24 @@ minimum 44-point hit target without changing the cap or removing configuration.
 so `View steps` opens the existing captioned walkthrough. Calling it `Show me`
 implied a video the app did not contain. This is a copy correction, not a removed
 flow; a real localised video can replace the sheet later.
+
+## Confirmation-expiry trust pass
+
+**Expiry settings apply to future confirmations only.** The former implementation
+resolved the latest timestamp against the item's live `resetRule`. Changing an
+expired item to `never` could therefore turn it green without another tap. Each
+confirmation now captures its rule, with aligned snapshots retained for Undo.
+Legacy items capture their old rule before the first settings edit. Display state
+remains derived; the inputs are now the timestamp, its captured rule and now.
+
+**"Forget this after" is now "Confirmation expiry".** "This" could mean the item,
+its history or its current record, while the app only controls how long a
+confirmation counts as current. The focused editor says new confirmations stay
+current until, names the anchor for rolling durations, exposes the 24-hour
+geofence ceiling, and states that the board's current status will not change.
+General name/status editing is a separate More-menu action.
+
+**Leaving-home expiry is offered only when it can run in the background.** A home
+coordinate plus When-In-Use permission cannot fulfil the promise. New selection
+requires Always Location. An existing unavailable selection remains visible but
+disabled, with an explanation and direct recovery route to iOS Settings.

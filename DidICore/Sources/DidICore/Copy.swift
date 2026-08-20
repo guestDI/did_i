@@ -266,14 +266,20 @@ public enum Copy {
 
     // MARK: - Item settings
 
-    /// day-2 introduces this editor, and only on day 2: "How long until this
-    /// expires?" is unanswerable about a thing you've owned for nine seconds.
-    public static let forgetAfterTitle = t("Forget this after")
+    /// Day 2 introduces this editor, and only on Day 2. "Confirmation" names
+    /// the thing that expires; "forget this" could mean the item or its history.
+    public static let confirmationExpiryTitle = t("Confirmation expiry")
+    public static let confirmationExpiryPrompt = t("New confirmations stay current until")
+    public static let confirmationExpiryFooter =
+        t("Applies to future confirmations. The status currently on the board will not change.")
+    public static let leavingExpiryUnavailable =
+        t("Leaving-home expiry needs Always Location access.")
+    public static let editItem = t("Edit item")
 
     /// The pointer to the editor. Belongs to the reset rule, not to the location
     /// branch it used to live in — someone who granted location needs it too.
     public static let resetRuleHint =
-        t("On the board, open an item's More menu → \"Forget this after\".")
+        t("On the board, open an item's More menu → \"Confirmation expiry\".")
 
     /// Archive, never delete. The footer is the promise that makes the button safe.
     public static let putItAway = t("Put it away")
@@ -311,12 +317,15 @@ public enum Copy {
     /// `locale` is injected for the same reason `now` and `calendar` are: the
     /// hour renders as "4 AM" or "04" depending on the region, so a test that
     /// reads the ambient locale asserts something different on every machine.
-    public static func forgetAfter(_ rule: ResetRule, locale: Locale = .current) -> String {
+    public static func confirmationExpiry(
+        _ rule: ResetRule,
+        locale: Locale = .current
+    ) -> String {
         switch rule {
-        case .onLeavingHome: t("When I leave home")
-        case .afterHours(let n): t("\(n) hours")
-        case .dailyAt(let hour): t("Every night at \(clockHour(hour, locale: locale))")
-        case .never: t("Never")
+        case .onLeavingHome: t("When I leave home, or after 24 hours")
+        case .afterHours(let n): t("\(n) hours after confirming")
+        case .dailyAt(let hour): t("Next \(clockHour(hour, locale: locale))")
+        case .never: t("Until I confirm again")
         }
     }
 
@@ -337,6 +346,7 @@ public enum Copy {
     // translated, in the header flaps or in the widget gallery.
 
     public static let done = t("Done")
+    public static let cancel = t("Cancel")
     public static let close = t("Close")
     public static let back = t("Back")
     public static let addAnItem = t("Add an item")

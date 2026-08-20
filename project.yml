@@ -73,6 +73,9 @@ targets:
         NSLocationAlwaysAndWhenInUseUsageDescription: >-
           Used to clear your confirmations when you leave home, even with the app
           closed. Your location is never sent to a server.
+        # The app does not implement or invoke encryption beyond Apple's OS
+        # services, so App Store Connect can skip the export-compliance prompt.
+        ITSAppUsesNonExemptEncryption: false
         # No UIBackgroundModes. That key is for continuous background location, and
         # nothing here asks for any: `LocationMonitor` never calls
         # `startUpdatingLocation` and never sets `allowsBackgroundLocationUpdates`.

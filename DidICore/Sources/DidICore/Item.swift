@@ -9,6 +9,11 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
     public var symbol: String          // SF Symbol name
     public var resetRule: ResetRule
     public var lastConfirmedAt: Date?  // nil = never confirmed
+
+    /// The rule that was active when `lastConfirmedAt` was recorded. Settings
+    /// change `resetRule` for future taps; this snapshot keeps an old timestamp
+    /// from becoming current again merely because its settings changed.
+    public var lastConfirmationRule: ResetRule?
     public var createdAt: Date
     public var archivedAt: Date?       // archive, never delete
     public var order: Int
@@ -22,6 +27,11 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
     /// 3+-in-one-day escalation pool and the weekly card. Optional so files
     /// written before this field existed still decode.
     public var confirmations: [Date]?
+
+    /// Rule snapshots aligned with `confirmations`. Optional for stores written
+    /// before confirmation rules were captured; legacy entries use the item's
+    /// rule from the moment they are first mutated.
+    public var confirmationRules: [ResetRule]?
 
     /// Opt-in, per item: notify me when I leave home and this has no record.
     /// One of only two notification categories in the app.
@@ -50,11 +60,13 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
         symbol: String,
         resetRule: ResetRule,
         lastConfirmedAt: Date? = nil,
+        lastConfirmationRule: ResetRule? = nil,
         createdAt: Date,
         archivedAt: Date? = nil,
         order: Int,
         confirmationLine: String? = nil,
         confirmations: [Date]? = nil,
+        confirmationRules: [ResetRule]? = nil,
         leavingHomeReminder: Bool? = nil,
         mutedUntilHome: Bool? = nil,
         archiveOfferedAt: Date? = nil,
@@ -66,11 +78,13 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
         self.symbol = symbol
         self.resetRule = resetRule
         self.lastConfirmedAt = lastConfirmedAt
+        self.lastConfirmationRule = lastConfirmationRule
         self.createdAt = createdAt
         self.archivedAt = archivedAt
         self.order = order
         self.confirmationLine = confirmationLine
         self.confirmations = confirmations
+        self.confirmationRules = confirmationRules
         self.leavingHomeReminder = leavingHomeReminder
         self.mutedUntilHome = mutedUntilHome
         self.archiveOfferedAt = archiveOfferedAt

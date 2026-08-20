@@ -233,7 +233,7 @@ private func optedIn() -> OnboardingFlags {
     #expect(Copy.LocationDeclined.message ==
         "No problem. We'll keep expiring things overnight instead.")
     #expect(Copy.resetRuleHint ==
-        "On the board, open an item's More menu → \"Forget this after\".")
+        "On the board, open an item's More menu → \"Confirmation expiry\".")
 }
 
 @Test func theEscapeHatchCopyIsVerbatim() {

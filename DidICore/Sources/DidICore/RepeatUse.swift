@@ -88,7 +88,14 @@ public extension Store {
         let cutoff = now.addingTimeInterval(-retention)
         for i in items.indices {
             if let confirmations = items[i].confirmations {
-                items[i].confirmations = confirmations.filter { $0 > cutoff }
+                let rules = items[i].confirmationRules ?? []
+                let retained = confirmations.enumerated().filter { $0.element > cutoff }
+                items[i].confirmations = retained.map(\.element)
+                if items[i].confirmationRules != nil {
+                    items[i].confirmationRules = retained.compactMap { index, _ in
+                        rules.indices.contains(index) ? rules[index] : nil
+                    }
+                }
             }
         }
         usage.checks = usage.checks
@@ -151,6 +158,7 @@ public extension Store {
         guard let i = items.firstIndex(where: { $0.id == id }) else { return }
         items[i].archivedAt = nil
         items[i].lastConfirmedAt = nil
+        items[i].lastConfirmationRule = nil
         items[i].archiveOfferedAt = nil
     }
 

@@ -11,7 +11,11 @@ public func boundaries(
     calendar: Calendar = .current
 ) -> [Date] {
     guard let last = item.lastConfirmedAt,
-          let end = expiry(for: item.resetRule, confirmedAt: last, calendar: calendar)
+          let end = expiry(
+            for: item.lastConfirmationRule ?? item.resetRule,
+            confirmedAt: last,
+            calendar: calendar
+          )
     else { return [] }
 
     let window = end.timeIntervalSince(last)

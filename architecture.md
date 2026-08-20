@@ -14,7 +14,10 @@ An item's state is a pure function:
 state(item, now) -> .unknown | .confirmed(freshness)
 ```
 
-computed from `lastConfirmedAt`, the item's `ResetRule`, and the current time. Nothing writes "this item is now amber". Nothing needs to run at 04:00.
+computed from `lastConfirmedAt`, the rule captured when that confirmation was
+made, and the current time. The item's configured `ResetRule` is the rule for its
+next confirmation; changing settings never reinterprets evidence already on the
+board. Nothing writes "this item is now amber". Nothing needs to run at 04:00.
 
 This matters because iOS will not reliably execute your code at 04:00. If state were stored, every expiry would need a background task, and background tasks are best-effort — the app would routinely show a stale green tick, which is the one failure this product cannot have (see the trust argument in the UX docs: a green tick that lies is worse than no app).
 
@@ -78,6 +81,7 @@ struct Item: Codable, Identifiable, Sendable {
     var symbol: String            // SF Symbol name
     var resetRule: ResetRule
     var lastConfirmedAt: Date?    // nil = never confirmed
+    var lastConfirmationRule: ResetRule? // rule captured by the latest tap
     var createdAt: Date
     var archivedAt: Date?         // archive, never delete
     var order: Int
@@ -98,6 +102,11 @@ struct Store: Codable, Sendable {
     var checkCounts: [UUID: [Date]]   // for the paranoia counter, trimmed to 30 days
 }
 ```
+
+`confirmations` also carries aligned rule snapshots for Undo. Older store files
+decode with no snapshots; the old configured rule is captured before the first
+edit. This preserves the derived-state architecture while enforcing the trust
+invariant: changing an expiry setting cannot turn an expired timestamp green.
 
 `checkCounts` records widget/app *views* of an item, not confirmations — it feeds the weekly card and, more importantly, the escalating-checks guardrail in the Day 3+ doc. Trim aggressively; it is the only structure that grows.
 
@@ -207,7 +216,11 @@ So the escalation described in the Day 2 doc is not optional politeness — it i
 
 1. Request `.authorizedWhenInUse` at the "Use my location" tap. Used immediately to capture the home coordinate.
 2. Once home is set, request `.authorizedAlways` with a one-line explanation of what it buys ("so we can clear the board when you leave, even with the app closed").
-3. If the user grants only when-in-use, the geofence reset silently degrades to the 24h ceiling and the leaving-home nudge is unavailable. Do not badger. Do not show a warning banner.
+3. If the user grants only when-in-use, the geofence reset silently degrades to
+   the 24h ceiling and the leaving-home nudge is unavailable. Do not offer
+   "When I leave home" as a new expiry choice until Always access is active. If
+   an existing item still carries that choice, show it disabled with the recovery
+   route to iOS Settings. Do not badger. Do not show a warning banner.
 
 `NSLocationAlwaysAndWhenInUseUsageDescription` must be present alongside the when-in-use string.
 
