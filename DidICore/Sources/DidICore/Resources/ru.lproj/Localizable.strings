@@ -192,3 +192,4 @@
 "Back" = "Назад";
 "OK" = "ОК";
 "Put %@ away?" = "Убрать «%@»?";
+"Also works from Control Center — add it again for each item you want to confirm from there." = "Также работает из Пункта управления — добавь его ещё раз для каждого пункта, который хочешь подтверждать оттуда.";

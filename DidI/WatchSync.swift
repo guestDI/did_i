@@ -24,7 +24,12 @@ final class WatchSync: NSObject {
 
     private func push() {
         guard WCSession.default.activationState == .activated else { return }
-        guard let data = try? StoreIO.encoded(StoreIO.read()) else { return }
+        var store = StoreIO.read()
+        // `Store.usage` is documented "local only, never transmitted" — the
+        // watch glance has no use for check counts or paranoia-counter data
+        // anyway, so it never leaves the phone.
+        store.usage = Usage()
+        guard let data = try? StoreIO.encoded(store) else { return }
         try? WCSession.default.updateApplicationContext(["store": data])
     }
 }

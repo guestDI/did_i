@@ -4,3 +4,6 @@
 "Pick which item this widget shows." = "Выбери, что показывает этот виджет.";
 "Item" = "Пункт";
 "Confirm" = "Подтвердить";
+"Confirm an item without opening the app. Add it again for each item you track." = "Подтверди пункт, не открывая приложение. Добавь ещё раз для каждого отслеживаемого пункта.";
+"Confirmed" = "Подтверждено";
+"Not confirmed" = "Не подтверждено";

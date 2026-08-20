@@ -4,3 +4,6 @@
 "Pick which item this widget shows." = "Wybierz element wyświetlany w tym widżecie.";
 "Item" = "Element";
 "Confirm" = "Potwierdź";
+"Confirm an item without opening the app. Add it again for each item you track." = "Potwierdź element bez otwierania aplikacji. Dodaj ponownie dla każdego śledzonego elementu.";
+"Confirmed" = "Potwierdzone";
+"Not confirmed" = "Niepotwierdzone";
