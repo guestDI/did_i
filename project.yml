@@ -112,6 +112,7 @@ targets:
       - package: DidICore
     settings:
       base:
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_BUNDLE_IDENTIFIER: com.dihnatovich.didi.watchapp
         PRODUCT_NAME: Did I
         TARGETED_DEVICE_FAMILY: "4"
