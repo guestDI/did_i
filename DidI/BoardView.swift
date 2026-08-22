@@ -7,7 +7,6 @@ struct BoardView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var store: Store
     @State private var editing: Item?
-    @State private var editingExpiry: Item?
     @State private var dayTwo: DayTwoFlow.Step?
     @State private var sharing: Item?
     @State private var showingSettings = false
@@ -74,21 +73,6 @@ struct BoardView: View {
                 existingItems: store.items,
                 save: { updated in
                     save { store in
-                        store.update(updated)
-                    }
-                }
-            )
-        }
-        .sheet(item: $editingExpiry) { item in
-            ConfirmationExpiryView(
-                item: item,
-                hasHome: store.home != nil,
-                save: { rule in
-                    save { store in
-                        guard let current = store.items.first(where: { $0.id == item.id })
-                        else { return }
-                        var updated = current
-                        updated.resetRule = rule
                         store.update(updated)
                     }
                 }
@@ -353,7 +337,6 @@ struct BoardView: View {
 
     private func rowActions(item: Item, now: Date) -> some View {
         Menu {
-            Button(Copy.confirmationExpiryTitle) { editingExpiry = item }
             Button(Copy.editItem, systemImage: "pencil") { editing = item }
             if item.lastConfirmedAt != nil {
                 Button(Copy.undo, systemImage: "arrow.uturn.backward") { undo(item) }

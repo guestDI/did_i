@@ -121,7 +121,7 @@ import Foundation
     #expect(reminder.body == Copy.unknownAway)
 }
 
-// MARK: - Confirmation expiry (day-2)
+// MARK: - How long a tick lasts (day-2)
 
 /// Pinned to en_US, because the hour renders as "4 AM" there and "04" in any
 /// 24-hour region. The ambient locale is not a fact about this app's copy.
@@ -139,11 +139,11 @@ func plainSpaces(_ text: String) -> String {
 
 @Test func confirmationExpiryOffersTheDocsOptionsInOrder() {
     #expect(ResetRule.choices(canDetectLeavingHome: true).map(confirmationExpiryEN) == [
-        "When I leave home, or after 24 hours",
-        "4 hours after confirming",
-        "12 hours after confirming",
-        "Next 4 AM",
-        "Until I confirm again",
+        "When I leave home (24 hours at most)",
+        "4 hours after I confirm",
+        "12 hours after I confirm",
+        "At 4 AM each day",
+        "Never (only when I confirm again)",
     ])
 }
 
@@ -151,7 +151,8 @@ func plainSpaces(_ text: String) -> String {
     let choices = ResetRule.choices(canDetectLeavingHome: false)
     #expect(!choices.contains(.onLeavingHome))
     #expect(choices.map(confirmationExpiryEN) == [
-        "4 hours after confirming", "12 hours after confirming", "Next 4 AM", "Until I confirm again",
+        "4 hours after I confirm", "12 hours after I confirm", "At 4 AM each day",
+        "Never (only when I confirm again)",
     ])
 }
 
@@ -165,13 +166,13 @@ func plainSpaces(_ text: String) -> String {
 }
 
 @Test func clockHoursReadAsClockTimes() {
-    #expect(confirmationExpiryEN(.dailyAt(hour: 4)) == "Next 4 AM")
-    #expect(confirmationExpiryEN(.dailyAt(hour: 0)) == "Next 12 AM")
-    #expect(confirmationExpiryEN(.dailyAt(hour: 13)) == "Next 1 PM")
+    #expect(confirmationExpiryEN(.dailyAt(hour: 4)) == "At 4 AM each day")
+    #expect(confirmationExpiryEN(.dailyAt(hour: 0)) == "At 12 AM each day")
+    #expect(confirmationExpiryEN(.dailyAt(hour: 13)) == "At 1 PM each day")
 }
 
 /// The whole reason the meridiem is no longer glued on by hand.
 @Test func aTwentyFourHourRegionGetsATwentyFourHourClock() {
     #expect(Copy.confirmationExpiry(.dailyAt(hour: 13), locale: Locale(identifier: "en_GB"))
-        == "Next 13")
+        == "At 13 each day")
 }

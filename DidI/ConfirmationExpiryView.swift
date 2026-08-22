@@ -3,28 +3,26 @@ import CoreLocation
 import UIKit
 import DidICore
 
-/// A focused editor for the one trust-sensitive item setting. The configured
-/// rule applies to future confirmations; the rule captured by the current
-/// confirmation remains untouched.
+/// The expiry rule, pushed from `ItemSettingsView`. It edits the parent's draft
+/// in place and has no Done of its own: one item, one save, one Done button.
+/// Standing alone in the More menu made "Edit item" a decoy — the obvious
+/// affordance for changing an item held everything except the rule people came
+/// to change — and split the two geofence settings across two screens.
+///
+/// The configured rule applies to future confirmations; the rule captured by the
+/// current confirmation remains untouched (`Store.update`).
 struct ConfirmationExpiryView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
 
-    let item: Item
+    @Binding var rule: ResetRule
+    /// The saved rule, not the draft: an already-chosen leaving-home rule stays
+    /// visible when the permission behind it is gone, so it can be changed away
+    /// from rather than silently vanishing.
+    let originalRule: ResetRule
     let hasHome: Bool
-    let save: (ResetRule) -> Bool
 
-    @State private var draftRule: ResetRule
     @State private var authorization = LocationMonitor.shared.status
-    @State private var showingSaveError = false
-
-    init(item: Item, hasHome: Bool, save: @escaping (ResetRule) -> Bool) {
-        self.item = item
-        self.hasHome = hasHome
-        self.save = save
-        _draftRule = State(initialValue: item.resetRule)
-    }
 
     private var leavingHomeAvailable: Bool {
         hasHome && authorization == .authorizedAlways
@@ -32,90 +30,81 @@ struct ConfirmationExpiryView: View {
 
     private var choices: [ResetRule] {
         var choices = ResetRule.choices(canDetectLeavingHome: leavingHomeAvailable)
-        if item.resetRule == .onLeavingHome, !choices.contains(.onLeavingHome) {
+        if originalRule == .onLeavingHome, !choices.contains(.onLeavingHome) {
             choices.insert(.onLeavingHome, at: 0)
         }
         return choices
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    ForEach(choices, id: \.self) { rule in
-                        Button {
-                            draftRule = rule
-                        } label: {
-                            HStack {
-                                Text(Copy.confirmationExpiry(rule))
+        Form {
+            Section {
+                ForEach(choices, id: \.self) { choice in
+                    Button {
+                        rule = choice
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(Copy.confirmationExpiry(choice))
                                     .foregroundStyle(Palette.text)
-                                Spacer()
-                                if draftRule == rule {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(Palette.amber)
-                                        .accessibilityHidden(true)
+                                // The caution belongs on the row, before the tap —
+                                // in a footer it only ever arrives after the choice
+                                // it is warning about.
+                                if choice == .never {
+                                    Text(Copy.neverWarning)
+                                        .appFont(12, relativeTo: .footnote)
+                                        .foregroundStyle(Palette.sub)
                                 }
                             }
-                            .contentShape(.rect)
+                            Spacer()
+                            if rule == choice {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(Palette.amber)
+                                    .accessibilityHidden(true)
+                            }
                         }
-                        .buttonStyle(.plain)
-                        .disabled(rule == .onLeavingHome && !leavingHomeAvailable)
-                        .accessibilityAddTraits(draftRule == rule ? .isSelected : [])
+                        .contentShape(.rect)
                     }
-                } header: {
-                    Text(Copy.confirmationExpiryPrompt)
-                } footer: {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(Copy.confirmationExpiryFooter)
-                        if draftRule == .never {
-                            Text(Copy.neverWarning)
-                        }
-                        if item.resetRule == .onLeavingHome && !leavingHomeAvailable {
-                            Text(Copy.leavingExpiryUnavailable)
-                        }
-                    }
+                    .buttonStyle(.plain)
+                    .disabled(choice == .onLeavingHome && !leavingHomeAvailable)
+                    // The footer explaining the dimmed row sits after every other
+                    // option, so VoiceOver reaches it long after the row it is about.
+                    .accessibilityHint(
+                        choice == .onLeavingHome && !leavingHomeAvailable
+                            ? Copy.leavingExpiryUnavailable : ""
+                    )
+                    .accessibilityAddTraits(rule == choice ? .isSelected : [])
                 }
-
-                if hasHome && !leavingHomeAvailable {
-                    Section {
-                        Button(Copy.HomeSettings.openSystemSettings) {
-                            guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-                            openURL(url)
-                        }
+            } header: {
+                Text(Copy.confirmationExpiryPrompt)
+            } footer: {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(Copy.confirmationExpiryFooter)
+                    if originalRule == .onLeavingHome && !leavingHomeAvailable {
+                        Text(Copy.leavingExpiryUnavailable)
                     }
                 }
             }
-            .scrollContentBackground(.hidden)
-            .background(Palette.ink)
-            .navigationTitle(Copy.confirmationExpiryTitle)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(Copy.cancel) { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(Copy.done) {
-                        if save(draftRule) {
-                            dismiss()
-                        } else {
-                            showingSaveError = true
-                        }
+
+            if hasHome && !leavingHomeAvailable {
+                Section {
+                    Button(Copy.HomeSettings.openSystemSettings) {
+                        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                        openURL(url)
                     }
-                    .disabled(draftRule == item.resetRule)
+                } footer: {
+                    Text(Copy.leavingExpiryUnavailable)
                 }
             }
         }
-        .presentationDetents([.medium, .large])
-        .interactiveDismissDisabled(draftRule != item.resetRule)
+        .scrollContentBackground(.hidden)
+        .background(Palette.ink)
+        .navigationTitle(Copy.confirmationExpiryTitle)
+        .navigationBarTitleDisplayMode(.inline)
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 authorization = LocationMonitor.shared.status
             }
-        }
-        .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
-            Button(Copy.ok) {}
-        } message: {
-            Text(Copy.saveFailedBody)
         }
     }
 }

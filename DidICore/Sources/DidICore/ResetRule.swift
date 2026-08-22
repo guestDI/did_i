@@ -18,14 +18,14 @@ public enum ResetRule: Codable, Sendable, Equatable, Hashable {
     }
 }
 
-/// Where "home" is. Radius is 150m by default: smaller drifts indoors, larger
+/// Where "home" is. Radius is 100m by default: smaller drifts indoors, larger
 /// fires the leaving-home nudge too late to be useful.
 public struct HomeLocation: Codable, Sendable, Equatable {
     public var latitude: Double
     public var longitude: Double
     public var radius: Double
 
-    public init(latitude: Double, longitude: Double, radius: Double = 150) {
+    public init(latitude: Double, longitude: Double, radius: Double = 100) {
         self.latitude = latitude
         self.longitude = longitude
         self.radius = radius

@@ -266,10 +266,14 @@ public enum Copy {
 
     // MARK: - Item settings
 
-    /// Day 2 introduces this editor, and only on Day 2. "Confirmation" names
-    /// the thing that expires; "forget this" could mean the item or its history.
-    public static let confirmationExpiryTitle = t("Confirmation expiry")
-    public static let confirmationExpiryPrompt = t("New confirmations stay current until")
+    /// Day 2 introduces this editor, and only on Day 2. Named in the app's own
+    /// vocabulary — "tick", not "confirmation expiry" — because the row sits in a
+    /// menu of plain verb phrases and "forget this" could mean the item or its
+    /// history. Each option is a self-contained phrase, not a fragment completing
+    /// the header: sentence-completion breaks on two of the five in English and
+    /// on case agreement in pl/ru.
+    public static let confirmationExpiryTitle = t("How long a tick lasts")
+    public static let confirmationExpiryPrompt = t("When a tick stops counting")
     public static let confirmationExpiryFooter =
         t("Applies to future confirmations. The status currently on the board will not change.")
     public static let leavingExpiryUnavailable =
@@ -279,7 +283,7 @@ public enum Copy {
     /// The pointer to the editor. Belongs to the reset rule, not to the location
     /// branch it used to live in — someone who granted location needs it too.
     public static let resetRuleHint =
-        t("On the board, open an item's More menu → \"Confirmation expiry\".")
+        t("On the board, open an item's More menu → \"Edit item\" → \"How long a tick lasts\".")
 
     /// Archive, never delete. The footer is the promise that makes the button safe.
     public static let putItAway = t("Put it away")
@@ -322,10 +326,10 @@ public enum Copy {
         locale: Locale = .current
     ) -> String {
         switch rule {
-        case .onLeavingHome: t("When I leave home, or after 24 hours")
-        case .afterHours(let n): t("\(n) hours after confirming")
-        case .dailyAt(let hour): t("Next \(clockHour(hour, locale: locale))")
-        case .never: t("Until I confirm again")
+        case .onLeavingHome: t("When I leave home (24 hours at most)")
+        case .afterHours(let n): t("\(n) hours after I confirm")
+        case .dailyAt(let hour): t("At \(clockHour(hour, locale: locale)) each day")
+        case .never: t("Never (only when I confirm again)")
         }
     }
 

@@ -71,7 +71,8 @@ final class LocationMonitor: NSObject {
         stopMonitoring()
         let region = CLCircularRegion(
             center: CLLocationCoordinate2D(latitude: home.latitude, longitude: home.longitude),
-            radius: home.radius,
+            // Clamped: stores written before the 100m default still hold 150.
+            radius: min(home.radius, 100),
             identifier: regionID
         )
         region.notifyOnExit = true

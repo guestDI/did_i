@@ -70,7 +70,7 @@ Only `Use my location` presents the iOS dialog. Request **`whenInUse` first**, t
 
 If "I'm not home right now": store a pending flag and offer setup again on the first app open at least 24 hours later. Settings remains available immediately. The cooldown avoids an immediate nag without adding continuous location tracking or a map picker to a one-tap app.
 
-Geofence radius: 150m default. Smaller and you get spurious triggers from GPS drift indoors; larger and the leaving-home nudge fires too late to be useful.
+Geofence radius: 100m default (was 150m — the nudge fired only after iOS's hysteresis buffer put you ~250m from the door). Smaller and you get spurious triggers from GPS drift indoors; larger and the leaving-home nudge fires too late to be useful.
 
 **Confirmation sequence:** persist the captured coordinate first, then begin monitoring. Show `Home saved.` after the first permission level is granted. After the app has background location access, show:
 > Home is set. Leaving home clears the board automatically.
@@ -85,7 +85,7 @@ Never ask again. Not on day 5, not on a settings banner, not with a "you're miss
 > No problem. We'll keep expiring things overnight instead.
 
 Then show where the setting actually lives, once:
-> On the board, open an item's More menu → "Confirmation expiry".
+> On the board, open an item's More menu → "Edit item" → "How long a tick lasts".
 
 That's it. The app is slightly dumber and entirely functional.
 
@@ -93,18 +93,24 @@ That's it. The app is slightly dumber and entirely functional.
 
 ## Introducing the reset rule editor
 
-Now — and only now — the per-item reset setting becomes discoverable. The item's
-More menu opens a focused editor:
+Now — and only now — the per-item reset setting becomes discoverable. It lives
+inside the item editor (More → "Edit item"), which is where someone looking to
+change an item goes first, and pushes to its own screen from there:
 
-**Confirmation expiry**
+**How long a tick lasts**
 
-> New confirmations stay current until
+> When a tick stops counting
 
-- When I leave home, or after 24 hours *(only offered when Always Location is active)*
-- 4 hours after confirming
-- 12 hours after confirming
-- Next 4am *(default)*
-- Until I confirm again *(with a warning: "A tick that never expires is a tick you can't trust.")*
+- When I leave home (24 hours at most) *(only offered when Always Location is active)*
+- 4 hours after I confirm
+- 12 hours after I confirm
+- At 4am each day *(default)*
+- Never (only when I confirm again) *(the warning "A tick that never expires is a tick you can't trust." sits on the row itself, not in the footer — a caution that only appears after the tap is not a caution)*
+
+Each option is a self-contained phrase rather than a fragment completing the
+header. Sentence-completion broke on two of the five in English ("…until when I
+leave home", "…until until I confirm again") and breaks harder on case agreement
+in pl/ru.
 
 The footer says: "Applies to future confirmations. The status currently on the
 board will not change." A rule change must never revive or shorten the current

@@ -37,9 +37,11 @@ final class AppStoreScreenshotUITests: XCTestCase {
         capture("03-current-at-a-glance")
 
         app.buttons["More actions"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["Confirmation expiry"].waitForExistence(timeout: 2))
-        app.buttons["Confirmation expiry"].tap()
-        XCTAssertTrue(app.navigationBars["Confirmation expiry"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["Edit item"].waitForExistence(timeout: 2))
+        app.buttons["Edit item"].tap()
+        XCTAssertTrue(app.buttons["How long a tick lasts"].waitForExistence(timeout: 3))
+        app.buttons["How long a tick lasts"].tap()
+        XCTAssertTrue(app.navigationBars["How long a tick lasts"].waitForExistence(timeout: 3))
         capture("04-expiry-you-control")
 
         app.buttons["Cancel"].tap()

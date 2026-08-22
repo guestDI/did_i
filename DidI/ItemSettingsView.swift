@@ -1,8 +1,10 @@
 import SwiftUI
 import DidICore
 
-/// General item editing. Confirmation expiry has its own focused editor because
-/// changing a validity rule should not require navigating unrelated text fields.
+/// Everything about one item: name, status word, expiry rule, leaving-home
+/// reminder. The expiry rule pushes to its own screen — five options with a
+/// warning on one of them do not belong inline — but it saves with this sheet's
+/// Done, so an item is never half-edited.
 struct ItemSettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -80,6 +82,21 @@ struct ItemSettingsView: View {
                             .foregroundStyle(Palette.amber)
                     } else {
                         Text(Copy.wordFieldFooter)
+                    }
+                }
+
+                Section {
+                    NavigationLink {
+                        ConfirmationExpiryView(
+                            rule: $draft.resetRule,
+                            originalRule: original.resetRule,
+                            hasHome: hasHome
+                        )
+                    } label: {
+                        LabeledContent(
+                            Copy.confirmationExpiryTitle,
+                            value: Copy.confirmationExpiry(draft.resetRule)
+                        )
                     }
                 }
 

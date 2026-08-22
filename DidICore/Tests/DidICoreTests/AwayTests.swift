@@ -233,7 +233,7 @@ private func optedIn() -> OnboardingFlags {
     #expect(Copy.LocationDeclined.message ==
         "No problem. We'll keep expiring things overnight instead.")
     #expect(Copy.resetRuleHint ==
-        "On the board, open an item's More menu → \"Confirmation expiry\".")
+        "On the board, open an item's More menu → \"Edit item\" → \"How long a tick lasts\".")
 }
 
 @Test func theEscapeHatchCopyIsVerbatim() {
@@ -243,7 +243,8 @@ private func optedIn() -> OnboardingFlags {
     #expect(Copy.shareMessage(item: item()) == "Random question — is The stove off?")
 }
 
-@Test func theGeofenceRadiusIsOneFiftyMetres() {
-    // Smaller drifts indoors; larger fires the nudge too late to be useful.
-    #expect(HomeLocation(latitude: 0, longitude: 0).radius == 150)
+@Test func theGeofenceRadiusIsOneHundredMetres() {
+    // Smaller drifts indoors; larger fires the nudge too late to be useful —
+    // iOS adds its own hysteresis buffer on top of whatever we ask for.
+    #expect(HomeLocation(latitude: 0, longitude: 0).radius == 100)
 }

@@ -42,7 +42,7 @@
 			<string>%lld godziny</string>
 		</dict>
 	</dict>
-	<key>%lld hours after confirming</key>
+	<key>%lld hours after I confirm</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@count@</string>

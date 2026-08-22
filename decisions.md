@@ -931,3 +931,47 @@ General name/status editing is a separate More-menu action.
 coordinate plus When-In-Use permission cannot fulfil the promise. New selection
 requires Always Location. An existing unavailable selection remains visible but
 disabled, with an explanation and direct recovery route to iOS Settings.
+
+**"Confirmation expiry" is now "How long a tick lasts", and the options no longer
+complete the header.** The rename off "Forget this after" fixed the ambiguous
+"this" but landed on systems vocabulary, in a More menu whose other rows are plain
+verb phrases ("Edit item", "Put it away", "Can't check right now"). "Tick" is
+already this app's word for the thing that expires. The header was a sentence stem
+— "New confirmations stay current until" — that two of five options could not
+complete: "…until *when* I leave home" and a literal doubled "…until *until* I
+confirm again". Options are now self-contained under "When a tick stops counting",
+which also removes the case-agreement trap the stem set for pl/ru.
+
+**`.never` says "Never" and carries its warning on the row.** The old label,
+"Until I confirm again", described true behaviour but read as the safe default —
+every rule ends when you confirm again — while `neverWarning` appeared in the
+footer only *after* selection, contradicting the label it was meant to qualify. A
+caution that arrives after the tap is not a caution.
+
+**Still open: "Edit item" is a decoy for this setting.** It is the obvious "change
+this thing" affordance and holds name, status word and the leaving-home *reminder*,
+while the leaving-home *expiry* lives in a sibling sheet. Two geofence settings,
+two screens, one guaranteed backtrack. Merging the expiry editor into
+`ItemSettingsView` as a push is the fix; deferred because it is structural, not copy.
+
+**The expiry editor moved inside "Edit item".** It used to be a sibling row in the
+More menu, which made "Edit item" a decoy: the obvious "change this item"
+affordance held name, status word and the leaving-home *reminder*, while the
+leaving-home *expiry* sat in a separate sheet — two geofence settings on two
+screens, and a guaranteed backtrack for anyone who guessed the pencil icon first.
+`ConfirmationExpiryView` is now pushed from `ItemSettingsView` on a
+`@Binding var rule`, with no Done of its own; the parent's Done saves the whole
+item at once, so an item is never half-edited. The focused-editor rationale still
+holds — five options with a warning on one do not belong inline — it is just a
+push instead of a sheet.
+
+Routing the rule through `ItemSettingsView.save` is safe: `Store.update` captures
+the rule snapshot regardless of which field changed, so "applies to future
+confirmations only" is unaffected. The one-time pointer copy now names both hops:
+More → "Edit item" → "How long a tick lasts".
+
+**The dimmed leaving-home row explains itself to VoiceOver.** The footer naming
+the missing permission comes after every other option in reading order, so the row
+carries `Copy.leavingExpiryUnavailable` as an `accessibilityHint` too, and the
+Open-Settings section — previously a bare unexplained button — now has the same
+line as its footer.

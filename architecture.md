@@ -226,7 +226,7 @@ So the escalation described in the Day 2 doc is not optional politeness — it i
 
 ### Region monitoring
 
-One `CLCircularRegion`, 150m radius, `notifyOnExit = true`, `notifyOnEntry = true`. Allowance is 20 regions; we use one.
+One `CLCircularRegion`, 100m radius, `notifyOnExit = true`, `notifyOnEntry = true`. Allowance is 20 regions; we use one.
 
 Entry events are used to clear the "can't check right now" mute state described in the Day 2 tone rules.
 
