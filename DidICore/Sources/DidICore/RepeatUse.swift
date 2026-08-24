@@ -104,18 +104,29 @@ public extension Store {
         usage.appOpens = usage.appOpens.filter { $0 > cutoff }
     }
 
-    /// Opening the board is a look at whatever was still in question.
-    ///
-    /// Attributing it to every item made "checks" a copy of the app-open count,
-    /// so every item tied and the counter's ranking meant nothing. If the stove
-    /// already reads green, opening the board was not checking the stove.
-    mutating func recordBoardView(at date: Date, calendar: Calendar = .current) {
+    /// Every open, whatever brought them here.
+    mutating func recordBoardView(at date: Date) {
         // The sweep rides along here rather than on every mutation: opening the
         // board is frequent enough to keep the file small and is the one path that
         // is never on the widget's budget.
         pruneHistory(now: date)
         usage.appOpens = (usage.appOpens + [date])
             .filter { $0 > date.addingTimeInterval(-retention) }
+    }
+
+    /// Opening the board is a look at whatever was still in question.
+    ///
+    /// Attributing it to every item made "checks" a copy of the app-open count,
+    /// so every item tied and the counter's ranking meant nothing. If the stove
+    /// already reads green, opening the board was not checking the stove.
+    ///
+    /// Separate from `recordBoardView` because the caller cannot know at launch
+    /// what the visit was for. Coming in to rename an item or set home is not
+    /// checking the stove either, and counting it inflated a number the weekly
+    /// card reads back to the user as a fact about their own behaviour. The app
+    /// only earns the right to say that if it is true, so the call is deferred
+    /// until the visit is over and its purpose is known.
+    mutating func recordChecks(at date: Date, calendar: Calendar = .current) {
         for item in active where state(item, now: date, calendar: calendar) == .unknown {
             recordCheck(item.id, at: date)
         }

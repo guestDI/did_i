@@ -148,6 +148,8 @@
 "Latest confirmation removed. Previous one remains." = "Последнее подтверждение удалено. Предыдущее осталось.";
 "Item" = "Пункт";
 "Status" = "Статус";
+"Reminders" = "Напоминания";
+"Notifications are off, so these reminders can't reach you." = "Уведомления выключены, поэтому эти напоминания до тебя не дойдут.";
 "Remind me when I leave" = "Напомнить при уходе";
 "One notification, when you leave and this has no record." = "Одно уведомление при уходе, если записи нет.";
 "Home" = "Дом";
@@ -183,6 +185,7 @@
 "View steps" = "Показать шаги";
 "Home saved." = "Дом сохранён.";
 "Home is set. Leaving home clears the board automatically." = "Дом задан. При уходе доска очищается автоматически.";
+"Muted from the summary until you confirm it." = "Скрыто из сводки до подтверждения.";
 "Muted from the summary until you're home." = "Скрыто из сводки до возвращения домой.";
 "On the board, open an item's More menu → \"Forget this after\"." = "На доске открой меню «Другие действия» у пункта → «Забыть через».";
 "That name is already on your board or in Previously." = "Такое название уже есть на доске или в разделе «Раньше».";

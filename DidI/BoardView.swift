@@ -18,6 +18,9 @@ struct BoardView: View {
     @State private var removing: Item?
     @State private var undoFeedback: [UUID: String] = [:]
     @State private var showingSaveError = false
+    @State private var authorization = LocationMonitor.shared.status
+    /// Set when the user goes somewhere on purpose. See `recordChecks`.
+    @State private var navigated = false
     @Environment(\.requestReview) private var requestReview
 
     init(initialStore: Store) {
@@ -52,7 +55,12 @@ struct BoardView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Palette.ink)
         .onChange(of: scenePhase) { _, phase in
+            if phase != .active {
+                // The visit is over, so what it was for is finally knowable.
+                recordChecksIfThisWasOne()
+            }
             if phase == .active {
+                navigated = false
                 reload()
                 // Permission can change from iOS Settings while the app is
                 // backgrounded. `didFinishLaunching` only re-registers the
@@ -61,6 +69,7 @@ struct BoardView: View {
                 // the app first leaves the region monitored under whatever
                 // authorization it last saw.
                 LocationMonitor.shared.start()
+                authorization = LocationMonitor.shared.status
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: StoreChange.name)) { _ in
@@ -123,6 +132,7 @@ struct BoardView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: AppDelegate.openWalkthrough)) { _ in
             // The nudge deep-links to the install instructions, not here.
+            navigated = true
             showingWalkthrough = true
         }
         .sheet(item: $dayTwo) { step in
@@ -178,6 +188,17 @@ struct BoardView: View {
         }
         // Housekeeping last, and only ever one prompt per open.
         staleItem = StaleItem.needingArchiveOffer(in: store, now: .now)
+    }
+
+    /// A visit spent renaming an item or setting home was not a look at the stove.
+    /// Recorded on the way out rather than on open, because at launch there is no
+    /// way to tell the two apart — and the count is read back to the user in the
+    /// weekly card as a fact about their own behaviour.
+    private func recordChecksIfThisWasOne() {
+        guard !navigated else { return }
+        // Deliberately not `save`: no animation and no widget reload on the way
+        // out, and a failed write here is not worth an alert nobody will see.
+        try? StoreIO.mutate { $0.recordChecks(at: .now) }
     }
 
     /// Offered once, whatever they answer.
@@ -241,7 +262,7 @@ struct BoardView: View {
                     .foregroundStyle(Palette.muted)
                     .accessibilityHidden(true)
                 Spacer()
-                Button { adding = .init(suggestion: nil) } label: {
+                Button { navigated = true; adding = .init(suggestion: nil) } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Palette.muted)
@@ -249,7 +270,7 @@ struct BoardView: View {
                         .contentShape(.rect)
                 }
                 .accessibilityLabel(Copy.addAnItem)
-                Button { showingSettings = true } label: {
+                Button { navigated = true; showingSettings = true } label: {
                     Image(systemName: "slider.horizontal.3")
                         .font(.system(size: 14))
                         .foregroundStyle(Palette.muted)
@@ -310,17 +331,26 @@ struct BoardView: View {
                 rowActions(item: item, now: now)
                     .offset(x: rowActionOffset(for: item), y: 13)
             }
-            if store.isAway, store.state(item, now: now) == .unknown {
+            if store.state(item, now: now) == .unknown, store.isAway || cannotTellIfAway {
                 awayActions(item)
             }
         }
+    }
+
+    /// day-2 accepts "declined, app keeps working on timers" as a normal outcome,
+    /// so the two things that help when you are out and cannot check — muting the
+    /// summary and asking someone at home — cannot be gated on a geofence nobody
+    /// agreed to. `isAway` still gates the *status line*, which claims "since you
+    /// left" and has to be true; these buttons claim nothing.
+    private var cannotTellIfAway: Bool {
+        store.home == nil || authorization != .authorizedAlways
     }
 
     @ViewBuilder
     private func awayActions(_ item: Item) -> some View {
         HStack(spacing: 8) {
             if item.mutedUntilHome == true {
-                Text(Copy.mutedUntilHome)
+                Text(cannotTellIfAway ? Copy.mutedUntilConfirmed : Copy.mutedUntilHome)
                     .appFont(12, relativeTo: .footnote)
                     .foregroundStyle(Palette.sub)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -337,12 +367,12 @@ struct BoardView: View {
 
     private func rowActions(item: Item, now: Date) -> some View {
         Menu {
-            Button(Copy.editItem, systemImage: "pencil") { editing = item }
+            Button(Copy.editItem, systemImage: "pencil") { navigated = true; editing = item }
             if item.lastConfirmedAt != nil {
                 Button(Copy.undo, systemImage: "arrow.uturn.backward") { undo(item) }
             }
             Button(Copy.putItAway, systemImage: "archivebox") { removing = item }
-            if store.isAway, store.state(item, now: now) == .unknown {
+            if store.state(item, now: now) == .unknown, store.isAway || cannotTellIfAway {
                 Button(Copy.cantCheckRightNow) { mute(item) }
                 Button(Copy.askSomeoneAtHome) { sharing = item }
             }

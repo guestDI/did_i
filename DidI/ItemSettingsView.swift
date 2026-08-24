@@ -1,4 +1,6 @@
 import SwiftUI
+import UIKit
+import UserNotifications
 import DidICore
 
 /// Everything about one item: name, status word, expiry rule, leaving-home
@@ -7,6 +9,8 @@ import DidICore
 /// Done, so an item is never half-edited.
 struct ItemSettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var draft: Item
     /// Kept to tell an edit from an untouched field on the way out.
@@ -15,6 +19,15 @@ struct ItemSettingsView: View {
     let existingItems: [Item]
     let save: (Item) -> Bool
     @State private var showingSaveError = false
+    @State private var notificationsAllowed = true
+
+    /// The reminder is delivered by a notification. Revoke that in iOS Settings
+    /// and `center.add` starts failing silently, leaving a toggle that reads on
+    /// and a promise nothing keeps — so the state is re-read on every appearance
+    /// rather than trusted from the moment permission was granted.
+    private var reminderCannotFire: Bool {
+        draft.leavingHomeReminder == true && !notificationsAllowed
+    }
 
     init(
         item: Item,
@@ -131,8 +144,17 @@ struct ItemSettingsView: View {
                             )
                         )
                         .tint(Palette.amber)
+                        if reminderCannotFire {
+                            Button(Copy.HomeSettings.openSystemSettings) { openSystemSettings() }
+                        }
                     } footer: {
-                        Text(Copy.Reminder.footer)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(Copy.Reminder.footer)
+                            if reminderCannotFire {
+                                Text(Copy.Reminder.notificationsOff)
+                                    .foregroundStyle(Palette.amber)
+                            }
+                        }
                     }
                 }
 
@@ -163,11 +185,25 @@ struct ItemSettingsView: View {
             }
         }
         .presentationDetents([.medium, .large])
+        .task { await refreshNotificationStatus() }
+        .onChange(of: scenePhase) { _, phase in
+            // They may have just left for iOS Settings to switch it back on.
+            if phase == .active { Task { await refreshNotificationStatus() } }
+        }
         .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
             Button(Copy.ok) {}
         } message: {
             Text(Copy.saveFailedBody)
         }
+    }
+
+    private func refreshNotificationStatus() async {
+        notificationsAllowed = await Notifications.authorizationStatus() == .authorized
+    }
+
+    private func openSystemSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        openURL(url)
     }
 
     private func requestAlwaysLocation() async -> Bool {

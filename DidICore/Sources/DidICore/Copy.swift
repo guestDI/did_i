@@ -256,6 +256,9 @@ public enum Copy {
     public static let cantCheckRightNow = t("Can't check right now")
     public static let askSomeoneAtHome = t("Ask someone at home")
     public static let mutedUntilHome = t("Muted from the summary until you're home.")
+    /// No geofence, so "until you're home" would be a promise nothing can keep:
+    /// without region entry the mute has to end on the next confirmation instead.
+    public static let mutedUntilConfirmed = t("Muted from the summary until you confirm it.")
 
     /// Pre-fills a share sheet. Names that do not start with an article read a
     /// little clipped ("is front door locked?"); it is an editable draft, not a
@@ -370,8 +373,16 @@ public enum Copy {
     public static let columnStatus = t("Status")
 
     public enum Reminder {
+        public static let section = t("Reminders")
         public static let toggle = t("Remind me when I leave")
         public static let footer = t("One notification, when you leave and this has no record.")
+        /// Notifications switched off in iOS Settings after a reminder was turned
+        /// on. The toggle is left alone — the same call as an unavailable
+        /// leaving-home expiry: keep what they chose, say why it cannot run, and
+        /// offer the way back. Clearing it silently would hide the failure and
+        /// throw away the intent.
+        public static let notificationsOff =
+            t("Notifications are off, so these reminders can't reach you.")
     }
 
     public enum HomeSettings {

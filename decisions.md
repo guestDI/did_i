@@ -975,3 +975,43 @@ the missing permission comes after every other option in reading order, so the r
 carries `Copy.leavingExpiryUnavailable` as an `accessibilityHint` too, and the
 Open-Settings section — previously a bare unexplained button — now has the same
 line as its footer.
+
+**A revoked notification permission no longer leaves a reminder toggle lying.**
+`leavingHomeReminder` asked for permission once, at the moment it was switched on,
+and nothing re-checked it. Switch notifications off in iOS Settings afterwards and
+`center.add` fails silently while the toggle still reads on — the app's one active
+safety net, dead, with the UI insisting it works. Worst for exactly the user who
+stopped opening the board because they trusted it. The toggle is *not* cleared:
+that would hide the failure and throw away the intent. Instead the state is
+re-derived on every appearance and on foreground, the item editor explains it with
+a route to iOS Settings, and Settings grows a Reminders section that appears only
+when reminders are on and cannot fire. Same shape as the unavailable leaving-home
+expiry, and as the revoked-location note: keep the choice, say why it cannot run,
+offer the way back. `reconcileWidgetNudge` had this treatment already; the reminder
+never got it.
+
+**"Can't check right now" and "Ask someone at home" no longer require a geofence.**
+Both were gated on `isAway`, which needs a home plus Always Location plus a real
+region exit. day-2 accepts "declined, app keeps working on timers" as a normal
+outcome, so that gate withheld the app's entire answer to being out and unable to
+check from the people most likely to need it. The gate is now
+`isAway || cannotTellIfAway`; when the geofence *can* answer and says they are
+home, the actions stay hidden. `isAway` still gates the status line, which claims
+"since you left" and has to be true — these buttons claim nothing.
+
+Muting needed an end condition that does not depend on region entry, so `confirm`
+now lifts the mute, and the muted line reads "until you confirm it" rather than
+"until you're home" when nothing can detect a homecoming.
+
+**A visit spent in Settings or the item editor is no longer counted as checking
+the stove.** `recordBoardView` recorded a check against every unresolved item on
+every open, including opens made to rename an item, set home or fix a rule. Those
+counts feed the weekly card, which reads them back to the user as a fact about
+their own behaviour — an app whose first obligation is not to generate anxiety
+cannot inflate that number. Split in two: `recordBoardView` (prune + app open,
+every time) and `recordChecks` (per item, deferred to scene background and skipped
+when the user navigated on purpose). At launch there is no way to tell the two
+kinds of visit apart, so the call waits until the visit is over. App-initiated
+interruptions — the day-2 lesson, the guardrail, the weekly card, the second-item
+suggestion, the stale offer — deliberately do not set the flag: the app
+interrupted them, they still came to look.

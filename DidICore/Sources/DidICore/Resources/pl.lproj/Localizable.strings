@@ -148,6 +148,8 @@
 "Latest confirmation removed. Previous one remains." = "Usunięto ostatnie potwierdzenie. Poprzednie nadal obowiązuje.";
 "Item" = "Element";
 "Status" = "Stan";
+"Reminders" = "Przypomnienia";
+"Notifications are off, so these reminders can't reach you." = "Powiadomienia są wyłączone, więc te przypomnienia do ciebie nie dotrą.";
 "Remind me when I leave" = "Przypomnij przy wyjściu";
 "One notification, when you leave and this has no record." = "Jedno powiadomienie przy wyjściu, jeśli brak wpisu.";
 "Home" = "Dom";
@@ -183,6 +185,7 @@
 "View steps" = "Pokaż kroki";
 "Home saved." = "Dom zapisany.";
 "Home is set. Leaving home clears the board automatically." = "Dom jest ustawiony. Wyjście automatycznie czyści tablicę.";
+"Muted from the summary until you confirm it." = "Wyciszone w podsumowaniu do czasu potwierdzenia.";
 "Muted from the summary until you're home." = "Wyciszono w podsumowaniu do powrotu do domu.";
 "On the board, open an item's More menu → \"Forget this after\"." = "Na tablicy otwórz menu Więcej przy elemencie → „Zapomnij po”.";
 "That name is already on your board or in Previously." = "Ta nazwa jest już na tablicy lub w sekcji Wcześniej.";

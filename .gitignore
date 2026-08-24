@@ -3,3 +3,4 @@ DidI.xcodeproj/
 .swiftpm/
 DerivedData/
 .DS_Store
+build/

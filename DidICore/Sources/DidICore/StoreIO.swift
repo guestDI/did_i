@@ -102,6 +102,10 @@ public struct Store: Codable, Sendable {
         items[i].lastConfirmedAt = date
         items[i].lastConfirmationRule = items[i].resetRule
         items[i].confirmationLine = line
+        // The mute was an escape from not knowing; a confirmation ends that.
+        // Without a geofence `arrivedHome` never fires, so this is the only thing
+        // that can lift a mute for someone who declined location.
+        items[i].mutedUntilHome = false
         lastConfirmationLine = line
 
         // A tap is a look you can actually observe, and the only one the widget

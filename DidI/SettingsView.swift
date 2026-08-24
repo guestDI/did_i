@@ -13,7 +13,16 @@ struct SettingsView: View {
     @State private var showingWalkthrough = false
     @State private var settingHome = false
     @State private var authorization = LocationMonitor.shared.status
+    @State private var notificationsAllowed = true
     @State private var showingSaveError = false
+
+    /// Surfaced only when there is something broken to report: reminders are on
+    /// for at least one item and notifications cannot deliver them. Finding this
+    /// out required opening an item's editor before — the one place nobody looks
+    /// once the toggle is set and believed.
+    private var remindersCannotFire: Bool {
+        !notificationsAllowed && store.active.contains { $0.leavingHomeReminder == true }
+    }
 
     private var locationRevoked: Bool {
         store.home != nil && authorization != .authorizedAlways
@@ -60,6 +69,16 @@ struct SettingsView: View {
                     }
                 }
 
+                if remindersCannotFire {
+                    Section {
+                        Button(Copy.HomeSettings.openSystemSettings) { openSystemSettings() }
+                    } header: {
+                        Text(Copy.Reminder.section)
+                    } footer: {
+                        Text(Copy.Reminder.notificationsOff)
+                    }
+                }
+
                 // Day 0's "Later" plus a declined nudge closes the only other
                 // route to these instructions, and the widget is the product.
                 Section {
@@ -89,9 +108,11 @@ struct SettingsView: View {
                     authorization = LocationMonitor.shared.status
                 }
             }
+            .task { await refreshNotificationStatus() }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active {
                     authorization = LocationMonitor.shared.status
+                    Task { await refreshNotificationStatus() }
                 }
             }
             .scrollContentBackground(.hidden)
@@ -128,6 +149,10 @@ struct SettingsView: View {
             showingSaveError = true
             UIAccessibility.post(notification: .announcement, argument: Copy.saveFailedBody)
         }
+    }
+
+    private func refreshNotificationStatus() async {
+        notificationsAllowed = await Notifications.authorizationStatus() == .authorized
     }
 
     private func openSystemSettings() {

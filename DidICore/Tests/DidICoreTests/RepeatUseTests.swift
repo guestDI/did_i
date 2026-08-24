@@ -415,7 +415,8 @@ private func goodWeek() -> Store {
     let answered = s.items[0].id, open = s.items[1].id
     s.confirm(id: answered, at: now.addingTimeInterval(-3600), calendar: utc)
 
-    s.recordBoardView(at: now, calendar: utc)
+    s.recordBoardView(at: now)
+    s.recordChecks(at: now, calendar: utc)
 
     let window = (since: now.addingTimeInterval(-60), until: now.addingTimeInterval(1))
     // One for its own confirmation an hour ago, and nothing for this look.
@@ -429,7 +430,8 @@ private func goodWeek() -> Store {
         s.confirm(id: s.items[i].id, at: now.addingTimeInterval(-3600), calendar: utc)
     }
     let before = s.usage.checks.mapValues(\.count)
-    s.recordBoardView(at: now, calendar: utc)
+    s.recordBoardView(at: now)
+    s.recordChecks(at: now, calendar: utc)
     // The app open is still recorded; it just is not evidence about any one item.
     #expect(s.usage.checks.mapValues(\.count) == before)
     #expect(s.usage.appOpens.count == 1)
@@ -465,4 +467,17 @@ private func ordered() -> Store {
     // The middle item is off the board, so the last one lands at the top.
     s.moveUp(all[2])
     #expect(s.active.map(\.id) == [all[2], all[0]])
+}
+
+/// A visit spent in Settings or the item editor is an app open, not a look at the
+/// stove — and the weekly card reads that count back to the user as a fact about
+/// them. The caller decides which it was; the open itself must not assume.
+@Test func anAppOpenAloneIsNotEvidenceAboutAnyItem() {
+    var s = settled([item(), item()])
+    let before = s.usage.checks.mapValues(\.count)
+
+    s.recordBoardView(at: now)
+
+    #expect(s.usage.appOpens.count == 1)
+    #expect(s.usage.checks.mapValues(\.count) == before)
 }
