@@ -153,6 +153,7 @@ struct BoardView: View {
     /// schedule. If they do not open the app for a week, it fires the day they do.
     private func onOpen() async {
         await Notifications.reconcileWidgetNudge()
+        await Notifications.reconcileLeavingHomeReminders()
         do {
             try StoreIO.mutate { $0.recordBoardView(at: .now) }
             reload()

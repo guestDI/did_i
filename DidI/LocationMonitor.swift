@@ -1,4 +1,5 @@
 import CoreLocation
+import UIKit
 import WidgetKit
 import DidICore
 
@@ -15,6 +16,11 @@ final class LocationMonitor: NSObject {
 
     private let manager = CLLocationManager()
     private let regionID = "home"
+
+    /// Held across the exit wake so `usernotificationsd` has time to acknowledge
+    /// the reminder before iOS is free to suspend the process. See
+    /// `beginLeavingHomeWake`.
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
 
     /// Called once a one-shot fix arrives, for "Set as home".
     private var pendingHomeCapture: ((CLLocationCoordinate2D?) -> Void)?
@@ -123,14 +129,61 @@ extension LocationMonitor: CLLocationManagerDelegate {
         _ manager: CLLocationManager, didExitRegion region: CLRegion
     ) {
         MainActor.assumeIsolated {
-            do {
-                try StoreIO.mutate { $0.leftHome(at: .now) }
-            } catch {
-                return
-            }
-            WidgetCenter.shared.reloadAllTimelines()
-            Notifications.scheduleLeavingHomeReminders()
+            beginLeavingHomeWake()
         }
+    }
+
+    /// `UNUserNotificationCenter.add` is XPC to a daemon with no synchronous
+    /// counterpart — the call returning does not mean the request landed. With
+    /// nothing else holding the process open, the exit handler used to fire the
+    /// request and return, racing an iOS suspend it sometimes lost. A background
+    /// task assertion buys the time; `await`ing `add` (in
+    /// `Notifications.scheduleLeavingHomeReminders`) is what the assertion is
+    /// held *for*.
+    private func beginLeavingHomeWake() {
+        endBackgroundTaskIfNeeded()
+        backgroundTask = UIApplication.shared.beginBackgroundTask(
+            withName: "leaving-home-exit"
+        ) { [weak self] in
+            // Time ran out. Release the assertion rather than being killed
+            // outright — whatever notification work is still in flight loses
+            // its guarantee, but the process survives to try again next time.
+            Task { @MainActor in self?.endBackgroundTaskIfNeeded() }
+        }
+
+        Task { @MainActor [weak self] in
+            defer { self?.endBackgroundTaskIfNeeded() }
+
+            // One store access for both the write and the read that used to
+            // follow it: `leftHome` and the due-item list are computed inside
+            // the same `mutate`, so a stale-but-successful widget refresh can
+            // never mask a reminder list that silently came from nothing.
+            let due: [Item]
+            if let result = try? StoreIO.mutate({ store -> [Item] in
+                store.leftHome(at: .now)
+                return store.needingLeavingHomeReminder(now: .now)
+            }) {
+                due = result
+            } else {
+                // The write itself failed — `leftHome` never landed, so `isAway`
+                // and the 24h ceiling are unaffected until the next successful
+                // access. That is recoverable on the next open; a reminder that
+                // never fired is not, so it is still worth salvaging from a
+                // plain read against whatever rule state already exists.
+                due = StoreIO.read().needingLeavingHomeReminder(now: .now)
+            }
+
+            // Notification before widget: the widget can be a few minutes stale
+            // for free, the reminder cannot.
+            await Notifications.scheduleLeavingHomeReminders(for: due)
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    private func endBackgroundTaskIfNeeded() {
+        guard backgroundTask != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(backgroundTask)
+        backgroundTask = .invalid
     }
 
     /// Entry clears the "can't check right now" mutes.

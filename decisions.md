@@ -1015,3 +1015,39 @@ kinds of visit apart, so the call waits until the visit is over. App-initiated
 interruptions — the day-2 lesson, the guardrail, the weekly card, the second-item
 suggestion, the stale offer — deliberately do not set the flag: the app
 interrupted them, they still came to look.
+
+**Leaving-home reminders: background task assertion, single store access,
+notification-before-widget ordering, and a foreground backstop.** Reported as
+"sometimes not triggered, sometimes triggered too late" — the "too late" half is
+geofence detection latency (see the 150m→100m radius change above); the
+"sometimes not triggered" half was architectural, four independent causes in one
+~10-second background wake:
+
+- `UNUserNotificationCenter.add` is XPC with no synchronous counterpart, called
+  with no `await` and nothing else holding the process open — a bare race against
+  iOS suspending the app, won most of the time and lost some of the time. Fixed
+  with a `beginBackgroundTask` assertion around the whole wake, held until
+  `scheduleLeavingHomeReminders` actually `await`s each `add` call to completion.
+- `didExitRegion` wrote the exit via `StoreIO.mutate`, then immediately opened a
+  second coordination with `StoreIO.read()` to find due items. `read()` flattens
+  any failure to an empty store and the caller cannot tell "nothing was due" from
+  "the read failed" — a second silent failure mode in the tightest budget in the
+  app. `StoreIO.mutate` is now generic (`mutate<T>(_:) -> T`), so the due-item
+  list is computed inside the same access that records the exit.
+- A failed `mutate` used to `return` immediately, dropping the notification along
+  with everything else — the notification is the least recoverable part of a
+  failed write (a stale `isAway` corrects itself on the next successful access; a
+  reminder that never fired does not), so failure now falls back to computing
+  `due` from a plain read instead of giving up.
+- `WidgetCenter.shared.reloadAllTimelines()` ran before the reminder was
+  scheduled. Reordered: the widget can be a few minutes stale for free, the
+  reminder cannot.
+- Exit is the *only* trigger; a wake that is skipped entirely (app not launched
+  for the region event, killed before the background task begins) had no
+  recovery path at all. `Notifications.reconcileLeavingHomeReminders()` now runs
+  on every foreground next to `reconcileWidgetNudge`, checked against
+  `pendingNotificationRequests` (the actual source of truth for "was this ever
+  scheduled") rather than a store flag.
+
+`didEnterRegion` is unchanged: no notification is scheduled there, so it does not
+share the same failure shape.

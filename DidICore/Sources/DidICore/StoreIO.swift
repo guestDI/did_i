@@ -236,32 +236,46 @@ public enum StoreIO {
     }
 
     public static func write(_ store: Store) throws {
-        try coordinatedWrite { _ in store }
+        try coordinatedWrite { _ in (store, ()) }
     }
 
-    /// Read, mutate, write **inside a single coordinated write**.
+    /// Read, mutate, write **inside a single coordinated write** — and hand back
+    /// whatever `body` computed from the mutated store.
     ///
     /// Previously this was `read()` then `write()`, two separate coordinations with
     /// a gap between them, and the gap lost updates: tap the stove and then the
     /// door on the medium widget and the second read could precede the first write,
     /// dropping a confirmation the button had already acknowledged. Same race
     /// between the app and the extension — an archive could vanish under a tap.
-    public static func mutate(_ body: (inout Store) -> Void) throws {
+    ///
+    /// The return value exists so a caller working under a tight budget — a
+    /// background wake, not a full app launch — can derive what it needs (e.g.
+    /// which items now need a notification) from this access instead of opening
+    /// a second one. A second `read()` after `mutate()` is not just wasteful:
+    /// `read()` flattens any failure to an empty store, so a caller that treats
+    /// that read as a decision cannot tell "nothing is due" from "the read failed".
+    @discardableResult
+    public static func mutate<T>(_ body: (inout Store) -> T) throws -> T {
         try coordinatedWrite { url in
             var store = try decode(from: url)
-            body(&store)
-            return store
+            let result = body(&store)
+            return (store, result)
         }
     }
 
     /// One coordinated write around the whole read-modify-write.
-    private static func coordinatedWrite(_ body: (URL) throws -> Store) throws {
+    private static func coordinatedWrite<T>(_ body: (URL) throws -> (Store, T)) throws -> T {
         var thrown: Error?
         var coordinationError: NSError?
+        var result: T?
         NSFileCoordinator().coordinate(
             writingItemAt: storeURL, options: .forReplacing, error: &coordinationError
         ) { url in
-            do { try encode(try body(url), to: url) } catch { thrown = error }
+            do {
+                let (store, value) = try body(url)
+                try encode(store, to: url)
+                result = value
+            } catch { thrown = error }
         }
         if let coordinationError { throw coordinationError }
         if let thrown { throw thrown }
@@ -271,6 +285,9 @@ public enum StoreIO {
             CFNotificationName(changeNotification as CFString),
             nil, nil, true
         )
+        // Reachable only once `thrown` is confirmed nil above: `body` always
+        // returns a `result` on that path.
+        return result!
     }
 
     /// Uncoordinated: both callers are already inside a coordination block, and

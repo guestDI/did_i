@@ -84,11 +84,18 @@ enum Notifications {
     // MARK: - The leaving-home reminder
 
     /// Scheduled from the region-exit wake, a few seconds out. Opt-in per item.
-    static func scheduleLeavingHomeReminders() {
-        let store = StoreIO.read()
-        let due = store.needingLeavingHomeReminder(now: .now)
-        guard !due.isEmpty else { return }
-
+    ///
+    /// `due` is computed by the caller inside the same `StoreIO.mutate` that
+    /// records the exit — a second `StoreIO.read()` here was a second file
+    /// coordination in the tightest budget in the app, and its failure mode (an
+    /// empty store) was indistinguishable from "nothing was due".
+    ///
+    /// `await`ed per request rather than fire-and-forget: nothing else in the
+    /// background-wake call stack holds the process alive, so a request that
+    /// `usernotificationsd` has not yet acknowledged when the wake ends may
+    /// never be delivered. The caller pairs this with a background task
+    /// assertion for exactly that reason.
+    static func scheduleLeavingHomeReminders(for due: [Item]) async {
         for item in due {
             let copy = Copy.leavingHomeReminder(item: item)
             let content = UNMutableNotificationContent()
@@ -100,8 +107,33 @@ enum Notifications {
                 content: content,
                 trigger: UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
             )
-            center.add(request)
+            try? await center.add(request)
         }
+    }
+
+    /// Backstop for the exit-triggered path above, which depends on a single
+    /// background wake running to completion before the process is suspended.
+    /// If that wake was skipped entirely — the app never launched for the
+    /// region event, or was killed before the background task began — nothing
+    /// else ever retries it, so this runs on every foreground alongside the
+    /// widget nudge reconciliation.
+    ///
+    /// Read against `pendingNotificationRequests`, not a store flag: that is
+    /// the actual source of truth for "was this ever scheduled", and matches
+    /// how the widget nudge already treats iOS as the ground truth for
+    /// permission and delivery state.
+    static func reconcileLeavingHomeReminders() async {
+        let store = StoreIO.read()
+        guard store.isAway else { return }
+        let due = store.needingLeavingHomeReminder(now: .now)
+        guard !due.isEmpty else { return }
+
+        let pending = await center.pendingNotificationRequests()
+        let queued = Set(pending.map(\.identifier))
+        let missing = due.filter { !queued.contains(leavingHomePrefix + $0.id.uuidString) }
+        guard !missing.isEmpty else { return }
+
+        await scheduleLeavingHomeReminders(for: missing)
     }
 
     /// Asked only when a per-item reminder is switched on — the first moment the
