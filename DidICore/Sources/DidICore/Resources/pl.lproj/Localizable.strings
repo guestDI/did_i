@@ -159,6 +159,8 @@
 "Open iOS Settings" = "Otwórz ustawienia iOS";
 "Location is off, so we're expiring things on a timer instead." = "Lokalizacja jest wyłączona, więc zamiast niej używamy minutnika.";
 "Leaving home clears the board only while the app is open." = "Wyjście z domu czyści tablicę tylko przy otwartej aplikacji.";
+"Home area size" = "Wielkość obszaru domu";
+"How far from the centre point still counts as home. A bigger property may need more room before \"left home\" fires." = "Jak daleko od punktu środkowego to nadal \"dom\". Większa posesja może potrzebować więcej miejsca, zanim zadziała \"wyjście z domu\".";
 "One tap on your way out." = "Jedno stuknięcie przy wyjściu.";
 "Undone. No record now." = "Cofnięto. Teraz brak wpisu.";
 "Your widget is still homeless" = "Twój widżet wciąż nie ma domu";

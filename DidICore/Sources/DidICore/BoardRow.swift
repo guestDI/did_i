@@ -75,8 +75,7 @@ public struct BoardRow: View {
         // a departure board with ragged rows stops reading as one.
         .frame(minHeight: 76)
         .contentShape(.rect)
-        .onTapGesture(perform: onConfirm)
-        .modifier(LongPressUndo(action: onUndo))
+        .modifier(ConfirmOrUndo(onConfirm: onConfirm, onUndo: onUndo))
         .overlay(alignment: .bottom) {
             Rectangle().fill(Palette.rule).frame(height: 1)
         }
@@ -99,16 +98,27 @@ public struct BoardRow: View {
     }
 }
 
-/// `onLongPressGesture` with no action still swallows taps, so the modifier is
-/// only attached when there is something to undo to.
-private struct LongPressUndo: ViewModifier {
-    let action: (() -> Void)?
+/// `.onTapGesture` and `.onLongPressGesture` attached as two independent
+/// modifiers on the same view is a known SwiftUI trap: the underlying UIKit
+/// recognizers have no failure relationship, so the first long press after the
+/// view appears can lose the race and register as nothing — the exact "doesn't
+/// work the first time" report this replaces. `.exclusively(before:)` composes
+/// them into one `Gesture` with an explicit precedence — hold long enough and
+/// the press wins outright; release early and only then does the tap fire — so
+/// there is nothing left to race.
+private struct ConfirmOrUndo: ViewModifier {
+    let onConfirm: () -> Void
+    let onUndo: (() -> Void)?
 
     func body(content: Content) -> some View {
-        if let action {
-            content.onLongPressGesture(perform: action)
+        if let onUndo {
+            content.gesture(
+                LongPressGesture(minimumDuration: 0.5)
+                    .onEnded { _ in onUndo() }
+                    .exclusively(before: TapGesture().onEnded(onConfirm))
+            )
         } else {
-            content
+            content.onTapGesture(perform: onConfirm)
         }
     }
 }

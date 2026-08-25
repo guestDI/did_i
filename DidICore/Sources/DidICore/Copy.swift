@@ -395,6 +395,12 @@ public enum Copy {
         public static let revoked = t("Location is off, so we're expiring things on a timer instead.")
         /// `whenInUse` without `always`: exit events only arrive in the foreground.
         public static let foregroundOnly = t("Leaving home clears the board only while the app is open.")
+
+        public static let radiusLabel = t("Home area size")
+        /// A flat and a house with a garden are both "home" at different scales,
+        /// so the fixed default is explained as a default, not asserted as fact.
+        public static let radiusFooter =
+            t("How far from the centre point still counts as home. A bigger property may need more room before \"left home\" fires.")
     }
 
     /// The widget's gallery entry. Its *configuration* strings are not here: the

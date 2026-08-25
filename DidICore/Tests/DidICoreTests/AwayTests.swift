@@ -243,8 +243,8 @@ private func optedIn() -> OnboardingFlags {
     #expect(Copy.shareMessage(item: item()) == "Random question — is The stove off?")
 }
 
-@Test func theGeofenceRadiusIsOneHundredMetres() {
+@Test func theGeofenceRadiusIsSeventyFiveMetres() {
     // Smaller drifts indoors; larger fires the nudge too late to be useful —
     // iOS adds its own hysteresis buffer on top of whatever we ask for.
-    #expect(HomeLocation(latitude: 0, longitude: 0).radius == 100)
+    #expect(HomeLocation(latitude: 0, longitude: 0).radius == 75)
 }

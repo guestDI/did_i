@@ -1051,3 +1051,55 @@ geofence detection latency (see the 150m→100m radius change above); the
 
 `didEnterRegion` is unchanged: no notification is scheduled there, so it does not
 share the same failure shape.
+
+**The board row's long-press-to-undo missed the first attempt.** `.onTapGesture`
+and `.onLongPressGesture` were attached as two independent modifiers on the same
+row. Their underlying UIKit recognizers have no failure relationship to each
+other, so the first long press after the row appeared could lose the
+recognition race and register as nothing at all — reported as "cancel doesn't
+work the first time," and as a side effect "still has checkmark, color didn't
+change," because with `onUndo` never actually called there was nothing for the
+row to update. Composed into one `Gesture` instead —
+`LongPressGesture(minimumDuration: 0.5).onEnded { undo() }.exclusively(before:
+TapGesture().onEnded { confirm() })` — which gives the two an explicit
+precedence, so there is nothing left to race.
+
+No change was made to `Palette` (fresh/aging/unknown). The reported "color is
+almost the same" was most likely the same symptom as the checkmark not
+clearing — nothing had actually changed, since undo never fired. Revisit if it
+still reads as low-contrast after retrying with the gesture fix.
+
+**Geofence radius cut again, 100m → 75m.** Same lever as the earlier 150m → 100m
+change, pulled a second notch: real-world background region monitoring accuracy
+and iOS's own hysteresis buffer both add distance on top of whatever radius is
+configured, so each cut chases a moving target with shrinking returns. 75m is
+close to the practical floor Apple documents for `CLCircularRegion` monitoring —
+a further cut trades a small latency win for a real rise in false exits from GPS
+drift indoors (apartments, multi-story homes, weak signal). `LocationMonitor`'s
+clamp now reads `min(home.radius, 75)` so stores still holding 100 or 150 from
+before this change pick up the new ceiling without a migration.
+
+**Geofence radius is now user-adjustable, not a single global default.** A flat
+and a house with a garden both read as "home" at wildly different scales — no
+fixed number (150m, then 100m, then 75m) can be right for everyone, and shrinking
+the global default for latency risked firing "left home" while someone with a
+larger property was still in their own yard. Settings gains a "Home area size"
+slider (50–250m, 25m steps, shown once a home exists), saved on drag release —
+not per tick, since each write is a coordinated file access — and applied
+immediately via `LocationMonitor.monitor` rather than waiting for the next
+foreground. `HomeLocation.defaultRadius` (75) and `.radiusRange` (50...250) are
+the single source for both the initial capture value and the slider's bounds.
+
+The old `min(home.radius, 75)` clamp in `LocationMonitor.monitor` is gone: it
+existed to auto-migrate stores from the app's own shrinking defaults, but with a
+real user control in place it would silently overwrite a deliberate choice on
+every relaunch, making the slider a lie. Replaced with a clamp to
+`HomeLocation.radiusRange` only — a floor/ceiling against corrupt or pre-slider
+data, never against what the user actually picked. Anyone who already has 100m
+or 150m stored keeps it until they open the new control themselves; there is no
+migration nudge, matching how this app treats every other quiet default.
+
+The displayed value uses `Measurement<UnitLength>.formatted()` rather than a
+hand-built "75m" string — free locale-correct unit conversion (feet in a US
+region) with no formatting code to keep in sync with the metres the geofence
+itself is built in.

@@ -70,7 +70,7 @@ Only `Use my location` presents the iOS dialog. Request **`whenInUse` first**, t
 
 If "I'm not home right now": store a pending flag and offer setup again on the first app open at least 24 hours later. Settings remains available immediately. The cooldown avoids an immediate nag without adding continuous location tracking or a map picker to a one-tap app.
 
-Geofence radius: 100m default (was 150m — the nudge fired only after iOS's hysteresis buffer put you ~250m from the door). Smaller and you get spurious triggers from GPS drift indoors; larger and the leaving-home nudge fires too late to be useful.
+Geofence radius: 75m default (150m at launch, then 100m, then 75m — each cut chasing iOS's own hysteresis buffer, which adds distance on top of whatever radius is set). Smaller and you get spurious triggers from GPS drift indoors; larger and the leaving-home nudge fires too late to be useful. 75m is close to the practical floor for background region monitoring — going lower trades a small latency gain for a real rise in false exits.
 
 **Confirmation sequence:** persist the captured coordinate first, then begin monitoring. Show `Home saved.` after the first permission level is granted. After the app has background location access, show:
 > Home is set. Leaving home clears the board automatically.

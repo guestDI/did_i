@@ -77,8 +77,11 @@ final class LocationMonitor: NSObject {
         stopMonitoring()
         let region = CLCircularRegion(
             center: CLLocationCoordinate2D(latitude: home.latitude, longitude: home.longitude),
-            // Clamped: stores written before the 100m default still hold 150.
-            radius: min(home.radius, 100),
+            // `radius` is user-adjustable (Settings → Home area size) — trusted
+            // as-is, clamped only against corrupt or pre-slider data, never
+            // against the app's own shrinking defaults. Overriding a deliberate
+            // choice on every relaunch would make the control a lie.
+            radius: min(max(home.radius, HomeLocation.radiusRange.lowerBound), HomeLocation.radiusRange.upperBound),
             identifier: regionID
         )
         region.notifyOnExit = true

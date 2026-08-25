@@ -159,6 +159,8 @@
 "Open iOS Settings" = "Открыть настройки iOS";
 "Location is off, so we're expiring things on a timer instead." = "Геопозиция выключена, поэтому вместо неё используется таймер.";
 "Leaving home clears the board only while the app is open." = "Уход из дома очищает доску, только пока приложение открыто.";
+"Home area size" = "Размер зоны дома";
+"How far from the centre point still counts as home. A bigger property may need more room before \"left home\" fires." = "Как далеко от центральной точки всё ещё считается домом. Для большого участка может понадобиться больше места, прежде чем сработает «ушёл из дома».";
 "One tap on your way out." = "Одно нажатие перед выходом.";
 "Undone. No record now." = "Отменено. Теперь записи нет.";
 "Your widget is still homeless" = "Твой виджет всё ещё бездомный";
