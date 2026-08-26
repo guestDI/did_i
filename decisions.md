@@ -1103,3 +1103,38 @@ The displayed value uses `Measurement<UnitLength>.formatted()` rather than a
 hand-built "75m" string — free locale-correct unit conversion (feet in a US
 region) with no formatting code to keep in sync with the metres the geofence
 itself is built in.
+
+**`SmallFace`'s confirm area gets the same panel-card background `MediumFace`
+already uses.** Reported as "action buttons on a widget are not clear."
+Investigated by importing the Claude Design canvas project
+(`Did I.dc.html` + `ios-frame.jsx` + `support.js`) and comparing every frame
+against the shipped `Faces.swift`.
+
+Most apparent design/code divergences turned out to be prior, deliberate
+Precedence calls already logged here: `systemMedium`'s grid over the design's
+row list, `accessoryCircular`'s glyph over the design's tick+name,
+`accessoryRectangular`'s summary line over the design's three rows, and the
+board footer's copy update for configurable reset rules. None of those needed
+touching — they are docs beating design on structure, exactly as the
+Precedence section prescribes; design is authoritative for palette/typography/
+layout only. `support.js` is the generated dc-runtime bundle, not design
+content — nothing to compare there.
+
+The one real gap: `MediumFace` already solved "a tappable cell that's just
+text on the background reads as inert" with a `Palette.panel` card (see its
+own comment), but `SmallFace` — the family most people actually use, being the
+one placeable directly on the home screen — never got the same treatment. A
+`Button(intent:)` inside a widget carries no visible chrome of its own beyond
+the system's momentary press highlight, so with nothing to distinguish it from
+static text, the flap block read as decoration rather than the one-tap
+control. Wrapped the confirm block in the same `Palette.panel` rounded card,
+matching the established convention rather than inventing a new one.
+
+`accessoryCircular`/`accessoryRectangular` (lock screen) were left alone: iOS
+renders those tinted/monochrome, stripping any background color, which the
+existing code comments already account for. `ConfirmControl` (Control Center)
+needed nothing — a native `ControlWidgetToggle` is unambiguous on its own.
+
+All eight `small-*` snapshot references re-recorded against the pinned iPhone
+16 / iOS 18.6 simulator; `medium-*`, `circular`, `rectangular`, and `empty`
+passed unchanged, confirming nothing else moved.

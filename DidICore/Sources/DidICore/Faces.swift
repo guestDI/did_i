@@ -93,10 +93,19 @@ public struct SmallFace: View {
                         .invalidatableContent()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                // Same "this is a row" cue `MediumFace` already uses: on the bare
+                // widget background this whole block read as inert text, not the
+                // one-tap control that gets the confirmation. A `Button(intent:)`
+                // in a widget has no visible chrome of its own — the app has to
+                // draw the affordance itself.
+                .background(Palette.panel, in: .rect(cornerRadius: 12))
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(spokenLabel(item: item, state: state))
                 .accessibilityHint(Copy.confirmHint)
             }
+            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
