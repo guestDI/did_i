@@ -17,6 +17,7 @@ struct DidIApp: App {
         #endif
         StoreChange.startListening()
         WatchSync.shared.start()
+        TipJar.shared.startListeningForTransactionUpdates()
     }
 
     #if DEBUG
