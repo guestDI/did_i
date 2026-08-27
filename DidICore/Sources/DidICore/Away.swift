@@ -32,11 +32,20 @@ public extension Store {
     }
 
     /// Unconfirmed items whose owner asked to be reminded on leaving.
+    ///
+    /// Deliberately calls `resolve` directly rather than `state(_:now:calendar:)`,
+    /// which would thread through `lastLeftHomeAt` — and for an `.onLeavingHome`
+    /// item that is exactly the departure this due-check exists to catch. The
+    /// exit handler records that departure before asking who is due (a single
+    /// coordinated store access), so by the time this runs the item has already
+    /// been reset to unknown regardless of whether it was confirmed seconds
+    /// before leaving. Omitting `lastLeftHome` answers "was this confirmed
+    /// before leaving", not "is this still confirmed after having already left".
     func needingLeavingHomeReminder(now: Date, calendar: Calendar = .current) -> [Item] {
         active.filter {
             $0.leavingHomeReminder == true
                 && $0.mutedUntilHome != true
-                && state($0, now: now, calendar: calendar) == .unknown
+                && resolve($0, now: now, calendar: calendar) == .unknown
         }
     }
 }

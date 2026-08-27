@@ -248,3 +248,16 @@ private func optedIn() -> OnboardingFlags {
     // iOS adds its own hysteresis buffer on top of whatever we ask for.
     #expect(HomeLocation(latitude: 0, longitude: 0).radius == 75)
 }
+
+@Test func confirmingRightBeforeLeavingSuppressesTheReminder() {
+    // Reported bug: an .onLeavingHome item confirmed moments before departure
+    // still reads as "unknown" once the exit event lands, because leftHome is
+    // recorded in the same store access that computes the due-list. The
+    // reminder must judge "confirmed before leaving", not "confirmed and
+    // still not reset by the very departure being evaluated".
+    var s = Store(items: [item(rule: .onLeavingHome)], home: home)
+    s.items[0].leavingHomeReminder = true
+    s.confirm(id: s.items[0].id, at: at("2026-08-11 08:59:00"), calendar: utc)
+    s.leftHome(at: at("2026-08-11 09:00:00"))
+    #expect(s.needingLeavingHomeReminder(now: at("2026-08-11 09:00:00"), calendar: utc).isEmpty)
+}
