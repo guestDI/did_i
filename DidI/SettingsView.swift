@@ -15,6 +15,8 @@ struct SettingsView: View {
     @State private var authorization = LocationMonitor.shared.status
     @State private var notificationsAllowed = true
     @State private var showingSaveError = false
+    @State private var showingTipThanks = false
+    @State private var showingTipError = false
     @State private var draftRadius: Double = HomeLocation.defaultRadius
 
     /// Surfaced only when there is something broken to report: reminders are on
@@ -125,6 +127,16 @@ struct SettingsView: View {
                     Text(Copy.controlCenterHint)
                 }
 
+                if let price = TipJar.shared.product?.displayPrice {
+                    Section {
+                        Button(Copy.TipJar.rowTitle(price: price)) {
+                            Task { await sendTip() }
+                        }
+                    } header: {
+                        Text(Copy.TipJar.section)
+                    }
+                }
+
                 Section {
                     Text(Copy.resetRuleHint)
                         .appFont(13, relativeTo: .footnote)
@@ -149,6 +161,7 @@ struct SettingsView: View {
             .task {
                 draftRadius = store.home?.radius ?? HomeLocation.defaultRadius
                 await refreshNotificationStatus()
+                await TipJar.shared.loadProduct()
             }
             .onChange(of: store.home) { _, home in
                 draftRadius = home?.radius ?? HomeLocation.defaultRadius
@@ -172,6 +185,16 @@ struct SettingsView: View {
                 Button(Copy.ok) {}
             } message: {
                 Text(Copy.saveFailedBody)
+            }
+            .alert(Copy.TipJar.thanksTitle, isPresented: $showingTipThanks) {
+                Button(Copy.ok) {}
+            } message: {
+                Text(Copy.TipJar.thanksBody)
+            }
+            .alert(Copy.TipJar.errorTitle, isPresented: $showingTipError) {
+                Button(Copy.ok) {}
+            } message: {
+                Text(Copy.TipJar.errorBody)
             }
         }
     }
@@ -219,6 +242,17 @@ struct SettingsView: View {
     private func openSystemSettings() {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
         UIApplication.shared.open(url)
+    }
+
+    private func sendTip() async {
+        do {
+            let completed = try await TipJar.shared.purchase()
+            if completed {
+                showingTipThanks = true
+            }
+        } catch {
+            showingTipError = true
+        }
     }
 }
 
