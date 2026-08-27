@@ -1,0 +1,31 @@
+{
+  "identifier" : "DIDI_TIPJAR",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "5A055317-D97B-4916-A618-06DA9E062F72",
+      "localizations" : [
+        {
+          "description" : "Support Did I? development",
+          "displayName" : "Small tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.dihnatovich.didi.tip.small",
+      "referenceName" : "Small tip",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA"
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
