@@ -403,6 +403,19 @@ public enum Copy {
             t("How far from the centre point still counts as home. A bigger property may need more room before \"left home\" fires.")
     }
 
+    public enum TipJar {
+        public static let section = t("Support")
+        /// `%@` is the StoreKit-provided localized price string, not a hardcoded
+        /// amount — the product's real price is the source of truth.
+        public static func rowTitle(price: String) -> String {
+            String(format: t("Buy me a coffee — %@"), price)
+        }
+        public static let thanksTitle = t("Thanks!")
+        public static let thanksBody = t("This app has no ads, no subscription, and never will. A tip like this is the only way to say thanks — genuinely appreciated.")
+        public static let errorTitle = t("Something went wrong")
+        public static let errorBody = t("The tip didn't go through. Try again later.")
+    }
+
     /// The widget's gallery entry. Its *configuration* strings are not here: the
     /// AppIntents metadata extractor rejects any bundle but the extension's own,
     /// so they live in DidIWidget/<locale>.lproj/Localizable.strings.

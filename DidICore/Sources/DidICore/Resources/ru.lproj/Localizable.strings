@@ -208,3 +208,9 @@
 "OK" = "ОК";
 "Put %@ away?" = "Убрать «%@»?";
 "Also works from Control Center — add it again for each item you want to confirm from there." = "Также работает из Пункта управления — добавь его ещё раз для каждого пункта, который хочешь подтверждать оттуда.";
+"Support" = "Поддержка";
+"Buy me a coffee — %@" = "Угости меня кофе — %@";
+"Thanks!" = "Спасибо!";
+"This app has no ads, no subscription, and never will. A tip like this is the only way to say thanks — genuinely appreciated." = "В этом приложении нет рекламы и подписок, и не будет. Чаевые — единственный способ сказать спасибо, и это правда ценно.";
+"Something went wrong" = "Что-то пошло не так";
+"The tip didn't go through. Try again later." = "Не удалось отправить чаевые. Попробуй позже.";
