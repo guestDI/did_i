@@ -37,11 +37,29 @@ final class LocationMonitor: NSObject {
 
     var hasAlways: Bool { status == .authorizedAlways }
 
-    /// Re-registers the geofence at launch. Regions survive termination, but
-    /// re-registering is cheap and covers a restore onto a new device.
+    /// Re-registers the geofence at launch, and again on every foreground in
+    /// case "Always" was granted from iOS Settings while backgrounded. Skips
+    /// re-registering when the same region is already monitored: re-adding an
+    /// identical `CLCircularRegion` makes CoreLocation re-evaluate the
+    /// boundary against whatever location fix it currently has, which can be
+    /// stale or GPS-noisy — and fire a spurious exit for someone who never
+    /// left, resetting an `.onLeavingHome` item that was just confirmed.
     func start() {
         guard hasAlways, let home = StoreIO.read().home else { return }
+        guard !isMonitoring(home) else { return }
         monitor(home)
+    }
+
+    private func isMonitoring(_ home: HomeLocation) -> Bool {
+        guard let region = manager.monitoredRegions.first(where: { $0.identifier == regionID }) as? CLCircularRegion
+        else { return false }
+        return region.center.latitude == home.latitude
+            && region.center.longitude == home.longitude
+            && region.radius == Self.clampedRadius(home.radius)
+    }
+
+    private static func clampedRadius(_ radius: Double) -> Double {
+        min(max(radius, HomeLocation.radiusRange.lowerBound), HomeLocation.radiusRange.upperBound)
     }
 
     // MARK: - Authorization, in two steps
@@ -81,7 +99,7 @@ final class LocationMonitor: NSObject {
             // as-is, clamped only against corrupt or pre-slider data, never
             // against the app's own shrinking defaults. Overriding a deliberate
             // choice on every relaunch would make the control a lie.
-            radius: min(max(home.radius, HomeLocation.radiusRange.lowerBound), HomeLocation.radiusRange.upperBound),
+            radius: Self.clampedRadius(home.radius),
             identifier: regionID
         )
         region.notifyOnExit = true

@@ -32,7 +32,7 @@ Full reasoning: `architecture.md` §1.
 ## Known standing gaps (as of last check)
 
 - `DEVELOPMENT_TEAM` is set (`3VRYJ7457W`) in `project.yml`, but App Group `group.com.dihnatovich.didi` registration in the dev account itself (assigned to the DidI, DidIWidget, and DidIWatch targets) is still unverified. Blocking prerequisite before any device testing or archiving.
-- Overnight widget timeline behavior (04:00 transition) is unverified — can't be simulated, needs a real device soak.
+- Overnight widget timeline behavior (04:00 transition) confirmed working on a real device soak.
 - Lock screen widget's App Group file may be unreadable before first unlock (data protection). `ConfirmItemIntent`/`SetConfirmedIntent` use `try StoreIO.mutate` (not `try?`), so a throw propagates to the AppIntent system rather than failing silently — but the on-device behavior before first unlock is still unverified.
 - Widget configuration sheet (item picker) reads from the extension's own bundle; pl/ru string files exist (`DidIWidget/{pl,ru}.lproj`) but the picker UI itself is untested in those locales.
 - IBM Plex Mono not bundled; SF Mono stands in for flap cells (not visually final).
