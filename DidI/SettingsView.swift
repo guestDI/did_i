@@ -119,7 +119,7 @@ struct SettingsView: View {
                     }
                 }
 
-                // Day 0's "Later" plus a declined nudge closes the only other
+                // Day 0's "Skip for now" closes the only other
                 // route to these instructions, and the widget is the product.
                 Section {
                     Button(Copy.widgetHelpRow) { showingWalkthrough = true }

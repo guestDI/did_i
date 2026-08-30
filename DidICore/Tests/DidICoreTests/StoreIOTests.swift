@@ -40,6 +40,24 @@ private func tempURL() -> URL {
     #expect(back.items == original.items)
 }
 
+@Test func aStoreWithTheLegacyOnLeavingHomeKeyStillDecodes() throws {
+    // Reported bug: `ResetRule.onLeavingHome` was renamed to `.onComingHome`
+    // (decisions.md), and a store written before that rename has the old case
+    // name as a literal JSON key. Without the migration, this threw and took
+    // the whole board down — indistinguishable from a genuinely corrupt file.
+    let url = tempURL()
+    defer { try? FileManager.default.removeItem(at: url) }
+    var legacy = Store(items: [item()])
+    legacy.items[0].resetRule = .onComingHome
+    let encoded = try StoreIO.encoder.encode(legacy)
+    let json = String(decoding: encoded, as: UTF8.self)
+        .replacingOccurrences(of: "\"onComingHome\"", with: "\"onLeavingHome\"")
+    try Data(json.utf8).write(to: url)
+
+    let store = try StoreIO.decode(from: url)
+    #expect(store.items[0].resetRule == .onComingHome)
+}
+
 // MARK: - Retention
 
 @Test func pruningDropsHistoryOlderThanThirtyDaysAnywhereItHides() {

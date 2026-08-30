@@ -1138,3 +1138,75 @@ needed nothing — a native `ControlWidgetToggle` is unambiguous on its own.
 All eight `small-*` snapshot references re-recorded against the pinned iPhone
 16 / iOS 18.6 simulator; `medium-*`, `circular`, `rectangular`, and `empty`
 passed unchanged, confirming nothing else moved.
+
+## `.onLeavingHome` → `.onComingHome`: reset trigger moved to arrival
+
+**This overrides day-2-decay-and-location.md**, which specifies "clear your
+confirmations when you leave home" verbatim (its LocationAsk pitch, the
+resetRule menu label, and the "since I left" guarantee it promises) as a
+deliberate design, not an oversight.
+
+Found on a physical device: an item confirmed at home, with no departure at
+all, flipped back to unconfirmed shortly after. Root cause was `CLRegion`
+exit events firing on cell/Wi-Fi positioning drift rather than a real
+crossing — `LocationMonitor.start()` re-registering the geofence on every
+foreground made this worse (fixed separately, see git history), but the
+underlying inaccuracy is a documented limit of `CLCircularRegion` monitoring,
+not something more code can reliably eliminate. Exit-triggered reset put that
+inaccuracy on the critical path for something the product explicitly
+promises never to do without the user's action: silently un-confirm an item
+they just closed.
+
+Re-specified against actual use, direct from the person using the app: the
+reset should fire when *returning* home, because being home again is what
+makes the door/stove answerable to change again (it can be reopened, used,
+etc.) — not on departure, which is exactly when a confirmation needs to
+*survive* untouched. The separate "remind me if I leave with this
+unconfirmed" notification (`Item.leavingHomeReminder`, `Notifications.swift`)
+already covers the case the old exit-triggered reset was trying to backstop,
+and needs no change: it is a departure-time check against whatever `state()`
+already says, independent of which rule produced that state.
+
+`ResetRule.onLeavingHome` → `.onComingHome`. `resolve()`'s `lastLeftHome:`
+parameter → `lastEnteredHome:`, compared against `Store.lastEnteredHomeAt`
+instead of `lastLeftHomeAt`. `Away.needingLeavingHomeReminder` no longer
+needs to bypass `state(_:now:calendar:)` — the race it was dodging (the exit
+handler resetting the very item being checked, in the same store access)
+doesn't exist once exit stops touching this rule at all, so it now calls
+`state()` directly. `LocationAsk` pitch copy, the resetRule menu label, and
+`Copy.leavingExpiryUnavailable` (→ `comingHomeExpiryUnavailable`) rewritten
+to match, with pl/ru translations added alongside (old leaving-home-worded
+keys left in the `.strings` files rather than deleted — dead weight, but
+harmless, and consistent with how this project treats every other superseded
+key).
+
+## E2E UX pass: truthful exits, progressive away help, scoped animation
+
+Running the complete first-use and repeat-confirmation paths on iOS 18.6 found
+three places where correct individual features combined into misleading or
+annoying behavior.
+
+**`Skip for now` is now a real exit.** The widget screen used to label its
+secondary action `Later`, then immediately open a second sheet asking another
+question. The reminder contract now lives inline as `Remind me once` plus the
+weekday-morning detail; only that action asks notification permission.
+`Skip for now` records the decline and ends onboarding in one tap. A prior OS
+denial hides the unavailable reminder choice.
+
+**Unknown rows disclose away help progressively when location is unknown.** A
+declined or limited permission previously expanded every unknown item with two
+large crisis actions while still claiming `Easy fix.` as though home were known.
+The status is now the location-neutral `No current record.` and a single
+`I'm away` button reveals the existing mute/share actions. A positively detected
+away state still shows them immediately.
+
+**Only flap glyphs animate during confirmation.** Animating the entire store or
+practice state made SwiftUI cross-fade two complete board rows on top of each
+other, duplicating the name and timestamp at the product's first-success moment.
+Whole-row animation is removed; `FlapCell` retains its own scoped transition.
+
+The practice footer no longer promises an overnight reset for the Iron and
+Straightener presets, which use 12-hour rules. `Old confirmations expire
+automatically` is true for every default. Coming-home copy was also completed
+through the success state, Settings, and all localized iOS permission strings;
+the separate leaving-home reminder keeps its departure wording.

@@ -19,19 +19,15 @@ final class UndoUITests: XCTestCase {
         XCTAssertTrue(practiceRow.waitForExistence(timeout: 3))
         practiceRow.tap()
 
-        let later = app.buttons["Later"]
-        XCTAssertTrue(later.waitForExistence(timeout: 5))
-        later.tap()
-
-        let noThanks = app.buttons["No thanks"]
-        XCTAssertTrue(noThanks.waitForExistence(timeout: 2))
-        noThanks.tap()
+        let skip = app.buttons["Skip for now"]
+        XCTAssertTrue(skip.waitForExistence(timeout: 5))
+        skip.tap()
 
         let boardRow = app.buttons.matching(
             NSPredicate(format: "label CONTAINS[c] %@", "Confirm The stove")
         ).firstMatch
         XCTAssertTrue(boardRow.waitForExistence(timeout: 3))
-        XCTAssertNotEqual(boardRow.value as? String, "No record yet. Easy fix.")
+        XCTAssertNotEqual(boardRow.value as? String, "No current record.")
 
         // A second confirmation reproduces the reported case: undoing it leaves
         // the first green record in place, which used to look like a dead button.
@@ -52,7 +48,7 @@ final class UndoUITests: XCTestCase {
         XCTAssertTrue(undo.waitForExistence(timeout: 2))
         undo.tap()
 
-        let unknown = NSPredicate(format: "value == %@", "No record yet. Easy fix.")
+        let unknown = NSPredicate(format: "value == %@", "No current record.")
         expectation(for: unknown, evaluatedWith: boardRow)
         waitForExpectations(timeout: 3)
     }

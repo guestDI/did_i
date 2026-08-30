@@ -90,7 +90,7 @@ struct Item: Codable, Identifiable, Sendable {
 enum ResetRule: Codable, Sendable, Equatable {
     case dailyAt(hour: Int)       // default: 4
     case afterHours(Int)          // 4 or 12
-    case onLeavingHome            // requires geofence
+    case onComingHome             // requires geofence
     case never                    // discouraged in UI
 }
 
@@ -98,6 +98,7 @@ struct Store: Codable, Sendable {
     var items: [Item]
     var home: HomeLocation?
     var lastLeftHomeAt: Date?
+    var lastEnteredHomeAt: Date?
     var flags: OnboardingFlags
     var checkCounts: [UUID: [Date]]   // for the paranoia counter, trimmed to 30 days
 }
@@ -124,7 +125,7 @@ enum ItemState: Equatable {
 
 enum Freshness { case fresh, aging }   // aging = past 60% of the window
 
-func resolve(_ item: Item, home: HomeLocation?, lastLeftHome: Date?, now: Date) -> ItemState
+func resolve(_ item: Item, lastEnteredHome: Date?, now: Date) -> ItemState
 ```
 
 Rules:
@@ -132,7 +133,7 @@ Rules:
 - No `lastConfirmedAt` → `.unknown`.
 - `.dailyAt(h)` → unknown if the most recent occurrence of hour `h` is after `lastConfirmedAt`.
 - `.afterHours(n)` → unknown if `now > lastConfirmedAt + n hours`.
-- `.onLeavingHome` → unknown if `lastLeftHomeAt > lastConfirmedAt`. **Always ORed with a 24h ceiling** so an item can never become permanently green if the user stops leaving the house.
+- `.onComingHome` → unknown if `lastEnteredHomeAt > lastConfirmedAt`. **Always ORed with a 24h ceiling** so an item can never become permanently green if the user does not leave and return.
 - `.never` → always confirmed. Exists because someone will want it; discouraged in copy.
 
 `now` is injected everywhere. There is no call to `Date()` inside the resolver. This makes decay behaviour testable in milliseconds instead of overnight, which matters because overnight is the slowest possible feedback loop and this is the app's core mechanic.
@@ -143,7 +144,7 @@ Rules:
 func boundaries(for item: Item, after: Date) -> [Date]
 ```
 
-Returns the future instants at which `resolve` would change its answer — typically two: the fresh→aging transition and the aging→unknown transition. Used directly by the timeline provider. For `.onLeavingHome`, only the 24h ceiling is predictable; the geofence transition is handled by an explicit reload.
+Returns the future instants at which `resolve` would change its answer — typically two: the fresh→aging transition and the aging→unknown transition. Used directly by the timeline provider. For `.onComingHome`, only the 24h ceiling is predictable; the geofence entry is handled by an explicit reload.
 
 ---
 
@@ -210,15 +211,15 @@ Long-press to undo is not available inside a widget button; undo lives in the ap
 
 ### Authorization — correction to the Day 2 flow
 
-Background region monitoring requires **`.authorizedAlways`**. `.authorizedWhenInUse` will not deliver exit events while the app is backgrounded or terminated, which is exactly when they matter.
+Background region monitoring requires **`.authorizedAlways`**. `.authorizedWhenInUse` will not deliver entry or exit events while the app is backgrounded or terminated, which is exactly when they matter.
 
 So the escalation described in the Day 2 doc is not optional politeness — it is required for the feature to function:
 
 1. Request `.authorizedWhenInUse` at the "Use my location" tap. Used immediately to capture the home coordinate.
-2. Once home is set, request `.authorizedAlways` with a one-line explanation of what it buys ("so we can clear the board when you leave, even with the app closed").
+2. Once home is set, request `.authorizedAlways` with a one-line explanation of what it buys ("so we can clear the board when you're back, even with the app closed").
 3. If the user grants only when-in-use, the geofence reset silently degrades to
    the 24h ceiling and the leaving-home nudge is unavailable. Do not offer
-   "When I leave home" as a new expiry choice until Always access is active. If
+   "When I come home" as a new expiry choice until Always access is active. If
    an existing item still carries that choice, show it disabled with the recovery
    route to iOS Settings. Do not badger. Do not show a warning banner.
 
@@ -228,19 +229,26 @@ So the escalation described in the Day 2 doc is not optional politeness — it i
 
 One `CLCircularRegion`, 75m radius, `notifyOnExit = true`, `notifyOnEntry = true`. Allowance is 20 regions; we use one.
 
-Entry events are used to clear the "can't check right now" mute state described in the Day 2 tone rules.
+Entry events record `lastEnteredHomeAt`, which expires `.onComingHome`
+confirmations and clears the "can't check right now" mute state described in
+the Day 2 tone rules. Exit events record `lastLeftHomeAt` and schedule only the
+separate, opt-in leaving-home reminders; departure does not clear a confirmation.
 
 ### Background wake
 
 A region exit relaunches a terminated app with `UIApplication.LaunchOptionsKey.location`. The `CLLocationManager` and its delegate must be constructed **synchronously during launch**, before any `await`, or the event is dropped. In SwiftUI this means an `@UIApplicationDelegateAdaptor`, not a `.task` modifier.
 
-Work permitted in that wake (a few seconds, no guarantees):
+Work permitted in an exit wake (a few seconds, no guarantees):
 
 1. Set `store.lastLeftHomeAt = .now`.
 2. `WidgetCenter.shared.reloadAllTimelines()`.
 3. If any item is unconfirmed and its per-item nudge is enabled, schedule a `UNTimeIntervalNotificationTrigger` a few seconds out.
 
 Nothing else. No cleanup, no trimming, no counters.
+
+An entry wake performs the corresponding minimal path: set
+`store.lastEnteredHomeAt = .now`, clear home-bound mutes, and reload widget
+timelines. It schedules no notification.
 
 ### Notifications
 
@@ -280,7 +288,7 @@ Because the resolver is pure and `now` is injected, the entire decay mechanic is
 
 - An item confirmed at 23:00 with `.dailyAt(4)` is unknown at 04:00:01 and confirmed at 03:59:59.
 - An item confirmed at 05:00 with `.dailyAt(4)` survives until the *next* 04:00, not the one that already passed.
-- `.onLeavingHome` never stays green past 24h even with no exit event.
+- `.onComingHome` never stays green past 24h even with no entry event.
 - DST transitions: a `.dailyAt(4)` boundary on the spring-forward night must still resolve exactly once. Use `Calendar.nextDate(after:matching:)`, never arithmetic on 86400.
 - Timezone change mid-window (user flies): boundaries recompute against the current calendar; an item may expire early or late by hours. Acceptable; document it.
 

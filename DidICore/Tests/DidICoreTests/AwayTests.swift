@@ -5,7 +5,7 @@ import Foundation
 private let home = HomeLocation(latitude: 52.37, longitude: 4.89)
 
 private func awayStore() -> Store {
-    Store(items: [item(rule: .onLeavingHome)], home: home)
+    Store(items: [item(rule: .onComingHome)], home: home)
 }
 
 // MARK: - isAway
@@ -211,9 +211,11 @@ private func optedIn() -> OnboardingFlags {
 }
 
 @Test func theLocationAskCopyIsVerbatim() {
-    #expect(Copy.LocationAsk.title == "Want it to reset when you actually leave?")
+    // Deviates from day-2-decay-and-location.md's exact wording: the reset
+    // trigger moved from leaving home to coming home. See decisions.md.
+    #expect(Copy.LocationAsk.title == "Want it to reset when you're back home?")
     #expect(Copy.LocationAsk.body ==
-        "Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it's never sent to a server.")
+        "Instead of a fixed time, we can clear your confirmations once you're back home — so a green tick stays trustworthy the whole time you're out, and nothing stale carries into next time. That needs your location, and it's never sent to a server.")
     #expect(Copy.LocationAsk.use == "Use my location")
     #expect(Copy.LocationAsk.keepTimer == "Keep the timer")
 }
@@ -226,12 +228,12 @@ private func optedIn() -> OnboardingFlags {
     #expect(Copy.HomeSetup.notHome == "I'm not home right now")
     #expect(Copy.HomeSetup.saved == "Home saved.")
     #expect(Copy.HomeSetup.confirmed ==
-        "Home is set. Leaving home clears the board automatically.")
+        "Home is set. Coming home clears the board automatically.")
 }
 
 @Test func theDeclineCopyIsVerbatim() {
     #expect(Copy.LocationDeclined.message ==
-        "No problem. We'll keep expiring things overnight instead.")
+        "No problem. We'll keep using the current timer instead.")
     #expect(Copy.resetRuleHint ==
         "On the board, open an item's More menu → \"Edit item\" → \"How long a tick lasts\".")
 }
@@ -239,6 +241,7 @@ private func optedIn() -> OnboardingFlags {
 @Test func theEscapeHatchCopyIsVerbatim() {
     #expect(Copy.cantCheckRightNow == "Can't check right now")
     #expect(Copy.askSomeoneAtHome == "Ask someone at home")
+    #expect(Copy.imAway == "I'm away")
     #expect(Copy.mutedUntilHome == "Muted from the summary until you're home.")
     #expect(Copy.shareMessage(item: item()) == "Random question — is The stove off?")
 }
@@ -250,12 +253,13 @@ private func optedIn() -> OnboardingFlags {
 }
 
 @Test func confirmingRightBeforeLeavingSuppressesTheReminder() {
-    // Reported bug: an .onLeavingHome item confirmed moments before departure
-    // still reads as "unknown" once the exit event lands, because leftHome is
-    // recorded in the same store access that computes the due-list. The
-    // reminder must judge "confirmed before leaving", not "confirmed and
-    // still not reset by the very departure being evaluated".
-    var s = Store(items: [item(rule: .onLeavingHome)], home: home)
+    // Regression guard for a bug specific to the old exit-based reset: an item
+    // confirmed moments before departure used to read as "unknown" the instant
+    // the exit event landed, because leftHome was recorded in the same store
+    // access that computed the due-list. Reset is entry-based now (leftHome no
+    // longer touches this item's state at all), but the reminder should still
+    // never fire for something confirmed before the exit it's reacting to.
+    var s = Store(items: [item(rule: .onComingHome)], home: home)
     s.items[0].leavingHomeReminder = true
     s.confirm(id: s.items[0].id, at: at("2026-08-11 08:59:00"), calendar: utc)
     s.leftHome(at: at("2026-08-11 09:00:00"))

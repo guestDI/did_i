@@ -42,7 +42,7 @@ public struct BoardRow: View {
                 // Two lines: the away line runs to 62 characters and is the one
                 // sentence in the app that must never be clipped.
                 Text(status)
-                    .boardFont(9.5, .medium, relativeTo: .caption)
+                    .boardFont(11.5, .medium, relativeTo: .caption)
                     .foregroundStyle(Palette.sub)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)

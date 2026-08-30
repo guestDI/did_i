@@ -45,19 +45,22 @@ Item name is interpolated. If several items aged out, use "Your confirmations ag
 Immediately after `Makes sense`, second sheet:
 
 **Title**
-> Want it to reset when you actually leave?
+> Want it to reset when you're back home?
 
 **Body**
-> Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means "since I left". That needs your location, and it never leaves your phone.
+> Instead of a fixed time, we can clear your confirmations once you're back home — so a green tick stays trustworthy the whole time you're out, and nothing stale carries into next time. That needs your location, and it's never sent to a server.
 
 **Buttons:** `Use my location` / `Keep the timer`
 
-Only `Use my location` presents the iOS dialog. Request **`whenInUse` first**, then escalate to `always` later if the leaving-home nudge is ever enabled — asking for `always` cold is the fastest way to get denied.
+Only `Use my location` presents the iOS dialog. Request **`whenInUse` first**
+to capture home, then explain and request `always` once home is saved.
+Background region entry is required for the coming-home reset; asking for
+`always` cold is still the fastest way to get denied.
 
 ### iOS purpose string (Info.plist)
 
 `NSLocationWhenInUseUsageDescription`:
-> Used to clear your confirmations when you leave home, so an old checkmark never fools you. Your location is never sent to a server.
+> Used to clear your confirmations when you come home, so an old checkmark never carries into the next time. Your location is never sent to a server.
 
 ### If granted
 
@@ -73,16 +76,18 @@ If "I'm not home right now": store a pending flag and offer setup again on the f
 Geofence radius: 75m default (150m at launch, then 100m, then 75m — each cut chasing iOS's own hysteresis buffer, which adds distance on top of whatever radius is set). Smaller and you get spurious triggers from GPS drift indoors; larger and the leaving-home nudge fires too late to be useful. 75m is close to the practical floor for background region monitoring — going lower trades a small latency gain for a real rise in false exits.
 
 **Confirmation sequence:** persist the captured coordinate first, then begin monitoring. Show `Home saved.` after the first permission level is granted. After the app has background location access, show:
-> Home is set. Leaving home clears the board automatically.
+> Home is set. Coming home clears the board automatically.
 
-If iOS does not grant background access, explain that automatic leaving-home resets are not active and keep timer resets working. Never claim the automation is enabled before the required permission exists.
+If iOS does not grant background access, explain that automatic coming-home
+resets are not active and keep timer resets working. Never claim the automation
+is enabled before the required permission exists.
 
 ### If declined
 
 Never ask again. Not on day 5, not on a settings banner, not with a "you're missing out" card.
 
 **Copy on decline:**
-> No problem. We'll keep expiring things overnight instead.
+> No problem. We'll keep using the current timer instead.
 
 Then show where the setting actually lives, once:
 > On the board, open an item's More menu → "Edit item" → "How long a tick lasts".
@@ -101,7 +106,7 @@ change an item goes first, and pushes to its own screen from there:
 
 > When a tick stops counting
 
-- When I leave home (24 hours at most) *(only offered when Always Location is active)*
+- When I come home (24 hours at most) *(only offered when Always Location is active)*
 - 4 hours after I confirm
 - 12 hours after I confirm
 - At 4am each day *(default)*
@@ -109,7 +114,7 @@ change an item goes first, and pushes to its own screen from there:
 
 Each option is a self-contained phrase rather than a fragment completing the
 header. Sentence-completion broke on two of the five in English ("…until when I
-leave home", "…until until I confirm again") and breaks harder on case agreement
+come home", "…until until I confirm again") and breaks harder on case agreement
 in pl/ru.
 
 The footer says: "Applies to future confirmations. The status currently on the
@@ -117,7 +122,7 @@ board will not change." A rule change must never revive or shorten the current
 confirmation. The rule is captured when the user confirms; the newly configured
 rule starts with the next tap.
 
-If an item already uses leaving-home expiry and Always Location later becomes
+If an item already uses coming-home expiry and Always Location later becomes
 unavailable, keep the selected choice visible but disabled, explain why, and
 offer the iOS Settings recovery route. Do not present an unavailable automation
 as a working choice.
@@ -144,13 +149,20 @@ Plus an escape hatch, always available in that state:
 - `Can't check right now` — mutes the item until they're home again, and stops it appearing in the widget's summary count.
 - `Ask someone at home` — opens a share sheet pre-filled: "Random question — is the stove off?"
 
+When the app cannot determine whether someone is home because location was
+declined or limited, use the neutral status `No current record.` and show a
+single compact `I'm away` disclosure. Only reveal the two escape actions after
+that tap. Do not permanently expand every unknown row with away-state controls.
+
 Snark aimed at someone who is genuinely anxious and 3km from home is the fastest way to make this app feel cruel. The joke is a reward for being fine, never a comment on being uncertain.
 
 ---
 
 ## Edge cases
 
-**User never leaves home** (works remotely, unwell, holiday). The geofence never fires and items reset on the 4am fallback. This must be the behaviour anyway — geofence reset *supplements* the timer, it doesn't replace it. Never leave an item in a state where nothing can ever expire it.
+**User never leaves home** (works remotely, unwell, holiday). No departure and
+return occurs, so the geofence never fires and items reset on the 24-hour
+fallback. The geofence reset supplements the timer; it never replaces it.
 
 **User confirms items but never opens the app again.** The decay lesson never fires. That's fine — they're using the widget, which is the intended end state. Don't chase them with a notification to deliver a lesson.
 

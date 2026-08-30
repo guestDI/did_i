@@ -16,17 +16,16 @@ import Foundation
 @Test func screenTwoCopyIsVerbatim() {
     #expect(Copy.Screen2.title == "Try it once")
     #expect(Copy.Screen2.subtitle == "This is the whole app. There's no step four.")
-    #expect(Copy.Screen2.footer == "Hold to undo. Everything resets overnight.")
+    #expect(Copy.Screen2.footer == "Hold to undo. Old confirmations expire automatically.")
 }
 
 @Test func screenThreeCopyIsVerbatim() {
     #expect(Copy.Screen3.title == "Put it where you'll look")
     #expect(Copy.Screen3.subtitle == "The widget answers without opening anything.")
-    #expect(Copy.Screen3.nudgeTitle == "Want a nudge tomorrow morning?")
-    #expect(Copy.Screen3.nudgeBody ==
-        "We'll remind you once, around the time you'd be leaving the house. Once. Then never again.")
-    #expect(Copy.Screen3.yesOnce == "Yes, once")
-    #expect(Copy.Screen3.noThanks == "No thanks")
+    #expect(Copy.Screen3.remindOnce == "Remind me once")
+    #expect(Copy.Screen3.remindOnceDetail ==
+        "One notification on the next weekday morning.")
+    #expect(Copy.Screen3.skipForNow == "Skip for now")
 }
 
 @Test func noExclamationMarksAnywhereInSystemCopy() {
@@ -34,7 +33,8 @@ import Foundation
         Copy.onboardingConfirmation, Copy.Screen1.title, Copy.Screen1.subtitle,
         Copy.Screen1.footer, Copy.Screen2.title, Copy.Screen2.subtitle,
         Copy.Screen2.footer, Copy.Screen3.title, Copy.Screen3.subtitle,
-        Copy.Screen3.nudgeTitle, Copy.Screen3.nudgeBody, Copy.unknownAtHome,
+        Copy.Screen3.remindOnce, Copy.Screen3.remindOnceDetail,
+        Copy.Screen3.skipForNow, Copy.unknownAtHome, Copy.unknownLocation,
         Copy.unknownAway, Copy.neverWarning,
     ] + Copy.widgetNudges.flatMap { [$0.title, $0.body] }
 

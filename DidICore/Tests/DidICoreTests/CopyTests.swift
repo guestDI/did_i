@@ -84,6 +84,12 @@ import Foundation
         == "No record since you left. That's not the same as leaving it on.")
 }
 
+@Test func unknownLocationMakesNoClaimAboutWhereTheUserIs() {
+    #expect(Copy.unknownLocation == "No current record.")
+    #expect(!Copy.unknownLocation.localizedCaseInsensitiveContains("home"))
+    #expect(!Copy.unknownLocation.localizedCaseInsensitiveContains("left"))
+}
+
 @Test func theAwayLineNeedsToKnowTheyLeft() {
     // "No record *since you left*" presupposes a geofence. With no home set it is
     // not just risky, it is untrue — so the default is the light line.
@@ -138,8 +144,8 @@ func plainSpaces(_ text: String) -> String {
 }
 
 @Test func confirmationExpiryOffersTheDocsOptionsInOrder() {
-    #expect(ResetRule.choices(canDetectLeavingHome: true).map(confirmationExpiryEN) == [
-        "When I leave home (24 hours at most)",
+    #expect(ResetRule.choices(canDetectComingHome: true).map(confirmationExpiryEN) == [
+        "When I come home (24 hours at most)",
         "4 hours after I confirm",
         "12 hours after I confirm",
         "At 4 AM each day",
@@ -147,9 +153,9 @@ func plainSpaces(_ text: String) -> String {
     ])
 }
 
-@Test func leavingHomeIsHiddenWithoutAHome() {
-    let choices = ResetRule.choices(canDetectLeavingHome: false)
-    #expect(!choices.contains(.onLeavingHome))
+@Test func comingHomeIsHiddenWithoutAHome() {
+    let choices = ResetRule.choices(canDetectComingHome: false)
+    #expect(!choices.contains(.onComingHome))
     #expect(choices.map(confirmationExpiryEN) == [
         "4 hours after I confirm", "12 hours after I confirm", "At 4 AM each day",
         "Never (only when I confirm again)",
@@ -158,7 +164,7 @@ func plainSpaces(_ text: String) -> String {
 
 @Test func theDefaultRuleIsNightlyAtFour() {
     #expect(ResetRule.default == .dailyAt(hour: 4))
-    #expect(ResetRule.choices(canDetectLeavingHome: false).contains(.default))
+    #expect(ResetRule.choices(canDetectComingHome: false).contains(.default))
 }
 
 @Test func neverCarriesItsWarning() {

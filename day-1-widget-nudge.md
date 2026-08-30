@@ -13,7 +13,7 @@
 ### Fires only if all of these are true
 
 1. No widget of ours is currently installed (checked via `WidgetCenter.shared.getCurrentConfigurations`).
-2. Notification permission was granted — meaning the user tapped "Later" on the widget screen, then "Yes, once", then allowed the OS dialog.
+2. Notification permission was granted — meaning the user tapped `Remind me once` on the widget screen, then allowed the OS dialog.
 3. It has been at least 12 hours since install.
 4. It has not fired before. Ever.
 

@@ -29,9 +29,9 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Used to clear your confirmations when you leave home, even with the app closed. Your location is never sent to a server.</string>
+	<string>Used to clear your confirmations when you come home, even with the app closed. Your location is never sent to a server.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Used to clear your confirmations when you leave home, so an old checkmark never fools you. Your location is never sent to a server.</string>
+	<string>Used to clear your confirmations when you come home, so an old checkmark never carries into the next time. Your location is never sent to a server.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

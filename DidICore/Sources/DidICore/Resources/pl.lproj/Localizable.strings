@@ -74,9 +74,12 @@
 "Makes sense" = "Ma sens";
 "Want it to reset when you actually leave?" = "Resetować dopiero, gdy naprawdę wyjdziesz?";
 "Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it's never sent to a server." = "Zamiast o stałej porze możemy wyczyścić potwierdzenia, gdy wyjdziesz z domu — wtedy zielony znacznik zawsze znaczy „od wyjścia”. Potrzebna jest lokalizacja, ale nigdy nie jest wysyłana na serwer.";
+"Want it to reset when you're back home?" = "Resetować, gdy wrócisz do domu?";
+"Instead of a fixed time, we can clear your confirmations once you're back home — so a green tick stays trustworthy the whole time you're out, and nothing stale carries into next time. That needs your location, and it's never sent to a server." = "Zamiast o stałej porze możemy wyczyścić potwierdzenia, gdy wrócisz do domu — wtedy zielony znacznik pozostaje wiarygodny przez cały czas, gdy jesteś poza domem, i nic nieaktualnego nie przechodzi na następny raz. Potrzebna jest lokalizacja, ale nigdy nie jest wysyłana na serwer.";
 "Use my location" = "Użyj mojej lokalizacji";
 "Keep the timer" = "Zostaw minutnik";
 "so we can clear the board when you leave, even with the app closed" = "aby wyczyścić tablicę po wyjściu, nawet gdy aplikacja jest zamknięta";
+"so we can clear the board when you're back, even with the app closed" = "aby wyczyścić tablicę po powrocie, nawet gdy aplikacja jest zamknięta";
 "One more thing" = "Jeszcze jedno";
 "Allow while closed" = "Pozwól po zamknięciu";
 "Not now" = "Nie teraz";
@@ -118,6 +121,7 @@
 "When a tick stops counting" = "Kiedy znacznik przestaje się liczyć";
 "Applies to future confirmations. The status currently on the board will not change." = "Dotyczy przyszłych potwierdzeń. Stan widoczny teraz na tablicy się nie zmieni.";
 "Leaving-home expiry needs Always Location access." = "Wygaszanie po wyjściu wymaga stałego dostępu do lokalizacji.";
+"Coming-home expiry needs Always Location access." = "Wygaszanie po powrocie wymaga stałego dostępu do lokalizacji.";
 "Edit item" = "Edytuj element";
 "On the board, open an item's More menu → \"Edit item\" → \"How long a tick lasts\"." = "Na tablicy otwórz menu Więcej przy elemencie → „Edytuj element” → „Jak długo ważny jest znacznik”.";
 "Put it away" = "Schowaj";
@@ -134,6 +138,7 @@
 "Every night at %@" = "Każdej nocy o %@";
 "Never" = "Nigdy";
 "When I leave home (24 hours at most)" = "Gdy wyjdę z domu (najwyżej po 24 godzinach)";
+"When I come home (24 hours at most)" = "Gdy wrócę do domu (najwyżej po 24 godzinach)";
 "At %@ each day" = "Codziennie o %@";
 "Never (only when I confirm again)" = "Nigdy (tylko gdy potwierdzę ponownie)";
 "Close" = "Zamknij";
@@ -198,6 +203,18 @@
 "We didn't change your records. Try again." = "Twoje wpisy nie zostały zmienione. Spróbuj ponownie.";
 "Try again" = "Spróbuj ponownie";
 "Most checked: %@. %lld checks." = "Najczęściej sprawdzane: %@. Sprawdzenia: %lld.";
+
+/* E2E UX pass: accurate reset promises and progressive away help. */
+"No current record." = "Brak aktualnego wpisu.";
+"Hold to undo. Old confirmations expire automatically." = "Przytrzymaj, aby cofnąć. Stare potwierdzenia wygasają automatycznie.";
+"Remind me once" = "Przypomnij mi raz";
+"One notification on the next weekday morning." = "Jedno powiadomienie następnego poranka w dzień roboczy.";
+"Skip for now" = "Na razie pomiń";
+"Home is set. Coming home clears the board automatically." = "Dom jest ustawiony. Powrót do domu automatycznie czyści tablicę.";
+"No problem. We'll keep using the current timer instead." = "Nie ma problemu. Zostaniemy przy obecnym timerze.";
+"I'm away" = "Jestem poza domem";
+"Coming home clears the board only while the app is open." = "Powrót do domu czyści tablicę tylko przy otwartej aplikacji.";
+"How far from the centre point still counts as home. A bigger property may need a larger area before automatic arrival is detected." = "Jak daleko od punktu środkowego to nadal dom. Większa posesja może wymagać większego obszaru, zanim powrót zostanie wykryty automatycznie.";
 "Next: %@. %lld checks." = "Następne: %@. Sprawdzenia: %lld.";
 "%@: confirmed at least once this week." = "%@: potwierdzono co najmniej raz w tym tygodniu.";
 "%lld checks this week. Each one has a timestamp." = "%lld sprawdzeń w tym tygodniu. Każde ma znacznik czasu.";

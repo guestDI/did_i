@@ -74,10 +74,10 @@ private func store(_ rule: ResetRule = .dailyAt(hour: 4)) -> Store {
     #expect(s.items.allSatisfy { Copy.general.contains($0.confirmationLine ?? "") })
 }
 
-@Test func storeStateAppliesTheGeofenceExit() {
-    var s = store(.onLeavingHome)
+@Test func storeStateAppliesTheGeofenceEntry() {
+    var s = store(.onComingHome)
     s.confirm(id: s.items[0].id, at: at("2026-08-11 08:00:00"), calendar: utc)
-    s.lastLeftHomeAt = at("2026-08-11 08:42:00")
+    s.lastEnteredHomeAt = at("2026-08-11 08:42:00")
     #expect(s.state(s.items[0], now: at("2026-08-11 09:00:00"), calendar: utc) == .unknown)
 }
 

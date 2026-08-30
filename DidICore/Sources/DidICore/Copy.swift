@@ -82,6 +82,9 @@ public enum Copy {
     }
 
     public static let unknownAtHome = t("No record yet. Easy fix.")
+    /// Used when location is unavailable, so we cannot truthfully claim either
+    /// that the user is home ("Easy fix") or that they have left.
+    public static let unknownLocation = t("No current record.")
     public static let unknownAway = t("No record since you left. That's not the same as leaving it on.")
 
     /// Mild, no jokes: "Off, 6 hours ago."
@@ -140,7 +143,7 @@ public enum Copy {
     public enum Screen2 {
         public static let title = t("Try it once")
         public static let subtitle = t("This is the whole app. There's no step four.")
-        public static let footer = t("Hold to undo. Everything resets overnight.")
+        public static let footer = t("Hold to undo. Old confirmations expire automatically.")
         public static let loggedJustNow = t("logged just now")
     }
 
@@ -149,7 +152,9 @@ public enum Copy {
         public static let subtitle = t("The widget answers without opening anything.")
         public static let steps = t("Long-press your home screen → Edit → Add widget → search \"Did I?\"")
         public static let showMe = t("View steps")
-        public static let later = t("Later")
+        public static let remindOnce = t("Remind me once")
+        public static let remindOnceDetail = t("One notification on the next weekday morning.")
+        public static let skipForNow = t("Skip for now")
 
         /// The doc calls for a 4–6s looping video here. There is no asset, so the
         /// same five beats are shown as captions. See decisions.md.
@@ -167,11 +172,6 @@ public enum Copy {
         public static let whichItem =
             t("The small widget shows one item. Long-press it → Edit Widget to change which.")
 
-        public static let nudgeTitle = t("Want a nudge tomorrow morning?")
-        public static let nudgeBody =
-            t("We'll remind you once, around the time you'd be leaving the house. Once. Then never again.")
-        public static let yesOnce = t("Yes, once")
-        public static let noThanks = t("No thanks")
     }
 
     /// VoiceOver, per the Day 0 edge cases: the practice tap is one button.
@@ -216,20 +216,20 @@ public enum Copy {
     }
 
     public enum LocationAsk {
-        public static let title = t("Want it to reset when you actually leave?")
+        public static let title = t("Want it to reset when you're back home?")
         /// Same correction as `Screen1.footer`: the coordinate is in the App Group
         /// container, which iCloud backs up, so "never leaves your phone" was the
         /// one claim in the product that was not true — and this is the screen where
         /// it is doing the most work.
         public static let body =
-            t("Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it's never sent to a server.")
+            t("Instead of a fixed time, we can clear your confirmations once you're back home — so a green tick stays trustworthy the whole time you're out, and nothing stale carries into next time. That needs your location, and it's never sent to a server.")
         public static let use = t("Use my location")
         public static let keepTimer = t("Keep the timer")
 
         /// architecture §6: background region events require `always`, so this is
         /// a second, later ask rather than optional politeness.
         public static let alwaysReason =
-            t("so we can clear the board when you leave, even with the app closed")
+            t("so we can clear the board when you're back, even with the app closed")
         public static let alwaysTitle = t("One more thing")
         public static let alwaysButton = t("Allow while closed")
         public static let alwaysSkip = t("Not now")
@@ -243,18 +243,19 @@ public enum Copy {
         public static let notHome = t("I'm not home right now")
         public static let saved = t("Home saved.")
         public static let confirmed =
-            t("Home is set. Leaving home clears the board automatically.")
+            t("Home is set. Coming home clears the board automatically.")
         /// A fix can fail indoors or in airplane mode. Say so; do not guess.
         public static let noFix = t("Couldn't get a location just now. Try again from here, or later.")
     }
 
     public enum LocationDeclined {
-        public static let message = t("No problem. We'll keep expiring things overnight instead.")
+        public static let message = t("No problem. We'll keep using the current timer instead.")
     }
 
     /// The escape hatch, always available on an unknown item while away.
     public static let cantCheckRightNow = t("Can't check right now")
     public static let askSomeoneAtHome = t("Ask someone at home")
+    public static let imAway = t("I'm away")
     public static let mutedUntilHome = t("Muted from the summary until you're home.")
     /// No geofence, so "until you're home" would be a promise nothing can keep:
     /// without region entry the mute has to end on the next confirmation instead.
@@ -279,8 +280,8 @@ public enum Copy {
     public static let confirmationExpiryPrompt = t("When a tick stops counting")
     public static let confirmationExpiryFooter =
         t("Applies to future confirmations. The status currently on the board will not change.")
-    public static let leavingExpiryUnavailable =
-        t("Leaving-home expiry needs Always Location access.")
+    public static let comingHomeExpiryUnavailable =
+        t("Coming-home expiry needs Always Location access.")
     public static let editItem = t("Edit item")
 
     /// The pointer to the editor. Belongs to the reset rule, not to the location
@@ -329,7 +330,7 @@ public enum Copy {
         locale: Locale = .current
     ) -> String {
         switch rule {
-        case .onLeavingHome: t("When I leave home (24 hours at most)")
+        case .onComingHome: t("When I come home (24 hours at most)")
         case .afterHours(let n): t("\(n) hours after I confirm")
         case .dailyAt(let hour): t("At \(clockHour(hour, locale: locale)) each day")
         case .never: t("Never (only when I confirm again)")
@@ -393,14 +394,14 @@ public enum Copy {
         public static let openSystemSettings = t("Open iOS Settings")
         /// Shown when location was granted and later revoked in iOS Settings.
         public static let revoked = t("Location is off, so we're expiring things on a timer instead.")
-        /// `whenInUse` without `always`: exit events only arrive in the foreground.
-        public static let foregroundOnly = t("Leaving home clears the board only while the app is open.")
+        /// `whenInUse` without `always`: region events only arrive in the foreground.
+        public static let foregroundOnly = t("Coming home clears the board only while the app is open.")
 
         public static let radiusLabel = t("Home area size")
         /// A flat and a house with a garden are both "home" at different scales,
         /// so the fixed default is explained as a default, not asserted as fact.
         public static let radiusFooter =
-            t("How far from the centre point still counts as home. A bigger property may need more room before \"left home\" fires.")
+            t("How far from the centre point still counts as home. A bigger property may need a larger area before automatic arrival is detected.")
     }
 
     public enum TipJar {

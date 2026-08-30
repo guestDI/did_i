@@ -161,7 +161,7 @@ public struct Store: Codable, Sendable {
     }
 
     public func state(_ item: Item, now: Date, calendar: Calendar = .current) -> ItemState {
-        resolve(item, lastLeftHome: lastLeftHomeAt, now: now, calendar: calendar)
+        resolve(item, lastEnteredHome: lastEnteredHomeAt, now: now, calendar: calendar)
     }
 
     /// Re-applies the current language to items still carrying chip copy.
@@ -299,7 +299,7 @@ public enum StoreIO {
     static func decode(from url: URL) throws -> Store {
         // Absent is not corrupt. This is first run, and an empty store is correct.
         guard FileManager.default.fileExists(atPath: url.path) else { return Store() }
-        var store = try decoder.decode(Store.self, from: Data(contentsOf: url))
+        var store = try decoder.decode(Store.self, from: migratingLegacyResetRuleKey(Data(contentsOf: url)))
         // Both processes read through here, so the board and the widget can never
         // disagree about which language they are in. Not written back on its own —
         // the next `mutate` persists it.
@@ -327,9 +327,26 @@ public enum StoreIO {
     /// The watch has no file to coordinate around, so this is `decode(from:)`
     /// without the `NSFileCoordinator` half.
     public static func decoded(_ data: Data) throws -> Store {
-        var store = try decoder.decode(Store.self, from: data)
+        var store = try decoder.decode(Store.self, from: migratingLegacyResetRuleKey(data))
         store.localizeChipCopy()
         return store
+    }
+
+    /// `ResetRule.onLeavingHome` was renamed to `.onComingHome` (the reset trigger
+    /// moved from departure to arrival — see decisions.md). The old case name is a
+    /// literal JSON key (`{"onLeavingHome":{}}`) in any store written before this
+    /// change, and Swift's synthesized `Decodable` throws on an unrecognised case
+    /// rather than skipping it — which `load()`'s absent-vs-corrupt distinction
+    /// then reports as a corrupt file, taking the whole board down.
+    ///
+    /// Rewriting the raw bytes rather than hand-rolling `ResetRule`'s `Decodable`
+    /// conformance: the key only ever appears as this exact quoted enum tag, never
+    /// as user-typed content, so a plain substring replace is precise and avoids
+    /// reproducing Swift's synthesized wire format by hand.
+    private static func migratingLegacyResetRuleKey(_ data: Data) -> Data {
+        guard let text = String(data: data, encoding: .utf8), text.contains("\"onLeavingHome\"")
+        else { return data }
+        return Data(text.replacingOccurrences(of: "\"onLeavingHome\"", with: "\"onComingHome\"").utf8)
     }
 
     static var encoder: JSONEncoder {

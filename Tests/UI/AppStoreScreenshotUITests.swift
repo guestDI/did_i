@@ -39,12 +39,19 @@ final class AppStoreScreenshotUITests: XCTestCase {
         app.buttons["More actions"].firstMatch.tap()
         XCTAssertTrue(app.buttons["Edit item"].waitForExistence(timeout: 2))
         app.buttons["Edit item"].tap()
-        XCTAssertTrue(app.buttons["How long a tick lasts"].waitForExistence(timeout: 3))
-        app.buttons["How long a tick lasts"].tap()
+        let expiry = app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH[c] %@", "How long a tick lasts")
+        ).firstMatch
+        XCTAssertTrue(expiry.waitForExistence(timeout: 3))
+        expiry.tap()
         XCTAssertTrue(app.navigationBars["How long a tick lasts"].waitForExistence(timeout: 3))
         capture("04-expiry-you-control")
 
-        app.buttons["Cancel"].tap()
+        let expiryNavigationBar = app.navigationBars["How long a tick lasts"]
+        expiryNavigationBar.buttons.firstMatch.tap()
+        let done = app.buttons["Done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 2))
+        done.tap()
         app.buttons["Settings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
         capture("05-private-by-design")

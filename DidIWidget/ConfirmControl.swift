@@ -36,7 +36,11 @@ struct ConfirmControl: ControlWidget {
                 isOn: state.confirmed,
                 action: SetConfirmedIntent(itemID: state.id),
                 valueLabel: { isOn in
-                    Label(isOn ? "Confirmed" : "Not confirmed", systemImage: state.symbol)
+                    if isOn {
+                        Label("Confirmed", systemImage: state.symbol)
+                    } else {
+                        Label("Not confirmed", systemImage: state.symbol)
+                    }
                 }
             )
         }

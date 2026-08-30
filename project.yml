@@ -66,12 +66,12 @@ targets:
         # Group container, which iCloud backs up. Never sent to a server is the
         # claim that is both meaningful and exactly correct.
         NSLocationWhenInUseUsageDescription: >-
-          Used to clear your confirmations when you leave home, so an old checkmark
-          never fools you. Your location is never sent to a server.
+          Used to clear your confirmations when you come home, so an old checkmark
+          never carries into the next time. Your location is never sent to a server.
         # architecture §6: background region events require `always`, so this
         # string must be present alongside the when-in-use one.
         NSLocationAlwaysAndWhenInUseUsageDescription: >-
-          Used to clear your confirmations when you leave home, even with the app
+          Used to clear your confirmations when you come home, even with the app
           closed. Your location is never sent to a server.
         # The app does not implement or invoke encryption beyond Apple's OS
         # services, so App Store Connect can skip the export-compliance prompt.

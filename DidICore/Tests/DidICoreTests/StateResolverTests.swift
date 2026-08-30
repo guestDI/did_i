@@ -81,25 +81,32 @@ func isUnknown(_ state: ItemState) -> Bool { state == .unknown }
     #expect(boundaries(for: thing, after: at("2026-08-11 09:00:00"), calendar: utc).isEmpty)
 }
 
-// MARK: - onLeavingHome
+// MARK: - onComingHome
 
-@Test func leavingHomeClearsTheItem() {
-    let stove = item(confirmedAt: at("2026-08-11 08:00:00"), rule: .onLeavingHome)
-    let left = at("2026-08-11 08:42:00")
-    #expect(isUnknown(resolve(stove, lastLeftHome: left, now: at("2026-08-11 09:00:00"), calendar: utc)))
+@Test func comingHomeClearsTheItem() {
+    let stove = item(confirmedAt: at("2026-08-11 08:00:00"), rule: .onComingHome)
+    let entered = at("2026-08-11 08:42:00")
+    #expect(isUnknown(resolve(stove, lastEnteredHome: entered, now: at("2026-08-11 09:00:00"), calendar: utc)))
 }
 
-@Test func leavingHomeBeforeConfirmingDoesNotClearIt() {
-    let stove = item(confirmedAt: at("2026-08-11 09:00:00"), rule: .onLeavingHome)
-    let left = at("2026-08-11 08:42:00")
-    #expect(!isUnknown(resolve(stove, lastLeftHome: left, now: at("2026-08-11 09:05:00"), calendar: utc)))
+@Test func comingHomeBeforeConfirmingDoesNotClearIt() {
+    let stove = item(confirmedAt: at("2026-08-11 09:00:00"), rule: .onComingHome)
+    let entered = at("2026-08-11 08:42:00")
+    #expect(!isUnknown(resolve(stove, lastEnteredHome: entered, now: at("2026-08-11 09:05:00"), calendar: utc)))
 }
 
-@Test func leavingHomeNeverStaysGreenPastTwentyFourHours() {
-    // No exit event at all — the ceiling has to expire it anyway.
-    let stove = item(confirmedAt: at("2026-08-10 09:00:00"), rule: .onLeavingHome)
-    #expect(!isUnknown(resolve(stove, lastLeftHome: nil, now: at("2026-08-11 08:59:00"), calendar: utc)))
-    #expect(isUnknown(resolve(stove, lastLeftHome: nil, now: at("2026-08-11 09:00:01"), calendar: utc)))
+@Test func comingHomeNeverStaysGreenPastTwentyFourHours() {
+    // No entry event at all — the ceiling has to expire it anyway.
+    let stove = item(confirmedAt: at("2026-08-10 09:00:00"), rule: .onComingHome)
+    #expect(!isUnknown(resolve(stove, lastEnteredHome: nil, now: at("2026-08-11 08:59:00"), calendar: utc)))
+    #expect(isUnknown(resolve(stove, lastEnteredHome: nil, now: at("2026-08-11 09:00:01"), calendar: utc)))
+}
+
+@Test func stayingAwayKeepsTheConfirmationTrustworthy() {
+    // The whole point of the switch away from exit-based reset: a tick made
+    // right before leaving must survive the entire trip, however long.
+    let stove = item(confirmedAt: at("2026-08-11 08:00:00"), rule: .onComingHome)
+    #expect(!isUnknown(resolve(stove, lastEnteredHome: nil, now: at("2026-08-11 20:00:00"), calendar: utc)))
 }
 
 // MARK: - DST

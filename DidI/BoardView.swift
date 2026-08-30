@@ -17,6 +17,7 @@ struct BoardView: View {
     @State private var staleItem: Item?
     @State private var removing: Item?
     @State private var undoFeedback: [UUID: String] = [:]
+    @State private var expandedAwayHelp: Set<UUID> = []
     @State private var showingSaveError = false
     @State private var authorization = LocationMonitor.shared.status
     /// Set when the user goes somewhere on purpose. See `recordChecks`.
@@ -324,7 +325,7 @@ struct BoardView: View {
                 BoardRow(
                     item: item,
                     state: store.state(item, now: now),
-                    statusOverride: undoFeedback[item.id],
+                    statusOverride: rowStatusOverride(for: item, now: now),
                     isAway: store.isAway,
                     onConfirm: { confirm(item) },
                     onUndo: item.lastConfirmedAt == nil ? nil : { undo(item) }
@@ -332,10 +333,25 @@ struct BoardView: View {
                 rowActions(item: item, now: now)
                     .offset(x: rowActionOffset(for: item), y: 13)
             }
-            if store.state(item, now: now) == .unknown, store.isAway || cannotTellIfAway {
-                awayActions(item)
+            if store.state(item, now: now) == .unknown {
+                if store.isAway || expandedAwayHelp.contains(item.id) {
+                    awayActions(item)
+                } else if cannotTellIfAway {
+                    Button(Copy.imAway) { expandedAwayHelp.insert(item.id) }
+                        .buttonStyle(ContextButton())
+                        .padding(.horizontal, 22)
+                        .padding(.vertical, 6)
+                }
             }
         }
+    }
+
+    private func rowStatusOverride(for item: Item, now: Date) -> String? {
+        if let feedback = undoFeedback[item.id] { return feedback }
+        if store.state(item, now: now) == .unknown, cannotTellIfAway {
+            return Copy.unknownLocation
+        }
+        return nil
     }
 
     /// day-2 accepts "declined, app keeps working on timers" as a normal outcome,
@@ -416,6 +432,7 @@ struct BoardView: View {
 
     private func confirm(_ item: Item) {
         guard save({ $0.confirm(id: item.id, at: .now) }) else { return }
+        expandedAwayHelp.remove(item.id)
         undoFeedback[item.id] = nil
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         if let line = store.items.first(where: { $0.id == item.id })?.confirmationLine {
@@ -465,8 +482,9 @@ struct BoardView: View {
     private func save(_ change: (inout Store) -> Void) -> Bool {
         do {
             try StoreIO.mutate(change)
-            let updated = try StoreIO.load()
-            withAnimation(.snappy(duration: 0.28)) { store = updated }
+            // Flap cells animate their own character changes. Animating the
+            // entire row/store duplicates labels and timestamps during a tap.
+            store = try StoreIO.load()
             WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
             return true
         } catch {

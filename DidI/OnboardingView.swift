@@ -300,7 +300,10 @@ private struct PracticeScreen: View {
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
 
-        withAnimation(.snappy) { confirmed = true }
+        // `FlapCell` owns the character animation. Animating this whole state
+        // change cross-fades two complete rows on top of each other and makes
+        // the first successful tap look visually corrupted.
+        confirmed = true
         UIAccessibility.post(notification: .announcement, argument: Copy.onboardingConfirmation)
 
         advanceTask = Task {
@@ -324,7 +327,7 @@ private struct PracticeScreen: View {
         }
         UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
-        withAnimation(.snappy) { confirmed = false }
+        confirmed = false
         UIAccessibility.post(notification: .announcement, argument: Copy.undone)
     }
 
@@ -342,7 +345,7 @@ private struct WidgetScreen: View {
     let onDone: () -> Void
 
     @State private var showingWalkthrough = false
-    @State private var askingAboutNudge = false
+    @State private var canOfferNudge = false
     @State private var showingSaveError = false
 
     var body: some View {
@@ -369,9 +372,21 @@ private struct WidgetScreen: View {
                     Button(Copy.Screen3.showMe) { showingWalkthrough = true }
                         .buttonStyle(PrimaryButton())
 
-                    Button(Copy.Screen3.later) { askingAboutNudge = true }
-                        .buttonStyle(SecondaryButton())
-                        .padding(.top, 4)
+                    if canOfferNudge {
+                        Button(Copy.Screen3.remindOnce) { requestOneNudge() }
+                            .buttonStyle(SecondaryButton())
+                            .padding(.top, 4)
+                        Text(Copy.Screen3.remindOnceDetail)
+                            .appFont(11, relativeTo: .caption)
+                            .foregroundStyle(Palette.dim)
+                            .frame(maxWidth: .infinity)
+                    }
+
+                    Button(Copy.Screen3.skipForNow) {
+                        if record(.later, notificationOptIn: false) { onDone() }
+                    }
+                    .buttonStyle(SecondaryButton())
+                    .padding(.top, 4)
                 }
                 .frame(minHeight: max(0, geometry.size.height - 70))
                 .padding(.horizontal, 26)
@@ -381,20 +396,13 @@ private struct WidgetScreen: View {
             .scrollIndicators(.hidden)
         }
         .sheet(isPresented: $showingWalkthrough) { WalkthroughSheet() }
-        .sheet(isPresented: $askingAboutNudge) {
-            NudgeSheet(
-                onYes: { optIn in
-                    if record(.later, notificationOptIn: optIn) { onDone() }
-                },
-                onNo: {
-                    if record(.later, notificationOptIn: false) { onDone() }
-                }
-            )
-        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { checkForInstalledWidget() }
         }
-        .task { await checkForInstalledWidgetAsync() }
+        .task {
+            await checkNudgeAvailability()
+            await checkForInstalledWidgetAsync()
+        }
         .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
             Button(Copy.ok) {}
         } message: {
@@ -419,6 +427,19 @@ private struct WidgetScreen: View {
 
     private func checkForInstalledWidget() {
         Task { await checkForInstalledWidgetAsync() }
+    }
+
+    private func checkNudgeAvailability() async {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        canOfferNudge = settings.authorizationStatus != .denied
+    }
+
+    private func requestOneNudge() {
+        Task {
+            let granted = (try? await UNUserNotificationCenter.current()
+                .requestAuthorization(options: [.alert, .sound])) ?? false
+            if record(.later, notificationOptIn: granted) { onDone() }
+        }
     }
 
     /// Detected via the widget configuration callback. Don't congratulate them —
@@ -490,60 +511,6 @@ struct WalkthroughSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background(Palette.ink)
         .presentationDetents([.medium, .large])
-    }
-}
-
-/// The only permission ask on Day 0, and only down the "Later" branch.
-private struct NudgeSheet: View {
-    let onYes: (Bool) -> Void
-    let onNo: () -> Void
-
-    @State private var checkedExistingDenial = false
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(Copy.Screen3.nudgeTitle)
-                        .boardFont(18, .semibold, relativeTo: .headline)
-                        .foregroundStyle(Palette.text)
-                    Text(Copy.Screen3.nudgeBody)
-                        .appFont(14, relativeTo: .subheadline)
-                        .foregroundStyle(Palette.sub)
-                        .padding(.top, 14)
-
-                    Spacer(minLength: 24)
-
-                    Button(Copy.Screen3.yesOnce) {
-                        Task {
-                            let granted = (try? await UNUserNotificationCenter.current()
-                                .requestAuthorization(options: [.alert, .sound])) ?? false
-                            onYes(granted)
-                        }
-                    }
-                    .buttonStyle(PrimaryButton())
-
-                    Button(Copy.Screen3.noThanks) { onNo() }
-                        .buttonStyle(SecondaryButton())
-                        .padding(.top, 4)
-                }
-                .padding(30)
-                .frame(minHeight: geometry.size.height, alignment: .topLeading)
-            }
-            .scrollIndicators(.hidden)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .background(Palette.ink)
-        .presentationDetents([.medium, .large])
-        .task {
-            // Reinstall with a prior OS-level denial: skip the sheet entirely
-            // rather than offer something we cannot deliver.
-            guard !checkedExistingDenial else { return }
-            checkedExistingDenial = true
-            let settings = await UNUserNotificationCenter.current().notificationSettings()
-            if settings.authorizationStatus == .denied { onNo() }
-        }
     }
 }
 

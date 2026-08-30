@@ -16,7 +16,7 @@ struct ConfirmationExpiryView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @Binding var rule: ResetRule
-    /// The saved rule, not the draft: an already-chosen leaving-home rule stays
+    /// The saved rule, not the draft: an already-chosen coming-home rule stays
     /// visible when the permission behind it is gone, so it can be changed away
     /// from rather than silently vanishing.
     let originalRule: ResetRule
@@ -24,14 +24,14 @@ struct ConfirmationExpiryView: View {
 
     @State private var authorization = LocationMonitor.shared.status
 
-    private var leavingHomeAvailable: Bool {
+    private var comingHomeAvailable: Bool {
         hasHome && authorization == .authorizedAlways
     }
 
     private var choices: [ResetRule] {
-        var choices = ResetRule.choices(canDetectLeavingHome: leavingHomeAvailable)
-        if originalRule == .onLeavingHome, !choices.contains(.onLeavingHome) {
-            choices.insert(.onLeavingHome, at: 0)
+        var choices = ResetRule.choices(canDetectComingHome: comingHomeAvailable)
+        if originalRule == .onComingHome, !choices.contains(.onComingHome) {
+            choices.insert(.onComingHome, at: 0)
         }
         return choices
     }
@@ -66,12 +66,12 @@ struct ConfirmationExpiryView: View {
                         .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
-                    .disabled(choice == .onLeavingHome && !leavingHomeAvailable)
+                    .disabled(choice == .onComingHome && !comingHomeAvailable)
                     // The footer explaining the dimmed row sits after every other
                     // option, so VoiceOver reaches it long after the row it is about.
                     .accessibilityHint(
-                        choice == .onLeavingHome && !leavingHomeAvailable
-                            ? Copy.leavingExpiryUnavailable : ""
+                        choice == .onComingHome && !comingHomeAvailable
+                            ? Copy.comingHomeExpiryUnavailable : ""
                     )
                     .accessibilityAddTraits(rule == choice ? .isSelected : [])
                 }
@@ -80,20 +80,20 @@ struct ConfirmationExpiryView: View {
             } footer: {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(Copy.confirmationExpiryFooter)
-                    if originalRule == .onLeavingHome && !leavingHomeAvailable {
-                        Text(Copy.leavingExpiryUnavailable)
+                    if originalRule == .onComingHome && !comingHomeAvailable {
+                        Text(Copy.comingHomeExpiryUnavailable)
                     }
                 }
             }
 
-            if hasHome && !leavingHomeAvailable {
+            if hasHome && !comingHomeAvailable {
                 Section {
                     Button(Copy.HomeSettings.openSystemSettings) {
                         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
                         openURL(url)
                     }
                 } footer: {
-                    Text(Copy.leavingExpiryUnavailable)
+                    Text(Copy.comingHomeExpiryUnavailable)
                 }
             }
         }

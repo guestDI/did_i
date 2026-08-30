@@ -28,8 +28,8 @@ func expiry(for rule: ResetRule, confirmedAt: Date, calendar: Calendar) -> Date?
         )
     case .afterHours(let n):
         return confirmedAt.addingTimeInterval(TimeInterval(n) * 3600)
-    case .onLeavingHome:
-        // 24h ceiling. The geofence exit is ORed in by the caller.
+    case .onComingHome:
+        // 24h ceiling. The geofence entry is ORed in by the caller.
         return confirmedAt.addingTimeInterval(24 * 3600)
     case .never:
         return nil
@@ -39,14 +39,14 @@ func expiry(for rule: ResetRule, confirmedAt: Date, calendar: Calendar) -> Date?
 /// Pure. `now` is injected; nothing here calls `Date()`.
 public func resolve(
     _ item: Item,
-    lastLeftHome: Date? = nil,
+    lastEnteredHome: Date? = nil,
     now: Date,
     calendar: Calendar = .current
 ) -> ItemState {
     guard let last = item.lastConfirmedAt else { return .unknown }
     let rule = item.lastConfirmationRule ?? item.resetRule
 
-    if rule == .onLeavingHome, let left = lastLeftHome, left > last {
+    if rule == .onComingHome, let entered = lastEnteredHome, entered > last {
         return .unknown
     }
 

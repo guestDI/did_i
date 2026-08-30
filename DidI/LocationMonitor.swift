@@ -3,7 +3,7 @@ import UIKit
 import WidgetKit
 import DidICore
 
-/// One `CLCircularRegion`, 150m, entry and exit. The allowance is 20 regions;
+/// One user-sized `CLCircularRegion` (75m default), entry and exit. The allowance is 20 regions;
 /// we use one.
 ///
 /// **Construction must be synchronous during launch.** A region exit relaunches a
@@ -43,7 +43,8 @@ final class LocationMonitor: NSObject {
     /// identical `CLCircularRegion` makes CoreLocation re-evaluate the
     /// boundary against whatever location fix it currently has, which can be
     /// stale or GPS-noisy — and fire a spurious exit for someone who never
-    /// left, resetting an `.onLeavingHome` item that was just confirmed.
+    /// left, sending a false "you're leaving and this isn't confirmed"
+    /// reminder even though `.onComingHome` no longer resets on exit at all.
     func start() {
         guard hasAlways, let home = StoreIO.read().home else { return }
         guard !isMonitoring(home) else { return }
@@ -207,7 +208,7 @@ extension LocationMonitor: CLLocationManagerDelegate {
         backgroundTask = .invalid
     }
 
-    /// Entry clears the "can't check right now" mutes.
+    /// Entry expires coming-home confirmations and clears the "can't check right now" mutes.
     nonisolated func locationManager(
         _ manager: CLLocationManager, didEnterRegion region: CLRegion
     ) {

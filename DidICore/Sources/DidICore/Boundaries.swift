@@ -3,7 +3,7 @@ import Foundation
 /// Future instants at which `resolve` would change its answer for this item:
 /// the fresh→aging transition and the aging→unknown transition.
 ///
-/// For `.onLeavingHome` only the 24h ceiling is predictable; the geofence
+/// For `.onComingHome` only the 24h ceiling is predictable; the geofence
 /// transition arrives as an explicit timeline reload.
 public func boundaries(
     for item: Item,

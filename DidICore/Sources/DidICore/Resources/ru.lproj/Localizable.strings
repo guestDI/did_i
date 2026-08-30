@@ -74,9 +74,12 @@
 "Makes sense" = "Логично";
 "Want it to reset when you actually leave?" = "Сбрасывать, когда ты действительно уходишь?";
 "Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it's never sent to a server." = "Вместо фиксированного времени мы можем очищать подтверждения, когда ты уходишь из дома — тогда зелёная галочка всегда означает «после ухода». Для этого нужна геопозиция, но она никогда не отправляется на сервер.";
+"Want it to reset when you're back home?" = "Сбрасывать, когда ты вернёшься домой?";
+"Instead of a fixed time, we can clear your confirmations once you're back home — so a green tick stays trustworthy the whole time you're out, and nothing stale carries into next time. That needs your location, and it's never sent to a server." = "Вместо фиксированного времени мы можем очищать подтверждения, когда ты возвращаешься домой — тогда зелёная галочка остаётся достоверной всё время, пока тебя нет дома, и ничего устаревшего не переходит на следующий раз. Для этого нужна геопозиция, но она никогда не отправляется на сервер.";
 "Use my location" = "Использовать геопозицию";
 "Keep the timer" = "Оставить таймер";
 "so we can clear the board when you leave, even with the app closed" = "чтобы очистить доску после твоего ухода, даже если приложение закрыто";
+"so we can clear the board when you're back, even with the app closed" = "чтобы очистить доску после твоего возвращения, даже если приложение закрыто";
 "One more thing" = "И ещё кое-что";
 "Allow while closed" = "Разрешить в фоне";
 "Not now" = "Не сейчас";
@@ -118,6 +121,7 @@
 "When a tick stops counting" = "Когда галочка перестаёт считаться";
 "Applies to future confirmations. The status currently on the board will not change." = "Относится к будущим подтверждениям. Текущий статус на доске не изменится.";
 "Leaving-home expiry needs Always Location access." = "Для сброса при уходе нужен постоянный доступ к геопозиции.";
+"Coming-home expiry needs Always Location access." = "Для сброса при возвращении домой нужен постоянный доступ к геопозиции.";
 "Edit item" = "Изменить пункт";
 "On the board, open an item's More menu → \"Edit item\" → \"How long a tick lasts\"." = "На доске открой меню «Другие действия» у пункта → «Изменить пункт» → «Сколько держится галочка».";
 "Put it away" = "Убрать";
@@ -134,6 +138,7 @@
 "Every night at %@" = "Каждую ночь в %@";
 "Never" = "Никогда";
 "When I leave home (24 hours at most)" = "Когда я уйду из дома (не дольше 24 часов)";
+"When I come home (24 hours at most)" = "Когда я вернусь домой (не дольше 24 часов)";
 "At %@ each day" = "Каждый день в %@";
 "Never (only when I confirm again)" = "Никогда (только когда подтвержу снова)";
 "Close" = "Закрыть";
@@ -198,6 +203,18 @@
 "We didn't change your records. Try again." = "Записи не были изменены. Попробуй ещё раз.";
 "Try again" = "Попробовать ещё раз";
 "Most checked: %@. %lld checks." = "Чаще всего проверялось: %@. Проверок: %lld.";
+
+/* E2E UX pass: accurate reset promises and progressive away help. */
+"No current record." = "Нет актуальной записи.";
+"Hold to undo. Old confirmations expire automatically." = "Удерживай, чтобы отменить. Старые подтверждения истекают автоматически.";
+"Remind me once" = "Напомнить один раз";
+"One notification on the next weekday morning." = "Одно уведомление утром следующего рабочего дня.";
+"Skip for now" = "Пока пропустить";
+"Home is set. Coming home clears the board automatically." = "Дом задан. Возвращение домой автоматически очищает доску.";
+"No problem. We'll keep using the current timer instead." = "Ничего страшного. Оставим текущий таймер.";
+"I'm away" = "Я не дома";
+"Coming home clears the board only while the app is open." = "Возвращение домой очищает доску, только пока приложение открыто.";
+"How far from the centre point still counts as home. A bigger property may need a larger area before automatic arrival is detected." = "Как далеко от центральной точки всё ещё считается домом. Для большого участка может понадобиться зона побольше, чтобы возвращение определялось автоматически.";
 "Next: %@. %lld checks." = "Далее: %@. Проверок: %lld.";
 "%@: confirmed at least once this week." = "%@: подтверждено хотя бы раз за эту неделю.";
 "%lld checks this week. Each one has a timestamp." = "%lld проверок за неделю. У каждой есть отметка времени.";

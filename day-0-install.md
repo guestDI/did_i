@@ -82,7 +82,7 @@ The user is never asked about this. See Day 2 for when the reset rule surfaces.
 Then: the live item card, in its unknown state, exactly as it will look on the main screen.
 
 **Footer, 11px, muted**
-> Hold to undo. Everything resets overnight.
+> Hold to undo. Old confirmations expire automatically.
 
 ### Behaviour
 
@@ -140,25 +140,24 @@ Keep every line under 60 characters so it fits one line on the smallest supporte
 
 **Buttons**
 - Primary: `View steps` — opens the installation steps in a scrollable sheet
-- Secondary: `Later`
+- Secondary: `Remind me once` — asks for notification permission, then schedules
+  one weekday-morning nudge
+- Secondary: `Skip for now` — finishes onboarding immediately
 
 ### Why this is the real conversion event
 
-iOS gives no API to place a widget on someone's behalf. It's a five-step manual task at the end of an onboarding, which is exactly where people bail. Treat "Later" as a legitimate outcome, not a failure.
+iOS gives no API to place a widget on someone's behalf. It's a five-step manual task at the end of an onboarding, which is exactly where people bail. Treat `Skip for now` as a legitimate outcome, not a failure.
 
-### The "Later" branch — and the only permission ask today
+### The optional nudge — and the only permission ask today
 
-When "Later" is tapped, show one sheet:
+The widget screen states the reminder's entire contract inline:
 
-**Title**
-> Want a nudge tomorrow morning?
+> One notification on the next weekday morning.
 
-**Body**
-> We'll remind you once, around the time you'd be leaving the house. Once. Then never again.
-
-**Buttons:** `Yes, once` / `No thanks`
-
-Only on "Yes, once" do we present the iOS notification permission dialog. If they say "No thanks", we never ask for notification permission again during onboarding.
+Only `Remind me once` presents the iOS notification permission dialog. `Skip for now`
+must mean exactly that — it exits without opening another sheet or asking another
+question. A prior OS-level denial hides the reminder choice entirely rather than
+offering something the app cannot deliver.
 
 This is the only kind of permission ask that gets a yes: specific, attached to a thing they just chose, with a stated limit.
 
@@ -179,7 +178,7 @@ No "you're all set" celebration. No tour. No checklist. No settings prompt. The 
 ## What we deliberately do not do on Day 0
 
 - Ask for location. (Earned on Day 2 — see that doc.)
-- Ask for notifications, unless "Later" was tapped on the widget screen.
+- Ask for notifications, unless `Remind me once` was tapped on the widget screen.
 - Create an account. There is no account, ever.
 - Offer a second item.
 - Explain decay, reset rules, or the geofence.
@@ -193,7 +192,8 @@ No "you're all set" celebration. No tour. No checklist. No settings prompt. The 
 
 **"Something else" left empty.** Return key stays disabled; no error message, no red border. Just nothing happens.
 
-**Notification permission previously denied at OS level** (reinstall). Skip the "Yes, once" sheet entirely — don't offer something we can't deliver.
+**Notification permission previously denied at OS level** (reinstall). Hide
+`Remind me once` entirely — don't offer something we can't deliver.
 
 **Reinstall with existing local data.** There is no cloud, so a reinstall is a fresh install. Treat it as one, no restore prompt.
 
