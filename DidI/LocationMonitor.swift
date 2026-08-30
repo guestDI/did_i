@@ -27,6 +27,18 @@ final class LocationMonitor: NSObject {
     /// Called when the authorization dialog resolves.
     private var pendingAuthorization: ((CLAuthorizationStatus) -> Void)?
 
+    /// Set whenever `monitor()` (re)registers the region. A boundary callback
+    /// delivered within `registrationGraceWindow` of that is far more likely to be
+    /// CoreLocation reporting the region's already-known state on a fresh
+    /// registration than an actual crossing — observed on first setup, a
+    /// permission grant, or a radius change, not just the redundant
+    /// re-registration `isMonitoring` already skips. Reported bug: confirming an
+    /// item and then opening the app reset it seconds later, because a same-day
+    /// reinstall had cleared the previously-monitored region and re-registering it
+    /// while genuinely at home fired an immediate, spurious entry.
+    private var monitoringStartedAt: Date?
+    private static let registrationGraceWindow: TimeInterval = 10
+
     override init() {
         super.init()
         manager.delegate = self
@@ -105,7 +117,15 @@ final class LocationMonitor: NSObject {
         )
         region.notifyOnExit = true
         region.notifyOnEntry = true
+        monitoringStartedAt = .now
         manager.startMonitoring(for: region)
+    }
+
+    /// True while a boundary callback is more likely a registration echo than a
+    /// real crossing. See `monitoringStartedAt`.
+    private var withinRegistrationGrace: Bool {
+        guard let started = monitoringStartedAt else { return false }
+        return Date.now.timeIntervalSince(started) < Self.registrationGraceWindow
     }
 
     func stopMonitoring() {
@@ -151,6 +171,7 @@ extension LocationMonitor: CLLocationManagerDelegate {
         _ manager: CLLocationManager, didExitRegion region: CLRegion
     ) {
         MainActor.assumeIsolated {
+            guard !withinRegistrationGrace else { return }
             beginLeavingHomeWake()
         }
     }
@@ -213,6 +234,7 @@ extension LocationMonitor: CLLocationManagerDelegate {
         _ manager: CLLocationManager, didEnterRegion region: CLRegion
     ) {
         MainActor.assumeIsolated {
+            guard !withinRegistrationGrace else { return }
             do {
                 try StoreIO.mutate { $0.arrivedHome(at: .now) }
             } catch {
