@@ -127,6 +127,11 @@ struct SettingsView: View {
                     Text(Copy.controlCenterHint)
                 }
 
+                Section {
+                    Link(Copy.privacyPolicy, destination: AppLinks.privacy)
+                    Link(Copy.supportWebsite, destination: AppLinks.support)
+                }
+
                 if let price = TipJar.shared.product?.displayPrice {
                     Section {
                         Button(Copy.TipJar.rowTitle(price: price)) {
@@ -256,6 +261,11 @@ struct SettingsView: View {
             showingTipError = true
         }
     }
+}
+
+private enum AppLinks {
+    static let privacy = URL(string: "https://guestdi.github.io/did_i/privacy/")!
+    static let support = URL(string: "https://guestdi.github.io/did_i/support/")!
 }
 
 /// Pre-filled share sheet for "Ask someone at home".

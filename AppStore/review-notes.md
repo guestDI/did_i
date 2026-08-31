@@ -1,7 +1,7 @@
 # App Review notes
 
-Did I? is a local-only memory aid. No login, account, subscription, purchase,
-backend, or special test credentials are required.
+Did I? is a local-only memory aid. No login, account, subscription, backend, or
+special test credentials are required. No purchase is exposed in version 1.0.
 
 ## Suggested review path
 
@@ -15,10 +15,10 @@ backend, or special test credentials are required.
 ## Location permission
 
 Location is optional and is not requested during initial setup. A reviewer can
-choose the “When I leave home” expiry option to test it. The app requests permission
-only for an on-device circular region around the saved home coordinate. It does not
-continuously display, upload, sell, or share location. Denying permission leaves all
-other expiry options fully usable.
+set a home and choose the “When I come home” expiry option to test it. The app
+requests permission only for an on-device circular region around the saved home
+coordinate. It does not continuously display, upload, sell, or share location.
+Denying permission leaves all other expiry options fully usable.
 
 ## Notifications
 
@@ -27,4 +27,3 @@ can be declined without limiting confirmation functionality.
 
 Did I? is not a safety system. Its board state is derived from the latest confirmation
 timestamp and the user's chosen expiry rule.
-

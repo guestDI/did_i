@@ -6,7 +6,7 @@
 
 **Tekst promocyjny (170):** Potwierdź przed wyjściem, a gdy wróci niepewność, zerknij na widżet. Bez konta, reklam i śledzenia.
 
-**Słowa kluczowe (100 bajtów):** kuchenka,drzwi,zamek,lista,przypomnienie,widżet,dom,potwierdzenie,spokój
+**Słowa kluczowe (100 bajtów):** kuchenka,drzwi,zamek,lista,przypomnienie,widżet,dom,rutyna,urządzenie,sprawdź
 
 ## Opis
 
@@ -16,7 +16,7 @@ Stuknij raz po wyłączeniu kuchenki, zamknięciu drzwi, odłączeniu żelazka l
 
 • Potwierdzaj domowe czynności jednym stuknięciem
 • Sprawdzaj czas ostatniego potwierdzenia
-• Ustal wygaśnięcie: po określonym czasie, codziennie o 4:00, po wyjściu z domu albo ręcznie
+• Ustal wygaśnięcie: po określonym czasie, codziennie o 4:00, po powrocie do domu albo ręcznie
 • Cofnij przypadkowe stuknięcie
 • Dodaj widżety do szybkiego potwierdzania i sprawdzania stanu
 • Sprawdzaj ostatnie potwierdzenia na Apple Watch
@@ -29,7 +29,12 @@ Prywatność od podstaw:
 • Bez serwera dewelopera
 • Dane pozostają na Twoich urządzeniach
 
-Lokalizacja jest opcjonalna. Jeśli wybierzesz „Gdy wyjdę z domu”, Did I? użyje granicy obszaru przetwarzanej na urządzeniu, aby wygasić potwierdzenia po wyjściu. Twoja lokalizacja nie jest nam wysyłana.
+Lokalizacja jest opcjonalna. Jeśli wybierzesz „Gdy wrócę do domu”, Did I? użyje granicy obszaru przetwarzanej na urządzeniu, aby wygasić potwierdzenia po powrocie. Twoja lokalizacja nie jest nam wysyłana.
 
 Did I? pomaga pamiętać, ale nie jest systemem bezpieczeństwa. Ważne rzeczy zawsze sprawdzaj bezpośrednio.
 
+## Adresy URL
+
+- Marketing: https://guestdi.github.io/did_i/
+- Pomoc: https://guestdi.github.io/did_i/support/
+- Prywatność: https://guestdi.github.io/did_i/privacy/

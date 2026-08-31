@@ -6,7 +6,7 @@
 
 **Promotional text (170):** Log a confirmation before you leave, then glance at the widget whenever doubt shows up. No account, no ads, no tracking.
 
-**Keywords (100 bytes):** stove,door,lock,checklist,reminder,widget,home,confirm,anxiety,peace of mind
+**Keywords (100 bytes):** stove,door,lock,checklist,reminder,widget,home,routine,appliance,forgot,check
 
 ## Description
 
@@ -16,7 +16,7 @@ Tap once when you switch off the stove, lock the door, unplug the iron, or finis
 
 • Confirm common household checks in one tap
 • See when each item was last confirmed
-• Choose when a confirmation expires: after a duration, every day at 4:00 AM, when you leave home, or manually
+• Choose when a confirmation expires: after a duration, every day at 4:00 AM, when you come home, or manually
 • Undo an accidental tap
 • Add widgets for quick confirmation and at-a-glance status
 • Check recent confirmations from your Apple Watch
@@ -29,7 +29,7 @@ Private by design:
 • No developer server
 • Your data stays on your devices
 
-Location is optional. If you choose “When I leave home,” Did I? uses an on-device region boundary to expire confirmations after you leave. Your location is not sent to us.
+Location is optional. If you choose “When I come home,” Did I? uses an on-device region boundary to expire confirmations after you return. Your location is not sent to us.
 
 Did I? is a memory aid, not a safety system. Always verify anything important directly.
 
@@ -38,4 +38,3 @@ Did I? is a memory aid, not a safety system. Always verify anything important di
 - Marketing: https://guestdi.github.io/did_i/
 - Support: https://guestdi.github.io/did_i/support/
 - Privacy: https://guestdi.github.io/did_i/privacy/
-

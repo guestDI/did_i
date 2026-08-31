@@ -363,6 +363,8 @@ public enum Copy {
     public static let dismiss = t("Dismiss")
     public static let ok = t("OK")
     public static let settings = t("Settings")
+    public static let privacyPolicy = t("Privacy Policy")
+    public static let supportWebsite = t("Support Website")
     public static let saveFailedTitle = t("Couldn't save that")
     public static let saveFailedBody = t("Your previous record is unchanged. Try again.")
     public static let loadFailedTitle = t("Couldn't open your board")

@@ -20,6 +20,9 @@ final class AppStoreScreenshotUITests: XCTestCase {
         ).firstMatch
         XCTAssertTrue(practiceRow.waitForExistence(timeout: 3))
         practiceRow.tap()
+        // FlapCell animates each character for 0.28s. Capturing immediately
+        // records both faces on top of one another instead of the settled UI.
+        Thread.sleep(forTimeInterval: 0.6)
         capture("02-one-tap-confirmation")
 
         app.terminate()

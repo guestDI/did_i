@@ -4,9 +4,9 @@ Upload the files in display order:
 
 ## iPhone 6.9-inch display
 
-1. `en-US/iPhone-6.9/01-choose-what-matters.png`
+1. `en-US/iPhone-6.9/03-current-at-a-glance.png`
 2. `en-US/iPhone-6.9/02-one-tap-confirmation.png`
-3. `en-US/iPhone-6.9/03-current-at-a-glance.png`
+3. `en-US/iPhone-6.9/01-choose-what-matters.png`
 4. `en-US/iPhone-6.9/04-expiry-you-control.png`
 5. `en-US/iPhone-6.9/05-private-by-design.png`
 
