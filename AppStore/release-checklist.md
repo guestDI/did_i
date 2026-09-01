@@ -12,7 +12,7 @@
 - [x] Privacy, support, and marketing pages are ready under `docs/`
 - [x] Review notes, privacy answers, age-rating answers, and export options are drafted
 - [x] TestFlight beta description, feedback details, testing instructions, and review notes are drafted
-- [x] Five IBM Plex-based iPhone screenshots and one Apple Watch screenshot are prepared
+- [x] Five IBM Plex-based iPhone screenshots are prepared in both accepted 6.9-inch and 6.5-inch sizes, plus one Apple Watch screenshot
 
 ## Developer account and signing
 

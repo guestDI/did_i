@@ -10,7 +10,7 @@
 - iPhone Release archive for a generic iOS device using Xcode 26.2 and the iOS 26.2 SDK
 - Embedded widget and Watch app validation during archive
 - App icon audit: iOS and Watch source icons are 1024×1024 without alpha
-- Screenshot audit: five 1320×2868 iPhone PNGs and one 416×496 Watch JPEG, all without alpha
+- Screenshot audit: five 1320×2868 iPhone PNGs, five 1284×2778 iPhone PNGs, and one 416×496 Watch JPEG, all without alpha
 - Archive contents: app, widget extension, Watch app, privacy manifest, version `1.0`, build `1`, and `ITSAppUsesNonExemptEncryption = false`
 - Device-family audit: iPhone app `1`, widget `1`, and Watch companion `4`
 - Signed App Store export using Cloud Managed Apple Distribution and Store provisioning profiles for all three bundle IDs
