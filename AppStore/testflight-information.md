@@ -28,7 +28,7 @@ not a safety system.
 
 - Contact name: `Dzmitry Ihnatovich`
 - Contact email: `ignatovich.dm@gmail.com`
-- Contact phone: `TODO: phone number`
+- Contact phone: `+48573973335`
 - Sign-in required: **No**
 
 ### Review notes

@@ -10,7 +10,7 @@
 - Availability: All territories where Apple Watch apps and iOS 17 are supported
 - Content rights: The app does not contain, show, or access third-party content
 - Copyright: `2026 Dzmitry Ihnatovich`
-- Review contact: `Dzmitry Ihnatovich · ignatovich.dm@gmail.com · TODO: phone number`
+- Review contact: `Dzmitry Ihnatovich · ignatovich.dm@gmail.com · +48573973335`
 
 The app includes an iPhone app, Home/Lock Screen widgets, controls on supported OS
 versions, and a read-only companion Apple Watch app.
