@@ -1,8 +1,8 @@
 # Did I? — App Store release package
 
 This directory contains the version 1.0 App Store Connect copy, review declarations,
-privacy answers, export configuration, and release checklist. Generated screenshots
-are stored under `screenshots/`.
+privacy answers, TestFlight copy, export configuration, and release checklist.
+Generated screenshots are stored under `screenshots/`.
 
 The required public pages are ready in `../docs/` for GitHub Pages. Once Pages is
 enabled for this repository, use:
@@ -13,4 +13,3 @@ enabled for this repository, use:
 
 Before submission, replace every `TODO` in this directory, publish and verify those
 URLs, and complete the account-side checks in `release-checklist.md`.
-

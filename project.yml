@@ -40,6 +40,7 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_BUNDLE_IDENTIFIER: com.dihnatovich.didi
         PRODUCT_NAME: Did I
+        TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
     entitlements:
       path: DidI/DidI.entitlements
@@ -94,6 +95,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dihnatovich.didi.widget
         PRODUCT_NAME: DidIWidget
+        TARGETED_DEVICE_FAMILY: "1"
     entitlements:
       path: DidIWidget/DidIWidget.entitlements
       properties:
