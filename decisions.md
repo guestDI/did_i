@@ -68,9 +68,12 @@ file as absent-with-default, so no migration.
 file exists, so the widget works before the app has ever run. Deleted in Phase 4 when
 onboarding creates the first item.
 
-**Typeface.** The design specifies IBM Plex Mono. It is not a system font on iOS and
-is not bundled yet — SF Mono via `.system(design: .monospaced)` stands in. Bundling
-Plex is a Phase 2 item; both are tabular, so no layout will move.
+**Typeface.** The design specifies IBM Plex Mono. The regular, medium, semibold,
+and bold faces from IBM Plex v6.4.2 are bundled once in DidICore under the SIL
+Open Font License, then registered per process for the app, widget, and Watch app.
+SF Mono remains only as a defensive fallback if a packaged font resource cannot
+be loaded. Snapshot references must be re-recorded because Plex has different
+glyph metrics from the temporary system face.
 
 **Confirmation line selection.** Phase 0 picks deterministically from a four-line pool
 keyed on `lastConfirmedAt`, so the line is identical across every timeline entry for one

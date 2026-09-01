@@ -35,7 +35,6 @@ Full reasoning: `architecture.md` §1.
 - Overnight widget timeline behavior (04:00 transition) is unverified — can't be simulated, needs a real device soak.
 - Store files explicitly use `completeFileProtectionUntilFirstUserAuthentication`; lock-screen behavior before and after first unlock still needs real-device verification.
 - Widget configuration sheet (item picker) reads from the extension's own bundle — untested in pl/ru.
-- IBM Plex Mono not bundled; SF Mono stands in for flap cells (not visually final).
 - Snapshot references need re-recording on any device/OS/locale change.
 
 ## Conventions

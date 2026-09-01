@@ -1,3 +1,5 @@
+import CoreText
+import Foundation
 import SwiftUI
 
 /// Palette from the design project (`Did I.dc.html`), with one override.
@@ -45,17 +47,104 @@ extension Color {
     }
 }
 
-/// The board typeface. IBM Plex Mono is not on iOS and is not bundled yet —
-/// see decisions.md. SF Mono stands in and keeps the same tabular rhythm.
+/// The four IBM Plex Mono faces used by the board. They live in DidICore's
+/// resource bundle so the app, widget, and Watch app all load the same files.
+/// Swift package resources are not registered as system fonts automatically,
+/// so registration happens once per process before the first `Font.custom`.
+enum BoardTypeface {
+    struct Asset: Sendable {
+        let resource: String
+        let postScriptName: String
+    }
+
+    static let regular = Asset(
+        resource: "IBMPlexMono-Regular", postScriptName: "IBMPlexMono")
+    static let medium = Asset(
+        resource: "IBMPlexMono-Medium", postScriptName: "IBMPlexMono-Medm")
+    static let semibold = Asset(
+        resource: "IBMPlexMono-SemiBold", postScriptName: "IBMPlexMono-SmBld")
+    static let bold = Asset(
+        resource: "IBMPlexMono-Bold", postScriptName: "IBMPlexMono-Bold")
+    static let assets = [regular, medium, semibold, bold]
+
+    static func url(for asset: Asset) -> URL? {
+        // SwiftPM may preserve or flatten a processed resource subdirectory,
+        // depending on the build environment. Support both bundle layouts.
+        Bundle.module.url(
+            forResource: asset.resource, withExtension: "ttf", subdirectory: "Fonts"
+        ) ?? Bundle.module.url(forResource: asset.resource, withExtension: "ttf")
+    }
+
+    static var missingResources: [String] {
+        assets.compactMap { url(for: $0) == nil ? $0.resource : nil }
+    }
+
+    static let registrationSucceeded: Bool = {
+        guard missingResources.isEmpty else { return false }
+
+        for asset in assets where !isAvailable(asset) {
+            guard let url = url(for: asset) else { return false }
+            CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+        }
+        return assets.allSatisfy(isAvailable)
+    }()
+
+    static func name(for weight: Font.Weight) -> String {
+        if weight == .bold || weight == .heavy || weight == .black {
+            return bold.postScriptName
+        }
+        if weight == .semibold {
+            return semibold.postScriptName
+        }
+        if weight == .medium {
+            return medium.postScriptName
+        }
+        return regular.postScriptName
+    }
+
+    private static func isAvailable(_ asset: Asset) -> Bool {
+        let font = CTFontCreateWithName(asset.postScriptName as CFString, 12, nil)
+        return CTFontCopyPostScriptName(font) as String == asset.postScriptName
+    }
+}
+
+/// The board typeface at a fixed size. Use `boardFont` for text that should
+/// preserve its tuned default size while following Dynamic Type.
 public func board(_ size: CGFloat, _ weight: Font.Weight = .semibold) -> Font {
-    .system(size: size, weight: weight, design: .monospaced)
+    guard BoardTypeface.registrationSucceeded else {
+        return .system(size: size, weight: weight, design: .monospaced)
+    }
+    return .custom(BoardTypeface.name(for: weight), fixedSize: size)
 }
 
 /// `board`'s counterpart for lock screen accessories: a fixed `size:` never
 /// grows with the user's text size setting, and on the surface most likely to
 /// be read without glasses that reads as "too small", not compact.
 public func boardScaled(_ style: Font.TextStyle, _ weight: Font.Weight = .semibold) -> Font {
-    .system(style, design: .monospaced).weight(weight)
+    guard BoardTypeface.registrationSucceeded else {
+        return .system(style, design: .monospaced).weight(weight)
+    }
+    return .custom(
+        BoardTypeface.name(for: weight),
+        size: defaultPointSize(for: style),
+        relativeTo: style
+    )
+}
+
+private func defaultPointSize(for style: Font.TextStyle) -> CGFloat {
+    switch style {
+    case .largeTitle: 34
+    case .title: 28
+    case .title2: 22
+    case .title3: 20
+    case .headline, .body: 17
+    case .callout: 16
+    case .subheadline: 15
+    case .footnote: 13
+    case .caption: 12
+    case .caption2: 11
+    default: 17
+    }
 }
 
 /// Preserves the design's tuned point size at the default text setting while
