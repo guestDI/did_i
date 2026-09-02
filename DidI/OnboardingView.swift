@@ -82,6 +82,9 @@ struct OnboardingView: View {
             try StoreIO.mutate(change)
             store = try StoreIO.load()
             WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+            if #available(iOS 18.0, *) {
+                ControlCenter.shared.reloadControls(ofKind: WidgetKind.control)
+            }
             return true
         } catch {
             showingSaveError = true
@@ -222,7 +225,6 @@ private struct PracticeScreen: View {
     let onDone: () -> Void
 
     @State private var confirmed = false
-    @State private var advanceTask: Task<Void, Never>?
     @State private var showingSaveError = false
 
     private var item: Item? { store.active.first }
@@ -242,13 +244,35 @@ private struct PracticeScreen: View {
                     Spacer(minLength: 36)
 
                     if let item {
-                        BoardRow(
-                            item: item,
-                            state: confirmed ? .confirmed(age: 0, freshness: .fresh) : .unknown,
-                            statusOverride: confirmed ? Copy.Screen2.loggedJustNow : nil,
-                            onConfirm: { confirm(item) },
-                            onUndo: confirmed ? { undo(item) } : nil
-                        )
+                        ZStack(alignment: .topLeading) {
+                            BoardRow(
+                                item: item,
+                                state: confirmed ? .confirmed(age: 0, freshness: .fresh) : .unknown,
+                                statusOverride: confirmed ? Copy.Screen2.loggedJustNow : nil,
+                                onConfirm: { confirm(item) },
+                                onUndo: confirmed ? { clearStatus(item) } : nil
+                            )
+                            Menu {
+                                if confirmed {
+                                    Button(Copy.clearStatus, systemImage: "xmark.circle") {
+                                        clearStatus(item)
+                                    }
+                                } else {
+                                    Button(Copy.confirmLabel(item: item), systemImage: "checkmark") {
+                                        confirm(item)
+                                    }
+                                }
+                            } label: {
+                                Image(systemName: "ellipsis")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(Palette.dim)
+                                    .frame(width: 44, height: 44)
+                                    .contentShape(.rect)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(Copy.moreActions)
+                            .offset(x: min(22 + CGFloat(item.name.count) * 11.8, 170), y: 13)
+                        }
                         .padding(.horizontal, -26)
 
                         if confirmed {
@@ -257,6 +281,10 @@ private struct PracticeScreen: View {
                                 .foregroundStyle(Palette.fresh)
                                 .padding(.top, 18)
                                 .transition(.opacity)
+
+                            Button(Copy.done) { onDone() }
+                                .buttonStyle(PrimaryButton())
+                                .padding(.top, 18)
                         }
                     }
 
@@ -271,9 +299,6 @@ private struct PracticeScreen: View {
                 .padding(.horizontal, 26)
                 .padding(.top, 40)
                 .padding(.bottom, 30)
-                .contentShape(.rect)
-                // Auto-advance after 2.5s, or on tap of anywhere.
-                .onTapGesture { if confirmed { onDone() } }
             }
             .scrollIndicators(.hidden)
         }
@@ -286,7 +311,7 @@ private struct PracticeScreen: View {
 
     /// Not a simulation: real haptic, real entry in the real store.
     private func confirm(_ item: Item) {
-        guard !confirmed else { return onDone() }
+        guard !confirmed else { return }
         do {
             try StoreIO.mutate {
                 $0.confirm(id: item.id, at: .now)
@@ -299,6 +324,9 @@ private struct PracticeScreen: View {
         }
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+        if #available(iOS 18.0, *) {
+            ControlCenter.shared.reloadControls(ofKind: WidgetKind.control)
+        }
 
         // `FlapCell` owns the character animation. Animating this whole state
         // change cross-fades two complete rows on top of each other and makes
@@ -306,20 +334,14 @@ private struct PracticeScreen: View {
         confirmed = true
         UIAccessibility.post(notification: .announcement, argument: Copy.onboardingConfirmation)
 
-        advanceTask = Task {
-            try? await Task.sleep(for: .seconds(2.5))
-            guard !Task.isCancelled else { return }
-            onDone()
-        }
     }
 
     /// Mirrors `BoardView.undo` — same haptic, same store call, same
     /// announcement — so the practice screen teaches the real interaction
     /// rather than a lookalike.
-    private func undo(_ item: Item) {
-        advanceTask?.cancel()
+    private func clearStatus(_ item: Item) {
         do {
-            try StoreIO.mutate { $0.undo(id: item.id) }
+            try StoreIO.mutate { $0.clearCurrentStatus(id: item.id) }
             store = try StoreIO.load()
         } catch {
             reportSaveError()
@@ -327,8 +349,11 @@ private struct PracticeScreen: View {
         }
         UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+        if #available(iOS 18.0, *) {
+            ControlCenter.shared.reloadControls(ofKind: WidgetKind.control)
+        }
         confirmed = false
-        UIAccessibility.post(notification: .announcement, argument: Copy.undone)
+        UIAccessibility.post(notification: .announcement, argument: Copy.statusCleared)
     }
 
     private func reportSaveError() {

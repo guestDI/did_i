@@ -143,7 +143,7 @@ public enum Copy {
     public enum Screen2 {
         public static let title = t("Try it once")
         public static let subtitle = t("This is the whole app. There's no step four.")
-        public static let footer = t("Hold to undo. Old confirmations expire automatically.")
+        public static let footer = t("Use More actions to clear it. Old confirmations expire automatically.")
         public static let loggedJustNow = t("logged just now")
     }
 
@@ -303,6 +303,7 @@ public enum Copy {
     /// Board order is the widget's tap-target order, so it has to be editable.
     public static let moveUp = t("Move up")
     public static let moreActions = t("More actions")
+    public static let clearStatus = t("Clear current status")
 
     public static let widgetHelpRow = t("How to add the widget")
 
@@ -451,6 +452,7 @@ public enum Copy {
     /// Spoken after a hold-to-undo. Not in the docs — invented, and deliberately
     /// flat: undoing is a correction, not an achievement.
     public static let undone = t("Undone. No record now.")
+    public static let statusCleared = t("Cleared. No current record.")
     public static let previousConfirmationRestored =
         t("Latest confirmation removed. Previous one remains.")
     public static let undo = t("Undo latest confirmation")

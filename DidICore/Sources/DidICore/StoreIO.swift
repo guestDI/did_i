@@ -149,6 +149,18 @@ public struct Store: Codable, Sendable {
         items[i].confirmationLine = nil
     }
 
+    /// Clears what the board currently claims in one action without erasing the
+    /// confirmation history used for local usage insights. This is deliberately
+    /// different from `undo`: repeated taps must not force someone to clear the
+    /// same visible status several times.
+    public mutating func clearCurrentStatus(id: UUID) {
+        guard let i = items.firstIndex(where: { $0.id == id }) else { return }
+        items[i].lastConfirmedAt = nil
+        items[i].lastConfirmationRule = nil
+        items[i].confirmationLine = nil
+        items[i].mutedUntilHome = false
+    }
+
     /// Replaces editable item settings without reinterpreting the confirmation
     /// already on the board. Legacy stores have no rule snapshot, so capture the
     /// old configured rule before accepting the new one.
@@ -377,4 +389,5 @@ public enum StoreIO {
 /// Widget kind, shared so the app and the extension cannot drift apart.
 public enum WidgetKind {
     public static let board = "DidIWidget"
+    public static let control = "com.dihnatovich.didi.confirm"
 }

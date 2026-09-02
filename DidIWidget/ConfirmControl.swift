@@ -15,16 +15,15 @@ struct ControlItemState: Sendable {
 }
 
 /// A Control Center / Lock Screen control: on confirms the configured item
-/// on the spot, off clears it back to unknown. Off is a hard clear, not
-/// `Store.undo` — undo only pops the latest confirmation off the history
-/// stack, so an item confirmed twice today would still read confirmed after
-/// one "off" tap and the toggle would visibly snap back on. A binary control
-/// needs an idempotent off. `promptsForUserConfiguration()` sends a first-time
+/// on the spot, off clears it back to unknown. Off clears the current visible
+/// claim while retaining confirmation history; it is not `Store.undo`, which
+/// would reveal the previous confirmation and make the toggle visibly snap back
+/// on. A binary control needs an idempotent off. `promptsForUserConfiguration()` sends a first-time
 /// add straight to the item picker, same as an unconfigured small widget
 /// falling back to the first item.
 @available(iOS 18.0, *)
 struct ConfirmControl: ControlWidget {
-    static let kind = "com.dihnatovich.didi.confirm"
+    static let kind = WidgetKind.control
 
     var body: some ControlWidgetConfiguration {
         AppIntentControlConfiguration(
@@ -93,15 +92,12 @@ struct SetConfirmedIntent: SetValueIntent {
         try StoreIO.mutate { store in
             if value {
                 store.confirm(id: id, at: .now)
-            } else if let i = store.items.firstIndex(where: { $0.id == id }) {
-                store.items[i].lastConfirmedAt = nil
-                store.items[i].lastConfirmationRule = nil
-                store.items[i].confirmations = []
-                store.items[i].confirmationRules = []
-                store.items[i].confirmationLine = nil
+            } else {
+                store.clearCurrentStatus(id: id)
             }
         }
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+        ControlCenter.shared.reloadControls(ofKind: WidgetKind.control)
         return .result()
     }
 }

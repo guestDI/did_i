@@ -17,7 +17,21 @@ final class UndoUITests: XCTestCase {
             NSPredicate(format: "label CONTAINS[c] %@", "Confirm The stove")
         ).firstMatch
         XCTAssertTrue(practiceRow.waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["More actions"].waitForExistence(timeout: 2))
         practiceRow.tap()
+
+        app.buttons["More actions"].tap()
+        let firstClear = app.buttons["Clear current status"]
+        XCTAssertTrue(firstClear.waitForExistence(timeout: 2))
+        firstClear.tap()
+        let noPracticeRecord = NSPredicate(format: "value == %@", "No record yet. Easy fix.")
+        expectation(for: noPracticeRecord, evaluatedWith: practiceRow)
+        waitForExpectations(timeout: 3)
+
+        practiceRow.tap()
+        let done = app.buttons["Done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 2))
+        done.tap()
 
         let skip = app.buttons["Skip for now"]
         XCTAssertTrue(skip.waitForExistence(timeout: 5))
@@ -29,24 +43,13 @@ final class UndoUITests: XCTestCase {
         XCTAssertTrue(boardRow.waitForExistence(timeout: 3))
         XCTAssertNotEqual(boardRow.value as? String, "No current record.")
 
-        // A second confirmation reproduces the reported case: undoing it leaves
-        // the first green record in place, which used to look like a dead button.
+        // A second confirmation reproduces the reported case. Clearing the
+        // visible status must work once, regardless of how many taps preceded it.
         boardRow.tap()
         app.buttons["More actions"].tap()
-        let undo = app.buttons["Undo latest confirmation"]
-        XCTAssertTrue(undo.waitForExistence(timeout: 2))
-        undo.tap()
-
-        let restored = NSPredicate(
-            format: "value == %@",
-            "Latest confirmation removed. Previous one remains."
-        )
-        expectation(for: restored, evaluatedWith: boardRow)
-        waitForExpectations(timeout: 3)
-
-        app.buttons["More actions"].tap()
-        XCTAssertTrue(undo.waitForExistence(timeout: 2))
-        undo.tap()
+        let clear = app.buttons["Clear current status"]
+        XCTAssertTrue(clear.waitForExistence(timeout: 2))
+        clear.tap()
 
         let unknown = NSPredicate(format: "value == %@", "No current record.")
         expectation(for: unknown, evaluatedWith: boardRow)

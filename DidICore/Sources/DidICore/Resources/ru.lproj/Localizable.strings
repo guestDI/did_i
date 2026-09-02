@@ -128,6 +128,9 @@
 "It leaves the board. You can bring it back any time." = "Исчезнет с доски. Вернуть можно в любой момент.";
 "Move up" = "Переместить выше";
 "More actions" = "Другие действия";
+"Clear current status" = "Очистить текущий статус";
+"Cleared. No current record." = "Очищено. Текущей записи нет.";
+"Use More actions to clear it. Old confirmations expire automatically." = "Используй «Другие действия», чтобы очистить статус. Старые подтверждения истекают автоматически.";
 "How to add the widget" = "Как добавить виджет";
 "A tick that never expires is a tick you can't trust." = "Галочке без срока нельзя доверять.";
 "Name" = "Название";

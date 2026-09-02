@@ -3,7 +3,7 @@ import SwiftUI
 /// One row of the board. Shared so the Day 0 practice card is not a lookalike of
 /// the main screen's card — it is the same view, "exactly as it will look".
 ///
-/// The row confirms and a hold undoes. Secondary controls are layered beside
+/// The row confirms and a hold clears the current status. Secondary controls are layered beside
 /// it by the app so this shared view remains one coherent accessibility element.
 public struct BoardRow: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -85,7 +85,7 @@ public struct BoardRow: View {
         .accessibilityHint(Copy.confirmHint)
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { onConfirm() }
-        .modifier(UndoAccessibility(action: onUndo))
+        .modifier(ClearAccessibility(action: onUndo))
     }
 
     private var name: some View {
@@ -104,7 +104,7 @@ public struct BoardRow: View {
 /// view appears can lose the race and register as nothing — the exact "doesn't
 /// work the first time" report this replaces. `.exclusively(before:)` composes
 /// them into one `Gesture` with an explicit precedence — hold long enough and
-/// the press wins outright; release early and only then does the tap fire — so
+/// the clear wins outright; release early and only then does the confirm fire — so
 /// there is nothing left to race.
 private struct ConfirmOrUndo: ViewModifier {
     let onConfirm: () -> Void
@@ -125,12 +125,12 @@ private struct ConfirmOrUndo: ViewModifier {
 
 /// A row with no confirmation has nothing to undo, so VoiceOver must not offer
 /// a custom action that silently does nothing.
-private struct UndoAccessibility: ViewModifier {
+private struct ClearAccessibility: ViewModifier {
     let action: (() -> Void)?
 
     func body(content: Content) -> some View {
         if let action {
-            content.accessibilityAction(named: Copy.undo) { action() }
+            content.accessibilityAction(named: Copy.clearStatus) { action() }
         } else {
             content
         }

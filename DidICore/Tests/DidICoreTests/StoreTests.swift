@@ -235,6 +235,23 @@ private func store(_ rule: ResetRule = .dailyAt(hour: 4)) -> Store {
     #expect(s.items[0].lastConfirmedAt == nil)
 }
 
+@Test func clearingCurrentStatusWorksOnceAfterRepeatedConfirmationsAndKeepsHistory() {
+    var s = store()
+    let id = s.items[0].id
+    s.confirm(id: id, at: at("2026-08-11 08:00:00"), calendar: utc)
+    s.confirm(id: id, at: at("2026-08-11 09:00:00"), calendar: utc)
+    s.confirm(id: id, at: at("2026-08-11 10:00:00"), calendar: utc)
+
+    s.clearCurrentStatus(id: id)
+
+    #expect(s.items[0].lastConfirmedAt == nil)
+    #expect(s.items[0].lastConfirmationRule == nil)
+    #expect(s.items[0].confirmationLine == nil)
+    #expect(s.items[0].confirmations?.count == 3)
+    #expect(s.items[0].confirmationRules?.count == 3)
+    #expect(s.state(s.items[0], now: at("2026-08-11 10:01:00"), calendar: utc) == .unknown)
+}
+
 // MARK: - Archiving
 
 @Test func archivedItemsLeaveTheBoardButNotTheStore() {

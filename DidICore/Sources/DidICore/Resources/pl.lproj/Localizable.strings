@@ -128,6 +128,9 @@
 "It leaves the board. You can bring it back any time." = "Zniknie z tablicy. W każdej chwili można przywrócić.";
 "Move up" = "Przenieś wyżej";
 "More actions" = "Więcej działań";
+"Clear current status" = "Wyczyść bieżący status";
+"Cleared. No current record." = "Wyczyszczono. Brak bieżącego zapisu.";
+"Use More actions to clear it. Old confirmations expire automatically." = "Użyj Więcej działań, aby wyczyścić status. Stare potwierdzenia wygasają automatycznie.";
 "How to add the widget" = "Jak dodać widżet";
 "A tick that never expires is a tick you can't trust." = "Znacznik, który nie wygasa, nie jest wiarygodny.";
 "Name" = "Nazwa";

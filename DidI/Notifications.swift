@@ -101,11 +101,20 @@ enum Notifications {
             let content = UNMutableNotificationContent()
             content.title = copy.title
             content.body = copy.body
+            // The whole point is to arrive while turning back is still cheap, and
+            // a Focus mode or the scheduled summary would otherwise hold it until
+            // the evening. This is the only notification in the app that earns
+            // the entitlement — the widget nudge deliberately does not use it.
+            content.interruptionLevel = .timeSensitive
+            content.relevanceScore = 1
 
             let request = UNNotificationRequest(
                 identifier: leavingHomePrefix + item.id.uuidString,
                 content: content,
-                trigger: UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+                // `nil`, not a 5-second interval. The five seconds bought nothing
+                // and were spent at the worst possible moment — already a few
+                // hundred metres from the door, waiting on region-exit latency.
+                trigger: nil
             )
             try? await center.add(request)
         }
@@ -118,18 +127,21 @@ enum Notifications {
     /// else ever retries it, so this runs on every foreground alongside the
     /// widget nudge reconciliation.
     ///
-    /// Read against `pendingNotificationRequests`, not a store flag: that is
+    /// Read against iOS's own notification state, not a store flag: that is
     /// the actual source of truth for "was this ever scheduled", and matches
     /// how the widget nudge already treats iOS as the ground truth for
-    /// permission and delivery state.
+    /// permission and delivery state. *Delivered* counts as well as *pending* —
+    /// the reminder is scheduled with no trigger, so it leaves the pending list
+    /// within a second of the exit and a pending-only check would re-fire it as
+    /// a duplicate banner on the next foreground.
     static func reconcileLeavingHomeReminders() async {
         let store = StoreIO.read()
         guard store.isAway else { return }
         let due = store.needingLeavingHomeReminder(now: .now)
         guard !due.isEmpty else { return }
 
-        let pending = await center.pendingNotificationRequests()
-        let queued = Set(pending.map(\.identifier))
+        let queued = await Set(center.pendingNotificationRequests().map(\.identifier))
+            .union(center.deliveredNotifications().map(\.request.identifier))
         let missing = due.filter { !queued.contains(leavingHomePrefix + $0.id.uuidString) }
         guard !missing.isEmpty else { return }
 

@@ -16,7 +16,6 @@ struct BoardView: View {
     @State private var guardrailItem: Item?
     @State private var staleItem: Item?
     @State private var removing: Item?
-    @State private var undoFeedback: [UUID: String] = [:]
     @State private var expandedAwayHelp: Set<UUID> = []
     @State private var showingSaveError = false
     @State private var authorization = LocationMonitor.shared.status
@@ -337,7 +336,7 @@ struct BoardView: View {
                     statusOverride: rowStatusOverride(for: item, now: now),
                     isAway: store.isAway,
                     onConfirm: { confirm(item) },
-                    onUndo: item.lastConfirmedAt == nil ? nil : { undo(item) }
+                    onUndo: item.lastConfirmedAt == nil ? nil : { clearStatus(item) }
                 )
                 rowActions(item: item, now: now)
                     .offset(x: rowActionOffset(for: item), y: 13)
@@ -356,7 +355,6 @@ struct BoardView: View {
     }
 
     private func rowStatusOverride(for item: Item, now: Date) -> String? {
-        if let feedback = undoFeedback[item.id] { return feedback }
         if store.state(item, now: now) == .unknown, cannotTellIfAway {
             return Copy.unknownLocation
         }
@@ -395,7 +393,7 @@ struct BoardView: View {
         Menu {
             Button(Copy.editItem, systemImage: "pencil") { navigated = true; editing = item }
             if item.lastConfirmedAt != nil {
-                Button(Copy.undo, systemImage: "arrow.uturn.backward") { undo(item) }
+                Button(Copy.clearStatus, systemImage: "xmark.circle") { clearStatus(item) }
             }
             Button(Copy.putItAway, systemImage: "archivebox") { removing = item }
             if store.state(item, now: now) == .unknown, store.isAway || cannotTellIfAway {
@@ -442,7 +440,6 @@ struct BoardView: View {
     private func confirm(_ item: Item) {
         guard save({ $0.confirm(id: item.id, at: .now) }) else { return }
         expandedAwayHelp.remove(item.id)
-        undoFeedback[item.id] = nil
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         if let line = store.items.first(where: { $0.id == item.id })?.confirmationLine {
             UIAccessibility.post(notification: .announcement, argument: line)
@@ -458,33 +455,13 @@ struct BoardView: View {
         requestReview()
     }
 
-    private func undo(_ item: Item) {
-        guard save({ $0.undo(id: item.id) }) else { return }
-        let previousRemains = store.items
-            .first(where: { $0.id == item.id })?
-            .lastConfirmedAt != nil
-        if previousRemains {
-            showUndoFeedback(for: item.id)
-        } else {
-            undoFeedback[item.id] = nil
-        }
+    private func clearStatus(_ item: Item) {
+        guard save({ $0.clearCurrentStatus(id: item.id) }) else { return }
         UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
         UIAccessibility.post(
             notification: .announcement,
-            argument: previousRemains ? Copy.previousConfirmationRestored : Copy.undone
+            argument: Copy.statusCleared
         )
-    }
-
-    /// Undoing a repeated tap can legitimately leave an older green record in
-    /// place. Say that visibly so the unchanged flap cannot read as a dead button.
-    private func showUndoFeedback(for itemID: UUID) {
-        let message = Copy.previousConfirmationRestored
-        withAnimation(.snappy(duration: 0.2)) { undoFeedback[itemID] = message }
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(2.5))
-            guard undoFeedback[itemID] == message else { return }
-            withAnimation(.snappy(duration: 0.2)) { undoFeedback[itemID] = nil }
-        }
     }
 
     @discardableResult
@@ -495,6 +472,9 @@ struct BoardView: View {
             // entire row/store duplicates labels and timestamps during a tap.
             store = try StoreIO.load()
             WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+            if #available(iOS 18.0, *) {
+                ControlCenter.shared.reloadControls(ofKind: WidgetKind.control)
+            }
             return true
         } catch {
             reportSaveError()

@@ -82,13 +82,15 @@ The user is never asked about this. See Day 2 for when the reset rule surfaces.
 Then: the live item card, in its unknown state, exactly as it will look on the main screen.
 
 **Footer, 11px, muted**
-> Hold to undo. Old confirmations expire automatically.
+> Use More actions to clear it. Old confirmations expire automatically.
 
 ### Behaviour
 
 - The tap fires the real haptic (`UIImpactFeedbackGenerator`, heavy) and writes a real entry to the store. This is not a simulation.
 - Card animates to confirmed green, shows "logged just now", and a random confirmation line appears below it.
-- Auto-advance after 2.5s, or on tap of anywhere.
+- Show the same More actions control as the board so the first confirmation can
+  be cleared immediately. Advance only from the explicit Done button; taps on
+  the card must not steal or race the clear action.
 
 ### Why this screen exists
 

@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreLocation
 import UIKit
+import WidgetKit
 import DidICore
 
 /// Only what Phase 5 forces into existence: home, and the one-line note day-2
@@ -239,6 +240,7 @@ struct SettingsView: View {
                 do {
                     try StoreIO.mutate { $0.plainTone = plain }
                     store = try StoreIO.load()
+                    WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
                 } catch {
                     showingSaveError = true
                 }

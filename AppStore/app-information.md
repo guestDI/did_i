@@ -3,7 +3,7 @@
 - Bundle ID: `com.dihnatovich.didi`
 - SKU: `didi-ios-001`
 - Version: `1.0`
-- Build: `1`
+- Build: `4`
 - Primary category: Lifestyle
 - Secondary category: Utilities
 - Price: Free

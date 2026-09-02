@@ -12,7 +12,7 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "1"
+    CURRENT_PROJECT_VERSION: "4"
     TARGETED_DEVICE_FAMILY: "1"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: 3VRYJ7457W
@@ -47,9 +47,16 @@ targets:
       properties:
         com.apple.security.application-groups:
           - group.com.dihnatovich.didi
+        # The leaving-home reminder is the one notification in the app that is
+        # worthless late: it exists to reach someone in the thirty seconds after
+        # they walk out. Without this it sits in a Focus summary until the
+        # evening. Granted automatically — no review request.
+        com.apple.developer.usernotifications.time-sensitive: true
     info:
       path: DidI/Info.plist
       properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDisplayName: Did I?
         # Every string lives in DidICore, so this target has no .lproj folders of
         # its own — but iOS picks the app's language from the *main* bundle's
@@ -104,6 +111,8 @@ targets:
     info:
       path: DidIWidget/Info.plist
       properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDisplayName: Did I?
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
@@ -125,6 +134,8 @@ targets:
     info:
       path: DidIWatch/Info.plist
       properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDisplayName: Did I?
         WKApplication: true
         # Ties this to the phone app so the App Store installs it as a

@@ -16,7 +16,8 @@ import Foundation
 @Test func screenTwoCopyIsVerbatim() {
     #expect(Copy.Screen2.title == "Try it once")
     #expect(Copy.Screen2.subtitle == "This is the whole app. There's no step four.")
-    #expect(Copy.Screen2.footer == "Hold to undo. Old confirmations expire automatically.")
+    #expect(Copy.Screen2.footer ==
+        "Use More actions to clear it. Old confirmations expire automatically.")
 }
 
 @Test func screenThreeCopyIsVerbatim() {

@@ -22,6 +22,9 @@ struct ConfirmItemIntent: AppIntent {
             store.confirm(id: id, at: .now)
         }
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+        if #available(iOS 18.0, *) {
+            ControlCenter.shared.reloadControls(ofKind: WidgetKind.control)
+        }
         return .result()
     }
 }

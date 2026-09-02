@@ -1208,8 +1208,48 @@ practice state made SwiftUI cross-fade two complete board rows on top of each
 other, duplicating the name and timestamp at the product's first-success moment.
 Whole-row animation is removed; `FlapCell` retains its own scoped transition.
 
+**Clearing status is one action, including on the practice screen.** Repeated
+confirmation taps remain in local history, but the visible clear action no longer
+pops that stack one record at a time. It clears `lastConfirmedAt`, its captured
+rule, and its line while keeping history for usage insights. The practice screen
+now shows the board's More actions affordance and an explicit Done button; its
+former tap-anywhere/auto-advance behavior competed with the first clear attempt.
+
 The practice footer no longer promises an overnight reset for the Iron and
 Straightener presets, which use 12-hour rules. `Old confirmations expire
 automatically` is true for every default. Coming-home copy was also completed
 through the success state, Settings, and all localized iOS permission strings;
 the separate leaving-home reminder keeps its departure wording.
+
+**Leaving-home reminder latency: time-sensitive delivery, no trigger delay, and
+an exit-only inner ring.** Reported as arriving when already far from home. The
+chain has two halves and only one of them is ours. Ours: a five-second
+`UNTimeIntervalNotificationTrigger` for no reason (now `nil`), and default
+interruption level, which lets a Focus mode or the scheduled summary hold the
+one notification in the app that is worthless late — now `.timeSensitive` with
+`relevanceScore = 1`, which needs
+`com.apple.developer.usernotifications.time-sensitive` (granted automatically,
+no review request). The widget nudge deliberately stays ordinary. Not ours: iOS
+re-evaluates a geofence on Wi-Fi/cell transitions rather than polling, so the
+exit callback itself can be minutes late and no API changes that. What the
+radius lever still had left was distance, not evaluation time: `LocationMonitor`
+now registers a second, exit-only `CLCircularRegion` at two thirds of the user's
+radius (floored at the slider's own 50m), so the crossing that starts the chain
+happens ~25-50m earlier. Entry stays on the outer ring alone — widening what
+counts as arriving home would clear confirmations for someone walking past, and
+the latency fix does not get to make that trade. Duplicate exits from the two
+rings are deduped inside the existing `mutate` with `guard !store.isAway`: only
+an intervening arrival makes an exit a new one.
+
+`reconcileLeavingHomeReminders` now checks `deliveredNotifications` as well as
+`pendingNotificationRequests`. With no trigger the request leaves the pending
+list within a second of the exit, so the pending-only check would have re-fired
+it as a duplicate banner on the next foreground — the 5s trigger was already
+long gone by then too, so this was latent, not new.
+
+Continuous background location (`UIBackgroundModes`, `CLBackgroundActivitySession`
++ `CLLocationUpdate.liveUpdates` bursts after the wake) is the only thing that
+would cut the evaluation half, and stays refused until a week of real departures
+with the above still reads late. `CLVisit` is strictly worse (departures land
+minutes to hours late), significant-location-change is 500m-grade, and `CLMonitor`
+is a nicer API at identical latency.

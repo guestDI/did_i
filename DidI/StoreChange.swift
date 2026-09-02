@@ -12,7 +12,12 @@ enum StoreChange {
             CFNotificationCenterGetDarwinNotifyCenter(),
             nil,
             { _, _, _, _, _ in
-                NotificationCenter.default.post(name: StoreChange.name, object: nil)
+                // Darwin notifications are not guaranteed to arrive on the main
+                // thread. SwiftUI state is reloaded by this local notification,
+                // so always bridge onto the main queue first.
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: StoreChange.name, object: nil)
+                }
             },
             StoreIO.changeNotification as CFString,
             nil,
