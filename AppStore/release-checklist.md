@@ -4,7 +4,7 @@
 
 - [x] App, widget, and Watch bundle identifiers are configured
 - [x] App Group entitlement is shared by the app and widget
-- [x] Version `1.0` and build `4` are configured
+- [x] Version `1.0` and build `5` are configured
 - [x] 1024×1024 iOS and Watch icons exist without alpha
 - [x] Privacy manifest declares no tracking, collection, or accessed API reasons
 - [x] Non-exempt encryption declaration is disabled
@@ -48,10 +48,10 @@
 ## TestFlight
 
 - [ ] Paste the prepared beta description, feedback details, testing instructions, and review notes
-- [ ] Upload `AppStore/build/Did I 1.0 (4).ipa` and wait for build processing
+- [ ] Upload `AppStore/build/Did I 1.0 (5).ipa` and wait for build processing
 - [ ] If prompted for export compliance, answer that the app does not use encryption
-- [ ] Create an internal testing group, add build `4`, and invite internal testers
-- [ ] For external testing, create an external group and submit build `4` for Beta App Review
+- [ ] Create an internal testing group, add build `5`, and invite internal testers
+- [ ] For external testing, create an external group and submit build `5` for Beta App Review
 
 ## Build and submission
 
@@ -60,6 +60,6 @@
 - [x] Resolve Xcode's portrait-orientation archive warning by making the app and widget explicitly iPhone-only
 - [x] Export a signed App Store distribution IPA with TestFlight entitlements
 - [ ] Upload the archive and resolve every App Store validation warning
-- [ ] Select build `4` for version `1.0`
+- [ ] Select build `5` for version `1.0`
 - [ ] Paste the review notes and submit for review
 - [ ] Keep the version in manual release until the approved build is smoke-tested
