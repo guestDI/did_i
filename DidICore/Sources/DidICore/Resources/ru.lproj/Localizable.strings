@@ -233,3 +233,11 @@
 "This app has no ads, no subscription, and never will. A tip like this is the only way to say thanks — genuinely appreciated." = "В этом приложении нет рекламы и подписок, и не будет. Чаевые — единственный способ сказать спасибо, и это правда ценно.";
 "Something went wrong" = "Что-то пошло не так";
 "The tip didn't go through. Try again later." = "Не удалось отправить чаевые. Попробуй позже.";
+
+"Tone" = "Тон";
+"Congratulations" = "Поздравления";
+"Deadpan" = "С юмором";
+"Plain" = "Без шуток";
+"Humour only appears on confirmed items. When something has no record, the copy stays plain either way." = "Юмор появляется только у подтверждённых пунктов. Если записи нет, текст в любом случае остаётся сухим.";
+"Did I? %@ · No badges, no streaks, no scores" = "Did I? %@ · Без значков, серий и очков";
+"Left home %@" = "Ушёл из дома в %@";

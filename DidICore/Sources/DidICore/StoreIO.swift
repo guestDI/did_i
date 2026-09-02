@@ -24,6 +24,10 @@ public struct Store: Codable, Sendable {
     /// day-3+ counters. Local only, never transmitted.
     public var usage: Usage
 
+    /// Design `2a`, TONE. `true` drops the joke pool: confirmations then read as
+    /// the plain "Off, 6 hours ago." line the aging state already uses.
+    public var plainTone: Bool
+
     public init(
         items: [Item] = [],
         home: HomeLocation? = nil,
@@ -31,7 +35,8 @@ public struct Store: Codable, Sendable {
         lastEnteredHomeAt: Date? = nil,
         lastConfirmationLine: String? = nil,
         flags: OnboardingFlags = OnboardingFlags(),
-        usage: Usage = Usage()
+        usage: Usage = Usage(),
+        plainTone: Bool = false
     ) {
         self.items = items
         self.home = home
@@ -40,6 +45,7 @@ public struct Store: Codable, Sendable {
         self.lastConfirmationLine = lastConfirmationLine
         self.flags = flags
         self.usage = usage
+        self.plainTone = plainTone
     }
 
     /// Hand-written so a store file missing any newer key still decodes rather
@@ -54,10 +60,11 @@ public struct Store: Codable, Sendable {
         lastConfirmationLine = try c.decodeIfPresent(String.self, forKey: .lastConfirmationLine)
         flags = try c.decodeIfPresent(OnboardingFlags.self, forKey: .flags) ?? OnboardingFlags()
         usage = try c.decodeIfPresent(Usage.self, forKey: .usage) ?? Usage()
+        plainTone = try c.decodeIfPresent(Bool.self, forKey: .plainTone) ?? false
     }
 
     enum CodingKeys: String, CodingKey {
-        case items, home, lastLeftHomeAt, lastEnteredHomeAt, lastConfirmationLine, flags, usage
+        case items, home, lastLeftHomeAt, lastEnteredHomeAt, lastConfirmationLine, flags, usage, plainTone
     }
 
     /// Adds the first item onboarding produced.
@@ -92,7 +99,9 @@ public struct Store: Codable, Sendable {
         let rules = retained.map(\.rule) + [items[i].resetRule]
         let today = history.filter { calendar.isDate($0, inSameDayAs: date) }
 
-        let line = Copy.confirmationLine(
+        // Plain tone leaves the line unset, so `Copy.status` falls back to the
+        // timestamp sentence for fresh confirmations too.
+        let line = plainTone ? nil : Copy.confirmationLine(
             escalating: today.count >= 3,
             avoiding: lastConfirmationLine
         )
@@ -106,7 +115,7 @@ public struct Store: Codable, Sendable {
         // Without a geofence `arrivedHome` never fires, so this is the only thing
         // that can lift a mute for someone who declined location.
         items[i].mutedUntilHome = false
-        lastConfirmationLine = line
+        if let line { lastConfirmationLine = line }
 
         // A tap is a look you can actually observe, and the only one the widget
         // ever gives us. Without this a widget-only user has no check history at

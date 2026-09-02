@@ -233,3 +233,11 @@
 "This app has no ads, no subscription, and never will. A tip like this is the only way to say thanks — genuinely appreciated." = "Ta aplikacja nie ma reklam ani subskrypcji i nigdy nie będzie ich mieć. Napiwek to jedyny sposób, by powiedzieć dzięki — naprawdę doceniam.";
 "Something went wrong" = "Coś poszło nie tak";
 "The tip didn't go through. Try again later." = "Napiwek się nie powiódł. Spróbuj ponownie później.";
+
+"Tone" = "Ton";
+"Congratulations" = "Gratulacje";
+"Deadpan" = "Z humorem";
+"Plain" = "Bez żartów";
+"Humour only appears on confirmed items. When something has no record, the copy stays plain either way." = "Humor pojawia się tylko przy potwierdzonych elementach. Gdy brak wpisu, tekst i tak zostaje rzeczowy.";
+"Did I? %@ · No badges, no streaks, no scores" = "Did I? %@ · Bez odznak, serii i punktów";
+"Left home %@" = "Wyjście z domu %@";

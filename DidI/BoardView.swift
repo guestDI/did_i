@@ -257,7 +257,7 @@ struct BoardView: View {
             }
             .accessibilityHidden(true)
             HStack {
-                Text(now.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
+                Text(dateLine(now: now))
                     .boardFont(10, .medium, relativeTo: .caption2)
                     .tracking(2)
                     .textCase(.uppercase)
@@ -285,6 +285,15 @@ struct BoardView: View {
         }
         .padding(.horizontal, 22)
         .padding(.top, 18)
+    }
+
+    /// Design `1a`: "MON 11 AUG · LEFT HOME 08:42". The second half only when the
+    /// geofence actually saw them leave — it is the same "since you left" claim
+    /// the away status line makes, and it has to be true.
+    private func dateLine(now: Date) -> String {
+        let date = now.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
+        guard store.isAway, let left = store.lastLeftHomeAt else { return date }
+        return date + " · " + Copy.leftHome(at: left.formatted(date: .omitted, time: .shortened))
     }
 
     private var columnHeadings: some View {

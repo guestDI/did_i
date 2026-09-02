@@ -109,6 +109,17 @@ struct SettingsView: View {
                     }
                 }
 
+                Section {
+                    Picker(Copy.Tone.congratulations, selection: toneBinding) {
+                        Text(Copy.Tone.deadpan).tag(false)
+                        Text(Copy.Tone.plain).tag(true)
+                    }
+                } header: {
+                    Text(Copy.Tone.section)
+                } footer: {
+                    Text(Copy.Tone.footer)
+                }
+
                 if remindersCannotFire {
                     Section {
                         Button(Copy.HomeSettings.openSystemSettings) { openSystemSettings() }
@@ -146,6 +157,16 @@ struct SettingsView: View {
                     Text(Copy.resetRuleHint)
                         .appFont(13, relativeTo: .footnote)
                         .foregroundStyle(Palette.sub)
+                }
+
+                Section {
+                    Text(Copy.versionFooter(version: Self.version))
+                        .boardFont(8.5, .medium, relativeTo: .caption2)
+                        .tracking(2.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Palette.dim)
+                        .frame(maxWidth: .infinity)
+                        .listRowBackground(Color.clear)
                 }
             }
             .sheet(isPresented: $showingWalkthrough) { WalkthroughSheet() }
@@ -204,6 +225,25 @@ struct SettingsView: View {
                 Text(Copy.TipJar.errorBody)
             }
         }
+    }
+
+    private static let version =
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+
+    /// Tone is one bit on the store, so the picker writes through `StoreIO`
+    /// rather than holding its own draft state.
+    private var toneBinding: Binding<Bool> {
+        Binding(
+            get: { store.plainTone },
+            set: { plain in
+                do {
+                    try StoreIO.mutate { $0.plainTone = plain }
+                    store = try StoreIO.load()
+                } catch {
+                    showingSaveError = true
+                }
+            }
+        )
     }
 
     /// Written on drag release, not on every tick — a `mutate` per pixel of

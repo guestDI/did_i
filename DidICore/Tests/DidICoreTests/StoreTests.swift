@@ -250,3 +250,18 @@ private func store(_ rule: ResetRule = .dailyAt(hour: 4)) -> Store {
     let s = Store(items: [first, second])
     #expect(s.active.map(\.order) == [0, 2])
 }
+
+@Test func plainToneSkipsTheJokeAndFallsBackToTheTimestampLine() {
+    var s = store()
+    s.plainTone = true
+    let id = s.items[0].id
+    s.confirm(id: id, at: at("2026-08-11 09:00:00"), calendar: utc)
+
+    #expect(s.items[0].confirmationLine == nil)
+    #expect(s.lastConfirmationLine == nil)
+    let status = Copy.status(
+        for: .confirmed(age: 60, freshness: .fresh),
+        item: s.items[0]
+    )
+    #expect(!Copy.general.contains(status))
+}

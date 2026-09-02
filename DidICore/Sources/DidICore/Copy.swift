@@ -388,6 +388,28 @@ public enum Copy {
             t("Notifications are off, so these reminders can't reach you.")
     }
 
+    /// Design `2a`, TONE. Humour only ever appears on a confirmed item, so this
+    /// switches exactly one thing: whether a fresh confirmation gets a joke line
+    /// or the same plain timestamp sentence an aging one already gets.
+    public enum Tone {
+        public static let section = t("Tone")
+        public static let congratulations = t("Congratulations")
+        public static let deadpan = t("Deadpan")
+        public static let plain = t("Plain")
+        public static let footer =
+            t("Humour only appears on confirmed items. When something has no record, the copy stays plain either way.")
+    }
+
+    /// Design `2a`'s closing line. The promise, not a version string.
+    public static func versionFooter(version: String) -> String {
+        t("Did I? \(version) · No badges, no streaks, no scores")
+    }
+
+    /// The board's date line once the geofence has seen them leave.
+    public static func leftHome(at time: String) -> String {
+        t("Left home \(time)")
+    }
+
     public enum HomeSettings {
         public static let section = t("Home")
         public static let notSet = t("Not set")
