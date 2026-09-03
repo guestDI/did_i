@@ -149,7 +149,7 @@ public struct Store: Codable, Sendable {
         items[i].confirmationLine = nil
     }
 
-    /// Clears what the board currently claims in one action without erasing the
+    /// Clears the current confirmation in one action without erasing the
     /// confirmation history used for local usage insights. This is deliberately
     /// different from `undo`: repeated taps must not force someone to clear the
     /// same visible status several times.

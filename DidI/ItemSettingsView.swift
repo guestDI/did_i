@@ -102,7 +102,6 @@ struct ItemSettingsView: View {
                     NavigationLink {
                         ConfirmationExpiryView(
                             rule: $draft.resetRule,
-                            originalRule: original.resetRule,
                             hasHome: hasHome
                         )
                     } label: {

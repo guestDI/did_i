@@ -224,10 +224,31 @@ private struct PracticeScreen: View {
     @Binding var store: Store
     let onDone: () -> Void
 
-    @State private var confirmed = false
     @State private var showingSaveError = false
 
     private var item: Item? { store.active.first }
+
+    /// The practice tap is a real confirmation, so its presentation must come
+    /// from the persisted event rather than from view-local state. Otherwise a
+    /// force-quit after the tap makes the same saved confirmation look unknown
+    /// when Screen 2 resumes.
+    private var practiceCompleted: Bool {
+        store.flags.practiceTapCompleted && item?.lastConfirmedAt != nil
+    }
+
+    private var practiceState: ItemState {
+        guard let item, practiceCompleted else { return .unknown }
+        return store.state(item, now: .now)
+    }
+
+    private var practiceStatusOverride: String? {
+        guard
+            practiceCompleted,
+            let confirmedAt = item?.lastConfirmedAt,
+            Date.now.timeIntervalSince(confirmedAt) < 60
+        else { return nil }
+        return Copy.Screen2.loggedJustNow
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -247,13 +268,13 @@ private struct PracticeScreen: View {
                         ZStack(alignment: .topLeading) {
                             BoardRow(
                                 item: item,
-                                state: confirmed ? .confirmed(age: 0, freshness: .fresh) : .unknown,
-                                statusOverride: confirmed ? Copy.Screen2.loggedJustNow : nil,
+                                state: practiceState,
+                                statusOverride: practiceStatusOverride,
                                 onConfirm: { confirm(item) },
-                                onUndo: confirmed ? { clearStatus(item) } : nil
+                                onClear: practiceCompleted ? { clearStatus(item) } : nil
                             )
                             Menu {
-                                if confirmed {
+                                if practiceCompleted {
                                     Button(Copy.clearStatus, systemImage: "xmark.circle") {
                                         clearStatus(item)
                                     }
@@ -275,7 +296,7 @@ private struct PracticeScreen: View {
                         }
                         .padding(.horizontal, -26)
 
-                        if confirmed {
+                        if practiceCompleted {
                             Text(Copy.onboardingConfirmation)
                                 .boardFont(11, .medium, relativeTo: .caption)
                                 .foregroundStyle(Palette.fresh)
@@ -311,7 +332,7 @@ private struct PracticeScreen: View {
 
     /// Not a simulation: real haptic, real entry in the real store.
     private func confirm(_ item: Item) {
-        guard !confirmed else { return }
+        guard !practiceCompleted else { return }
         do {
             try StoreIO.mutate {
                 $0.confirm(id: item.id, at: .now)
@@ -331,17 +352,19 @@ private struct PracticeScreen: View {
         // `FlapCell` owns the character animation. Animating this whole state
         // change cross-fades two complete rows on top of each other and makes
         // the first successful tap look visually corrupted.
-        confirmed = true
         UIAccessibility.post(notification: .announcement, argument: Copy.onboardingConfirmation)
 
     }
 
-    /// Mirrors `BoardView.undo` — same haptic, same store call, same
+    /// Mirrors `BoardView.clearStatus` — same haptic, same store call, same
     /// announcement — so the practice screen teaches the real interaction
     /// rather than a lookalike.
     private func clearStatus(_ item: Item) {
         do {
-            try StoreIO.mutate { $0.clearCurrentStatus(id: item.id) }
+            try StoreIO.mutate {
+                $0.clearCurrentStatus(id: item.id)
+                $0.flags.practiceTapCompleted = false
+            }
             store = try StoreIO.load()
         } catch {
             reportSaveError()
@@ -352,7 +375,6 @@ private struct PracticeScreen: View {
         if #available(iOS 18.0, *) {
             ControlCenter.shared.reloadControls(ofKind: WidgetKind.control)
         }
-        confirmed = false
         UIAccessibility.post(notification: .announcement, argument: Copy.statusCleared)
     }
 

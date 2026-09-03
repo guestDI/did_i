@@ -89,7 +89,7 @@ struct Item: Codable, Identifiable, Sendable {
 
 enum ResetRule: Codable, Sendable, Equatable {
     case dailyAt(hour: Int)       // default: 4
-    case afterHours(Int)          // 4 or 12
+    case afterHours(Int)          // UI supports 1...72 whole hours
     case onComingHome             // requires geofence
     case never                    // discouraged in UI
 }

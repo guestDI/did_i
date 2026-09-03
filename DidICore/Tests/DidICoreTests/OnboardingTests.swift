@@ -36,7 +36,7 @@ import Foundation
         Copy.Screen2.footer, Copy.Screen3.title, Copy.Screen3.subtitle,
         Copy.Screen3.remindOnce, Copy.Screen3.remindOnceDetail,
         Copy.Screen3.skipForNow, Copy.unknownAtHome, Copy.unknownLocation,
-        Copy.unknownAway, Copy.neverWarning,
+        Copy.unknownAway, Copy.manualResetDetail,
     ] + Copy.widgetNudges.flatMap { [$0.title, $0.body] }
 
     for line in all {

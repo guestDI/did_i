@@ -235,7 +235,7 @@ private func optedIn() -> OnboardingFlags {
     #expect(Copy.LocationDeclined.message ==
         "No problem. We'll keep using the current timer instead.")
     #expect(Copy.resetRuleHint ==
-        "On the board, open an item's More menu → \"Edit item\" → \"How long a tick lasts\".")
+        "On the board, open an item's More menu → \"Edit item\" → \"Reset confirmation\".")
 }
 
 @Test func theEscapeHatchCopyIsVerbatim() {

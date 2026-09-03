@@ -7,8 +7,8 @@ special test credentials are required. No purchase is exposed in version 1.0.
 
 1. Launch and select a few household items.
 2. Complete the practice confirmation.
-3. Tap an item on the board to confirm it; long-press it or use More actions → Undo latest confirmation if desired.
-4. Open the item settings and choose when its confirmation expires.
+3. Tap an item on the board to confirm it; long-press it or use More actions → Clear current confirmation if desired.
+4. Open the item settings and choose when its confirmation resets.
 5. Add a Did I? widget from the Home Screen widget gallery to test quick confirmation.
 6. If testing on a paired watch, open the companion to see the latest synced status.
 

@@ -3,7 +3,7 @@ import SwiftUI
 /// One row of the board. Shared so the Day 0 practice card is not a lookalike of
 /// the main screen's card — it is the same view, "exactly as it will look".
 ///
-/// The row confirms and a hold clears the current status. Secondary controls are layered beside
+/// The row confirms and a hold clears the current confirmation. Secondary controls are layered beside
 /// it by the app so this shared view remains one coherent accessibility element.
 public struct BoardRow: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -13,7 +13,7 @@ public struct BoardRow: View {
     let statusOverride: String?
     let isAway: Bool
     let onConfirm: () -> Void
-    let onUndo: (() -> Void)?
+    let onClear: (() -> Void)?
 
     public init(
         item: Item,
@@ -21,14 +21,14 @@ public struct BoardRow: View {
         statusOverride: String? = nil,
         isAway: Bool = false,
         onConfirm: @escaping () -> Void,
-        onUndo: (() -> Void)? = nil
+        onClear: (() -> Void)? = nil
     ) {
         self.item = item
         self.state = state
         self.statusOverride = statusOverride
         self.isAway = isAway
         self.onConfirm = onConfirm
-        self.onUndo = onUndo
+        self.onClear = onClear
     }
 
     private var status: String {
@@ -75,17 +75,18 @@ public struct BoardRow: View {
         // a departure board with ragged rows stops reading as one.
         .frame(minHeight: 76)
         .contentShape(.rect)
-        .modifier(ConfirmOrUndo(onConfirm: onConfirm, onUndo: onUndo))
+        .modifier(ConfirmOrClear(onConfirm: onConfirm, onClear: onClear))
         .overlay(alignment: .bottom) {
             Rectangle().fill(Palette.rule).frame(height: 1)
         }
         .accessibilityElement(children: .ignore)
+        .accessibilityIdentifier("confirmationRow.\(item.name)")
         .accessibilityLabel(Copy.confirmLabel(item: item))
         .accessibilityValue(status)
         .accessibilityHint(Copy.confirmHint)
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { onConfirm() }
-        .modifier(ClearAccessibility(action: onUndo))
+        .modifier(ClearAccessibility(action: onClear))
     }
 
     private var name: some View {
@@ -106,15 +107,15 @@ public struct BoardRow: View {
 /// them into one `Gesture` with an explicit precedence — hold long enough and
 /// the clear wins outright; release early and only then does the confirm fire — so
 /// there is nothing left to race.
-private struct ConfirmOrUndo: ViewModifier {
+private struct ConfirmOrClear: ViewModifier {
     let onConfirm: () -> Void
-    let onUndo: (() -> Void)?
+    let onClear: (() -> Void)?
 
     func body(content: Content) -> some View {
-        if let onUndo {
+        if let onClear {
             content.gesture(
                 LongPressGesture(minimumDuration: 0.5)
-                    .onEnded { _ in onUndo() }
+                    .onEnded { _ in onClear() }
                     .exclusively(before: TapGesture().onEnded(onConfirm))
             )
         } else {
@@ -123,7 +124,7 @@ private struct ConfirmOrUndo: ViewModifier {
     }
 }
 
-/// A row with no confirmation has nothing to undo, so VoiceOver must not offer
+/// A row with no confirmation has nothing to clear, so VoiceOver must not offer
 /// a custom action that silently does nothing.
 private struct ClearAccessibility: ViewModifier {
     let action: (() -> Void)?

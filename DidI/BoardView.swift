@@ -336,7 +336,7 @@ struct BoardView: View {
                     statusOverride: rowStatusOverride(for: item, now: now),
                     isAway: store.isAway,
                     onConfirm: { confirm(item) },
-                    onUndo: item.lastConfirmedAt == nil ? nil : { clearStatus(item) }
+                    onClear: item.lastConfirmedAt == nil ? nil : { clearStatus(item) }
                 )
                 rowActions(item: item, now: now)
                     .offset(x: rowActionOffset(for: item), y: 13)

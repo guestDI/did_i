@@ -2,20 +2,12 @@ import Foundation
 
 public enum ResetRule: Codable, Sendable, Equatable, Hashable {
     case dailyAt(hour: Int)   // default: 4
-    case afterHours(Int)      // 4 or 12
+    case afterHours(Int)      // UI supports 1...72 whole hours
     case onComingHome         // requires geofence
     case never                // discouraged in UI
 
     public static let `default` = ResetRule.dailyAt(hour: 4)
 
-    /// The confirmation-expiry menu, in the Day 2 doc's order.
-    /// `onComingHome` only appears when background entry detection is actually
-    /// available; a saved coordinate alone cannot fulfil that promise.
-    public static func choices(canDetectComingHome: Bool) -> [ResetRule] {
-        (canDetectComingHome ? [.onComingHome] : []) + [
-            .afterHours(4), .afterHours(12), .default, .never,
-        ]
-    }
 }
 
 /// Where "home" is, and how big a circle around it counts as "home".

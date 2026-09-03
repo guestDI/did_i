@@ -1253,3 +1253,43 @@ would cut the evaluation half, and stays refused until a week of real departures
 with the above still reads late. `CLVisit` is strictly worse (departures land
 minutes to hours late), significant-location-change is 500m-grade, and `CLMonitor`
 is a nicer API at identical latency.
+
+## Onboarding resume pass
+
+**The practice screen derives its presentation from the saved confirmation.**
+`practiceTapCompleted` was persisted, but Screen 2 separately kept a local
+`confirmed` boolean. Force-quitting after the real practice tap and before `Done`
+therefore resumed the correct screen with the saved record rendered as unknown.
+The row, success copy, `Done`, and clear affordance now derive from the flag plus
+the item's real confirmation. Clearing the practice record clears the flag too,
+so that state also survives a relaunch truthfully. `logged just now` is used only
+for the first minute; a much later resume falls back to the normal derived status.
+
+## Reset-rule clarity and flexibility pass
+
+**The editor now asks when the confirmation resets.** “How long a tick lasts”
+was friendly but forced users to translate between ticks, expiry, clearing and
+the board's “No current record” state. The item row and editor are now named
+“Reset confirmation,” with the outcome stated directly: “When should this return
+to ‘No current record’?” Automatic and manual behavior are separate sections.
+
+**Fixed presets became adjustable values without a storage migration.**
+`ResetRule.afterHours(Int)` and `.dailyAt(hour: Int)` already accepted arbitrary
+whole hours; only `choices()` restricted the UI to 4 hours, 12 hours and 04:00.
+The editor now offers 1–72 hours and every hour of the day, remembers the last
+value while switching modes, and shows a concrete “If you confirm now…” preview.
+Minute-level clock times remain out of scope because the persisted rule stores an
+hour and changing that shape would add migration risk for little practical gain.
+
+**Coming-home reset is discoverable before it is available.** Its row remains
+visible and disabled without Home plus Always Location. The recovery action sets
+up Home when possible or opens iOS Settings when permission is the missing piece.
+A completed setup selects the option automatically.
+
+**Manual reset and accidental undo are no longer conflated in the UI.** The
+visible action has always called `clearCurrentStatus`, which deliberately clears
+the current board claim in one step while retaining local history; it did not call
+the separate stack-popping `undo`. User-facing labels, accessibility actions,
+onboarding, UI tests and App Store notes now consistently say “Clear current
+confirmation.” Historical `undo` storage logic remains for compatibility but is
+not presented as the behavior of the board action.

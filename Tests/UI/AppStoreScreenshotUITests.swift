@@ -43,14 +43,14 @@ final class AppStoreScreenshotUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Edit item"].waitForExistence(timeout: 2))
         app.buttons["Edit item"].tap()
         let expiry = app.buttons.matching(
-            NSPredicate(format: "label BEGINSWITH[c] %@", "How long a tick lasts")
+            NSPredicate(format: "label BEGINSWITH[c] %@", "Reset confirmation")
         ).firstMatch
         XCTAssertTrue(expiry.waitForExistence(timeout: 3))
         expiry.tap()
-        XCTAssertTrue(app.navigationBars["How long a tick lasts"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.navigationBars["Reset confirmation"].waitForExistence(timeout: 3))
         capture("04-expiry-you-control")
 
-        let expiryNavigationBar = app.navigationBars["How long a tick lasts"]
+        let expiryNavigationBar = app.navigationBars["Reset confirmation"]
         expiryNavigationBar.buttons.firstMatch.tap()
         let done = app.buttons["Done"]
         XCTAssertTrue(done.waitForExistence(timeout: 2))

@@ -90,7 +90,7 @@ Never ask again. Not on day 5, not on a settings banner, not with a "you're miss
 > No problem. We'll keep using the current timer instead.
 
 Then show where the setting actually lives, once:
-> On the board, open an item's More menu → "Edit item" → "How long a tick lasts".
+> On the board, open an item's More menu → "Edit item" → "Reset confirmation".
 
 That's it. The app is slightly dumber and entirely functional.
 
@@ -102,27 +102,43 @@ Now — and only now — the per-item reset setting becomes discoverable. It liv
 inside the item editor (More → "Edit item"), which is where someone looking to
 change an item goes first, and pushes to its own screen from there:
 
-**How long a tick lasts**
+**Reset confirmation**
 
-> When a tick stops counting
+> When should this return to “No current record”?
 
-- When I come home (24 hours at most) *(only offered when Always Location is active)*
-- 4 hours after I confirm
-- 12 hours after I confirm
-- At 4am each day *(default)*
-- Never (only when I confirm again) *(the warning "A tick that never expires is a tick you can't trust." sits on the row itself, not in the footer — a caution that only appears after the tap is not a caution)*
+Group the choices by their actual behavior:
+
+**Automatically**
+
+- After a duration — 1–72 whole hours, defaulting to the item's current duration
+- Every day at a chosen time — any hour, defaulting to 04:00
+- When I return home — 24 hours at most
+
+**Manually**
+
+- Only when I clear it — “It won’t expire automatically.”
+
+Selecting the duration or daily option reveals a focused picker for its value.
+The option row itself always shows the currently chosen value. Show a concrete
+preview below the choices: “If you confirm now, it resets Wednesday, 4:00 AM.”
+This is especially important for a daily time, whose effective duration depends
+on when the confirmation is made.
+
+The coming-home choice stays visible even when unavailable. Disable it, explain
+that Home and Always Location are required, and offer “Set up Home” or “Open iOS
+Settings” as appropriate. Hiding it makes the capability impossible to discover.
 
 Each option is a self-contained phrase rather than a fragment completing the
 header. Sentence-completion broke on two of the five in English ("…until when I
 come home", "…until until I confirm again") and breaks harder on case agreement
 in pl/ru.
 
-The footer says: "Applies to future confirmations. The status currently on the
-board will not change." A rule change must never revive or shorten the current
-confirmation. The rule is captured when the user confirms; the newly configured
-rule starts with the next tap.
+The footer says: "Takes effect the next time you confirm. It won’t change the
+confirmation already on the board." A rule change must never revive or shorten
+the current confirmation. The rule is captured when the user confirms; the newly
+configured rule starts with the next tap.
 
-If an item already uses coming-home expiry and Always Location later becomes
+If an item already uses coming-home reset and Always Location later becomes
 unavailable, keep the selected choice visible but disabled, explain why, and
 offer the iOS Settings recovery route. Do not present an unavailable automation
 as a working choice.

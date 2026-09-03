@@ -18,7 +18,7 @@ expiry rule.
 ## What to test
 
 Please test first launch and item selection, the practice confirmation, repeated
-one-tap confirmations, undo from a long-press or More actions, each expiry rule,
+one-tap confirmations, clearing from a long-press or More actions, each reset rule,
 Home and Lock Screen widgets, optional location permission, Polish/Russian
 localization, and status sync to a paired Apple Watch. Green means a current
 confirmation; amber means there is no current confirmation. Did I? is a memory aid,
@@ -36,7 +36,7 @@ not a safety system.
 No login, account, subscription, backend, purchase, or special credentials are
 required. Launch and select a few household items, complete the practice
 confirmation, then tap an item to confirm it. Long-press the item or use More
-actions → Undo latest confirmation to undo. Expiry rules are available from item
+actions → Clear current confirmation to clear it. Reset rules are available from item
 settings. Add a Did I? widget from the Home Screen widget gallery to test quick
 confirmation. The paired Watch companion is read-only and shows the latest synced
 status. Location and notifications are optional and can be declined without

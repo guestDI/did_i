@@ -1,8 +1,8 @@
 import XCTest
 
-final class UndoUITests: XCTestCase {
+final class ClearConfirmationUITests: XCTestCase {
     @MainActor
-    func testMoreMenuUndoExplainsAPreviousRecordThenClearsIt() throws {
+    func testMoreMenuClearsRepeatedConfirmationsInOneAction() throws {
         let app = XCUIApplication()
         app.launchArguments += [
             "-resetStoreForUITesting",
@@ -21,7 +21,7 @@ final class UndoUITests: XCTestCase {
         practiceRow.tap()
 
         app.buttons["More actions"].tap()
-        let firstClear = app.buttons["Clear current status"]
+        let firstClear = app.buttons["Clear current confirmation"]
         XCTAssertTrue(firstClear.waitForExistence(timeout: 2))
         firstClear.tap()
         let noPracticeRecord = NSPredicate(format: "value == %@", "No record yet. Easy fix.")
@@ -47,7 +47,7 @@ final class UndoUITests: XCTestCase {
         // visible status must work once, regardless of how many taps preceded it.
         boardRow.tap()
         app.buttons["More actions"].tap()
-        let clear = app.buttons["Clear current status"]
+        let clear = app.buttons["Clear current confirmation"]
         XCTAssertTrue(clear.waitForExistence(timeout: 2))
         clear.tap()
 

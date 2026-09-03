@@ -16,8 +16,8 @@ Tap once when you switch off the stove, lock the door, unplug the iron, or finis
 
 • Confirm common household checks in one tap
 • See when each item was last confirmed
-• Choose when a confirmation expires: after a duration, every day at 4:00 AM, when you come home, or manually
-• Undo an accidental tap
+• Choose when a confirmation resets: after a custom duration, at your chosen daily time, when you come home, or manually
+• Clear a current confirmation in one action
 • Add widgets for quick confirmation and at-a-glance status
 • Check recent confirmations from your Apple Watch
 

@@ -270,24 +270,32 @@ public enum Copy {
 
     // MARK: - Item settings
 
-    /// Day 2 introduces this editor, and only on Day 2. Named in the app's own
-    /// vocabulary — "tick", not "confirmation expiry" — because the row sits in a
-    /// menu of plain verb phrases and "forget this" could mean the item or its
-    /// history. Each option is a self-contained phrase, not a fragment completing
-    /// the header: sentence-completion breaks on two of the five in English and
-    /// on case agreement in pl/ru.
-    public static let confirmationExpiryTitle = t("How long a tick lasts")
-    public static let confirmationExpiryPrompt = t("When a tick stops counting")
+    /// "Confirmation" distinguishes the recorded check from the editable status
+    /// word, while "reset" names the outcome rather than the storage mechanism.
+    public static let confirmationExpiryTitle = t("Reset confirmation")
+    public static let confirmationExpiryPrompt =
+        t("When should this return to “No current record”?")
     public static let confirmationExpiryFooter =
-        t("Applies to future confirmations. The status currently on the board will not change.")
+        t("Takes effect the next time you confirm. It won’t change the confirmation already on the board.")
     public static let comingHomeExpiryUnavailable =
-        t("Coming-home expiry needs Always Location access.")
+        t("Set up Home and allow Always Location access to use this.")
+    public static let resetAutomatically = t("Automatically")
+    public static let resetManually = t("Manually")
+    public static let resetAfterDuration = t("After a duration")
+    public static let resetEveryDay = t("Every day at a chosen time")
+    public static let resetWhenHome = t("When I return home")
+    public static let resetWhenHomeDetail = t("24 hours at most")
+    public static let resetOnlyWhenCleared = t("Only when I clear it")
+    public static let manualResetDetail = t("It won’t expire automatically.")
+    public static let duration = t("Duration")
+    public static let resetTime = t("Reset time")
+    public static let setUpHome = t("Set up Home")
     public static let editItem = t("Edit item")
 
     /// The pointer to the editor. Belongs to the reset rule, not to the location
     /// branch it used to live in — someone who granted location needs it too.
     public static let resetRuleHint =
-        t("On the board, open an item's More menu → \"Edit item\" → \"How long a tick lasts\".")
+        t("On the board, open an item's More menu → \"Edit item\" → \"Reset confirmation\".")
 
     /// Archive, never delete. The footer is the promise that makes the button safe.
     public static let putItAway = t("Put it away")
@@ -303,7 +311,7 @@ public enum Copy {
     /// Board order is the widget's tap-target order, so it has to be editable.
     public static let moveUp = t("Move up")
     public static let moreActions = t("More actions")
-    public static let clearStatus = t("Clear current status")
+    public static let clearStatus = t("Clear current confirmation")
 
     public static let widgetHelpRow = t("How to add the widget")
 
@@ -313,7 +321,6 @@ public enum Copy {
     /// cover more than one thing from Control Center.
     public static let controlCenterHint =
         t("Also works from Control Center — add it again for each item you want to confirm from there.")
-    public static let neverWarning = t("A tick that never expires is a tick you can't trust.")
     public static let nameFieldTitle = t("Name")
     public static let nameFieldFooter = t("Keep it short — long names break the widget.")
     public static let nameAlreadyUsed = t("That name is already on your board or in Previously.")
@@ -331,10 +338,46 @@ public enum Copy {
         locale: Locale = .current
     ) -> String {
         switch rule {
-        case .onComingHome: t("When I come home (24 hours at most)")
-        case .afterHours(let n): t("\(n) hours after I confirm")
-        case .dailyAt(let hour): t("At \(clockHour(hour, locale: locale)) each day")
-        case .never: t("Never (only when I confirm again)")
+        case .onComingHome: resetWhenHome
+        case .afterHours(let n): t("\(durationLabel(n, locale: locale)) after I confirm")
+        case .dailyAt(let hour): t("Every day at \(clockHour(hour, locale: locale))")
+        case .never: resetOnlyWhenCleared
+        }
+    }
+
+    /// `Measurement` supplies the locale's unit and plural rules, rather than
+    /// assuming every language pluralises "hour" by appending an `s`.
+    public static func durationLabel(_ hours: Int, locale: Locale = .current) -> String {
+        Measurement(value: Double(hours), unit: UnitDuration.hours)
+            .formatted(.measurement(width: .wide).locale(locale))
+    }
+
+    public static func clockTime(_ hour: Int, locale: Locale = .current) -> String {
+        clockHour(hour, locale: locale)
+    }
+
+    /// A concrete outcome makes the clock rule comparable with a rolling
+    /// duration. `now` and `calendar` are injected so the preview is deterministic
+    /// in tests and respects the user's time zone and DST rules in the app.
+    public static func resetPreview(
+        _ rule: ResetRule,
+        now: Date = .now,
+        calendar: Calendar = .current,
+        locale: Locale = .current
+    ) -> String {
+        switch rule {
+        case .onComingHome:
+            return t("If you confirm now, it resets when you return home—or after 24 hours.")
+        case .never:
+            return t("If you confirm now, it stays current until you clear it.")
+        case .afterHours, .dailyAt:
+            guard let date = expiry(for: rule, confirmedAt: now, calendar: calendar) else {
+                return ""
+            }
+            let formatted = date.formatted(
+                .dateTime.weekday(.wide).hour().minute().locale(locale)
+            )
+            return t("If you confirm now, it resets \(formatted).")
         }
     }
 

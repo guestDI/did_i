@@ -85,7 +85,7 @@ public struct OnboardingFlags: Codable, Sendable, Equatable {
     /// Set when the user picks "Keep the timer". Never ask again — not on day 5,
     /// not on a settings banner, not with a "you're missing out" card.
     public var locationDeclined: Bool
-    /// The one-time "board → More → Edit item → How long a tick lasts" pointer.
+    /// The one-time "board → More → Edit item → Reset confirmation" pointer.
     public var settingsHintShown: Bool
     /// "I'm not home right now" — ask again after a quiet period, not on the
     /// very next open.
