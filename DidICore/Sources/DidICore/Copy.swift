@@ -325,6 +325,7 @@ public enum Copy {
     public static let moveUp = t("Move up")
     public static let moreActions = t("More actions")
     public static let clearStatus = t("Clear current confirmation")
+    public static let watchUnreachable = t("Couldn't reach iPhone — try again nearby.")
 
     public static let widgetHelpRow = t("How to add the widget")
 
