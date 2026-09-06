@@ -66,7 +66,11 @@ extension WatchSync: WCSessionDelegate {
         }
         guard let store = try? StoreIO.mutate({ store -> Store in
             WatchActionDecoding.apply(action, to: &store, at: .now)
-            return store
+            // `Store.usage` is documented "local only, never transmitted" — strip
+            // it from the reply so the watch never receives local-only counters.
+            var strippedStore = store
+            strippedStore.usage = Usage()
+            return strippedStore
         }) else {
             replyHandler(["ok": false])
             return
