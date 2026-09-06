@@ -38,6 +38,10 @@ final class WatchStore: NSObject {
         send(["action": "clear", "id": id.uuidString])
     }
 
+    func clearError() {
+        lastError = nil
+    }
+
     /// Every action round-trips through the phone — the watch has no App
     /// Group access and never guesses at the result. A failure (unreachable
     /// phone, or the phone's own write failing) surfaces as `lastError`

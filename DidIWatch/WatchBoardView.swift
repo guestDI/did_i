@@ -12,6 +12,13 @@ struct WatchBoardView: View {
         TimelineView(.periodic(from: .now, by: 30)) { context in
             List(watchStore.store.active) { item in
                 row(item, now: context.date)
+                    .swipeActions {
+                        if item.lastConfirmedAt != nil {
+                            Button(Copy.clearStatus) {
+                                watchStore.clear(id: item.id)
+                            }
+                        }
+                    }
             }
         }
         .navigationTitle("Did I?")
@@ -22,6 +29,14 @@ struct WatchBoardView: View {
             }
         }
         .onAppear { WatchStore.shared.start() }
+        .alert(
+            watchStore.lastError ?? "", isPresented: Binding(
+                get: { watchStore.lastError != nil },
+                set: { if !$0 { watchStore.clearError() } }
+            )
+        ) {
+            Button(Copy.ok) { watchStore.clearError() }
+        }
     }
 
     private func row(_ item: Item, now: Date) -> some View {
@@ -36,5 +51,7 @@ struct WatchBoardView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .contentShape(.rect)
+        .onTapGesture { watchStore.confirm(id: item.id) }
     }
 }
