@@ -13,6 +13,7 @@ final class WatchStore: NSObject {
     static let shared = WatchStore()
 
     private(set) var store = Store()
+    private(set) var lastError: String?
 
     func start() {
         #if DEBUG
@@ -27,6 +28,38 @@ final class WatchStore: NSObject {
         if let data = WCSession.default.receivedApplicationContext["store"] as? Data {
             apply(data)
         }
+    }
+
+    func confirm(id: UUID) {
+        send(["action": "confirm", "id": id.uuidString])
+    }
+
+    func clear(id: UUID) {
+        send(["action": "clear", "id": id.uuidString])
+    }
+
+    /// Every action round-trips through the phone — the watch has no App
+    /// Group access and never guesses at the result. A failure (unreachable
+    /// phone, or the phone's own write failing) surfaces as `lastError`
+    /// rather than a state that silently doesn't change.
+    private func send(_ message: [String: Any]) {
+        guard WCSession.default.activationState == .activated else {
+            lastError = Copy.watchUnreachable
+            return
+        }
+        WCSession.default.sendMessage(message, replyHandler: { [weak self] reply in
+            Task { @MainActor in
+                guard let self else { return }
+                if reply["ok"] as? Bool == true, let data = reply["store"] as? Data {
+                    self.apply(data)
+                    self.lastError = nil
+                } else {
+                    self.lastError = Copy.watchUnreachable
+                }
+            }
+        }, errorHandler: { [weak self] _ in
+            Task { @MainActor in self?.lastError = Copy.watchUnreachable }
+        })
     }
 
     #if DEBUG
