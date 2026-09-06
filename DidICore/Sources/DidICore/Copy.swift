@@ -277,6 +277,19 @@ public enum Copy {
         t("When should this return to “No current record”?")
     public static let confirmationExpiryFooter =
         t("Takes effect the next time you confirm. It won’t change the confirmation already on the board.")
+
+    /// Announces the rule actually governing the confirmation on the board right
+    /// now — which can be stale settings, not the current picker selection — so
+    /// `confirmationExpiryFooter`'s promise is visible where it matters instead of
+    /// only explained in the editor that made it.
+    public static func activeResetNote(_ rule: ResetRule, locale: Locale = .current) -> String {
+        switch rule {
+        case .onComingHome: t("Resets when you're home —")
+        case .afterHours(let n): t("Resets \(durationLabel(n, locale: locale)) after you confirmed —")
+        case .dailyAt(let hour): t("Resets at \(clockHour(hour, locale: locale)) —")
+        case .never: t("Resets only when you clear it —")
+        }
+    }
     public static let comingHomeExpiryUnavailable =
         t("Set up Home and allow Always Location access to use this.")
     public static let resetAutomatically = t("Automatically")

@@ -32,7 +32,15 @@ public struct BoardRow: View {
     }
 
     private var status: String {
-        statusOverride ?? Copy.status(for: state, item: item, isAway: isAway)
+        let base = statusOverride ?? Copy.status(for: state, item: item, isAway: isAway)
+        // The settings screen already tells you a rule change waits for the next
+        // confirmation; this is that promise made visible on the item it affects.
+        // Only surfaced while it's actually true, so the common case — active
+        // rule matches current settings — reads exactly as it always has.
+        guard statusOverride == nil, case .confirmed = state,
+              let activeRule = item.lastConfirmationRule, activeRule != item.resetRule
+        else { return base }
+        return "\(Copy.activeResetNote(activeRule)) \(base)"
     }
 
     public var body: some View {

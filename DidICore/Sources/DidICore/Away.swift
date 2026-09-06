@@ -47,6 +47,17 @@ public extension Store {
     }
 }
 
+/// Backstop dedup for `Notifications.reconcileLeavingHomeReminders`: pure so
+/// the "delivered counts as well as pending" logic is testable without
+/// `UNUserNotificationCenter`.
+public enum LeavingHomeReminders {
+    public static func missing(
+        due: [Item], alreadyQueued: Set<String>, identifierPrefix: String
+    ) -> [Item] {
+        due.filter { !alreadyQueued.contains(identifierPrefix + $0.id.uuidString) }
+    }
+}
+
 /// day-2's decay lesson. Fires on the first open where something has aged out —
 /// not on a schedule, and not on "day 2" literally. If they do not open the app
 /// for a week, it fires on the day they do.

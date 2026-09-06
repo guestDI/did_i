@@ -96,22 +96,18 @@ final class LocationMonitor: NSObject {
     /// reason.
     private func regions(for home: HomeLocation) -> [CLCircularRegion] {
         let center = CLLocationCoordinate2D(latitude: home.latitude, longitude: home.longitude)
-        let radius = Self.clampedRadius(home.radius)
-
-        let outer = CLCircularRegion(center: center, radius: radius, identifier: regionID)
-        outer.notifyOnEntry = true
-        outer.notifyOnExit = true
-
-        let innerRadius = max(radius * Self.innerRadiusFactor, HomeLocation.radiusRange.lowerBound)
-        guard innerRadius < radius else { return [outer] }
-        let inner = CLCircularRegion(center: center, radius: innerRadius, identifier: innerRegionID)
-        inner.notifyOnEntry = false
-        inner.notifyOnExit = true
-        return [outer, inner]
-    }
-
-    private static func clampedRadius(_ radius: Double) -> Double {
-        min(max(radius, HomeLocation.radiusRange.lowerBound), HomeLocation.radiusRange.upperBound)
+        return Geofence.rings(
+            radius: home.radius,
+            radiusRange: HomeLocation.radiusRange,
+            innerFactor: Self.innerRadiusFactor,
+            outerID: regionID,
+            innerID: innerRegionID
+        ).map { ring in
+            let region = CLCircularRegion(center: center, radius: ring.radius, identifier: ring.identifier)
+            region.notifyOnEntry = ring.notifyOnEntry
+            region.notifyOnExit = ring.notifyOnExit
+            return region
+        }
     }
 
     // MARK: - Authorization, in two steps
@@ -158,8 +154,9 @@ final class LocationMonitor: NSObject {
     /// True while a boundary callback is more likely a registration echo than a
     /// real crossing. See `monitoringStartedAt`.
     private var withinRegistrationGrace: Bool {
-        guard let started = monitoringStartedAt else { return false }
-        return Date.now.timeIntervalSince(started) < Self.registrationGraceWindow
+        Geofence.withinRegistrationGrace(
+            startedAt: monitoringStartedAt, now: .now, window: Self.registrationGraceWindow
+        )
     }
 
     func stopMonitoring() {

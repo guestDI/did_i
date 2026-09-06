@@ -142,7 +142,9 @@ enum Notifications {
 
         let queued = await Set(center.pendingNotificationRequests().map(\.identifier))
             .union(center.deliveredNotifications().map(\.request.identifier))
-        let missing = due.filter { !queued.contains(leavingHomePrefix + $0.id.uuidString) }
+        let missing = LeavingHomeReminders.missing(
+            due: due, alreadyQueued: queued, identifierPrefix: leavingHomePrefix
+        )
         guard !missing.isEmpty else { return }
 
         await scheduleLeavingHomeReminders(for: missing)
