@@ -1215,6 +1215,17 @@ rule, and its line while keeping history for usage insights. The practice screen
 now shows the board's More actions affordance and an explicit Done button; its
 former tap-anywhere/auto-advance behavior competed with the first clear attempt.
 
+**Coming-home resets invalidate the complete widget timeline, with a foreground
+backstop.** A physical-device arrival correctly wrote `lastEnteredHomeAt` and the
+app consequently rendered the item as unknown, while the Home Screen widget kept
+showing the pre-arrival confirmation. The arrival path had recently changed from
+`reloadAllTimelines()` to the targeted AppIntent-widget reload; restore the broad
+invalidation for this externally observed state change. The app has only one
+regular WidgetKit kind, so this adds no unrelated widget work. `BoardView.onOpen`
+also invalidates the widget after reloading the shared store. WidgetKit may defer
+a budgeted background request, but a foreground app reload is outside that budget,
+so opening the app can no longer leave the two surfaces visibly contradictory.
+
 The practice footer no longer promises an overnight reset for the Iron and
 Straightener presets, which use 12-hour rules. `Old confirmations expire
 automatically` is true for every default. Coming-home copy was also completed

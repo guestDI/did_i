@@ -157,6 +157,15 @@ struct BoardView: View {
         do {
             try StoreIO.mutate { $0.recordBoardView(at: .now) }
             reload()
+            // A region-entry wake can update the shared store while WidgetKit
+            // defers its background reload. Foreground reloads are outside the
+            // normal widget budget, so reconcile here as a backstop: once the
+            // app shows the coming-home reset, the widget must not keep showing
+            // a timeline built from the pre-arrival store.
+            WidgetCenter.shared.reloadAllTimelines()
+            if #available(iOS 18.0, *) {
+                ControlCenter.shared.reloadControls(ofKind: WidgetKind.control)
+            }
         } catch {
             reportSaveError()
         }

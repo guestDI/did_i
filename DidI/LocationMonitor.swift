@@ -281,7 +281,14 @@ extension LocationMonitor: CLLocationManagerDelegate {
             } catch {
                 return
             }
-            WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+            // This state change invalidates every precomputed entry already held
+            // by WidgetKit. A targeted AppIntent-widget reload issued from this
+            // background region wake was observed leaving the existing board
+            // timeline in place, even though the shared store had changed and
+            // the app rendered the arrival correctly. There is only one regular
+            // WidgetKit kind in this app, so use the bundle-wide invalidation
+            // that previously kept the board in sync.
+            WidgetCenter.shared.reloadAllTimelines()
             if #available(iOS 18.0, *) {
                 ControlCenter.shared.reloadControls(ofKind: WidgetKind.control)
             }
