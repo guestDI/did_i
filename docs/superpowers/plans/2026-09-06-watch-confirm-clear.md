@@ -201,6 +201,13 @@ In `DidI/WatchSync.swift`, inside the `extension WatchSync: WCSessionDelegate` b
     /// arrives here to actually apply. Runs through the same `StoreIO.mutate`
     /// the app and widget already share — this is just one more caller of
     /// it, on the phone process, so no new race is introduced.
+    ///
+    /// Stays fully `nonisolated` rather than hopping to `@MainActor`:
+    /// `StoreIO` and `WidgetCenter` need no actor, and under Swift 6 strict
+    /// concurrency, capturing the task-isolated `replyHandler` into a
+    /// `Task { @MainActor in }` closure is flagged as a data race — calling
+    /// it directly, synchronously, in this method's own isolation avoids
+    /// that entirely.
     nonisolated func session(
         _ session: WCSession, didReceiveMessage message: [String: Any],
         replyHandler: @escaping ([String: Any]) -> Void
@@ -209,21 +216,19 @@ In `DidI/WatchSync.swift`, inside the `extension WatchSync: WCSessionDelegate` b
             replyHandler(["ok": false])
             return
         }
-        Task { @MainActor in
-            guard let store = try? StoreIO.mutate({ store -> Store in
-                WatchActionDecoding.apply(action, to: &store, at: .now)
-                return store
-            }) else {
-                replyHandler(["ok": false])
-                return
-            }
-            WidgetCenter.shared.reloadAllTimelines()
-            guard let data = try? StoreIO.encoded(store) else {
-                replyHandler(["ok": false])
-                return
-            }
-            replyHandler(["ok": true, "store": data])
+        guard let store = try? StoreIO.mutate({ store -> Store in
+            WatchActionDecoding.apply(action, to: &store, at: .now)
+            return store
+        }) else {
+            replyHandler(["ok": false])
+            return
         }
+        WidgetCenter.shared.reloadAllTimelines()
+        guard let data = try? StoreIO.encoded(store) else {
+            replyHandler(["ok": false])
+            return
+        }
+        replyHandler(["ok": true, "store": data])
     }
 ```
 

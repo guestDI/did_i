@@ -31,11 +31,6 @@ final class LocationMonitor: NSObject {
     /// floor: under 50m, ordinary GPS drift indoors starts producing false exits.
     private static let innerRadiusFactor = 0.66
 
-    /// Held across the exit wake so `usernotificationsd` has time to acknowledge
-    /// the reminder before iOS is free to suspend the process. See
-    /// `beginLeavingHomeWake`.
-    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
-
     /// Called once a one-shot fix arrives, for "Set as home".
     private var pendingHomeCapture: ((CLLocationCoordinate2D?) -> Void)?
     /// Called when the authorization dialog resolves.
@@ -216,18 +211,29 @@ extension LocationMonitor: CLLocationManagerDelegate {
     /// `Notifications.scheduleLeavingHomeReminders`) is what the assertion is
     /// held *for*.
     private func beginLeavingHomeWake() {
-        endBackgroundTaskIfNeeded()
-        backgroundTask = UIApplication.shared.beginBackgroundTask(
+        // Local to this call, not a shared instance property: the inner and
+        // outer ring can both exit for the same departure, and two overlapping
+        // invocations sharing one identifier could end each other's background
+        // task early — UIApplication does not tolerate that and aborts the
+        // process the next time it is foregrounded.
+        var taskID: UIBackgroundTaskIdentifier = .invalid
+        taskID = UIApplication.shared.beginBackgroundTask(
             withName: "leaving-home-exit"
-        ) { [weak self] in
+        ) {
             // Time ran out. Release the assertion rather than being killed
             // outright — whatever notification work is still in flight loses
             // its guarantee, but the process survives to try again next time.
-            Task { @MainActor in self?.endBackgroundTaskIfNeeded() }
+            UIApplication.shared.endBackgroundTask(taskID)
+            taskID = .invalid
         }
 
-        Task { @MainActor [weak self] in
-            defer { self?.endBackgroundTaskIfNeeded() }
+        Task { @MainActor in
+            defer {
+                if taskID != .invalid {
+                    UIApplication.shared.endBackgroundTask(taskID)
+                    taskID = .invalid
+                }
+            }
 
             // One store access for both the write and the read that used to
             // follow it: `leftHome` and the due-item list are computed inside
@@ -257,14 +263,11 @@ extension LocationMonitor: CLLocationManagerDelegate {
             // Notification before widget: the widget can be a few minutes stale
             // for free, the reminder cannot.
             await Notifications.scheduleLeavingHomeReminders(for: due)
-            WidgetCenter.shared.reloadAllTimelines()
+            WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+            if #available(iOS 18.0, *) {
+                ControlCenter.shared.reloadControls(ofKind: WidgetKind.control)
+            }
         }
-    }
-
-    private func endBackgroundTaskIfNeeded() {
-        guard backgroundTask != .invalid else { return }
-        UIApplication.shared.endBackgroundTask(backgroundTask)
-        backgroundTask = .invalid
     }
 
     /// Entry expires coming-home confirmations and clears the "can't check right now" mutes.
@@ -278,7 +281,10 @@ extension LocationMonitor: CLLocationManagerDelegate {
             } catch {
                 return
             }
-            WidgetCenter.shared.reloadAllTimelines()
+            WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.board)
+            if #available(iOS 18.0, *) {
+                ControlCenter.shared.reloadControls(ofKind: WidgetKind.control)
+            }
         }
     }
 }
