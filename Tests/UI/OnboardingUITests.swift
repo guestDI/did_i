@@ -95,6 +95,22 @@ final class OnboardingUITests: XCTestCase {
     }
 
     @MainActor
+    func testColdLaunchWidgetNudgeOpensTheWalkthrough() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-appStoreScreenshotBoard",
+            "-openWalkthroughForUITesting",
+        ] + localeArguments
+        app.launch()
+
+        XCTAssertTrue(
+            app.staticTexts["Long-press an empty part of your home screen."]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertFalse(app.alerts["Couldn't open your board"].exists)
+    }
+
+    @MainActor
     private func freshApp() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-resetStoreForUITesting"] + localeArguments

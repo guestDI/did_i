@@ -77,13 +77,6 @@ final class FaceSnapshotTests: XCTestCase {
         }
     }
 
-    /// The longest line in the pool, to catch the two-line overflow case.
-    func worstCaseFresh() -> Item {
-        var item = fixture("The space heater", word: "Off", symbol: "flame", state: .fresh)
-        item.confirmationLine = "Got it. Nothing is on fire, probably because of you."
-        return item
-    }
-
     func board() -> ([Item], [UUID: ItemState]) {
         let items = [
             fixture("Front door", word: "Locked", symbol: "lock", state: .fresh, order: 0),
@@ -112,17 +105,6 @@ final class FaceSnapshotTests: XCTestCase {
                     named: "small-\(fixture.rawValue)-\(schemeName)"
                 )
             }
-        }
-    }
-
-    func testSmallFaceWithTheLongestLineInThePool() {
-        let item = worstCaseFresh()
-        for (scheme, schemeName) in schemes {
-            assertSnapshot(
-                of: homeScreen(SmallFace(item: item, state: Fixture.fresh.state)),
-                size: Self.small, scheme: scheme,
-                named: "small-longest-line-\(schemeName)"
-            )
         }
     }
 

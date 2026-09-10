@@ -76,9 +76,6 @@ final class WatchStore: NSObject {
         var store = Store(items: items)
         store.confirm(id: items[0].id, at: now.addingTimeInterval(-5 * 60))
         store.confirm(id: items[1].id, at: now.addingTimeInterval(-2 * 3600))
-        for index in 0..<2 {
-            store.items[index].confirmationLine = nil
-        }
         return store
     }
     #endif

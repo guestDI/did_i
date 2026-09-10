@@ -203,7 +203,7 @@ Constraints to respect:
 - It cannot assume the app is running or has ever run in this session.
 - **It cannot fire a custom haptic.** The widget button gets the system's own press feedback. If the "satisfying thunk" turns out to be load-bearing for the product feel, that is a finding to make in week one, not week six — see §9.
 
-Long-press to undo is not available inside a widget button; undo lives in the app, and the widget's confirmation is reversible only by opening the app. Acceptable, and worth confirming against the Day 0 copy which currently promises "hold to undo" on the practice screen (that promise is about the in-app card, so it stands).
+Long-press to clear is not available inside a widget button; clearing lives in the app's per-item More menu, and the widget's confirmation is reversible only by opening the app. The in-app status surface is inert and uses a separate labelled Confirm control, so inspecting a row cannot create a record.
 
 ---
 

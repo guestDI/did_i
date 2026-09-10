@@ -124,7 +124,7 @@ public struct Store: Codable, Sendable {
     }
 
     /// Reverses the most recent confirmation. The promise on the Day 0 practice
-    /// screen — "hold to undo" — is about the in-app card, and this is it.
+    /// screen is exposed through the in-app More menu; widgets remain write-only.
     ///
     /// Falls back to the previous confirmation if there is one, otherwise to no
     /// record at all. The joke is dropped rather than restored: the line that went

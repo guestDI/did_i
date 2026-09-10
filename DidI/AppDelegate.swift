@@ -7,8 +7,28 @@ import DidICore
 /// during launch**, before any `await`, or the event is dropped. In SwiftUI that
 /// means an `@UIApplicationDelegateAdaptor`, not a `.task` modifier.
 final class AppDelegate: NSObject, UIApplicationDelegate {
-    /// Set when a notification tap asked for the widget walkthrough.
-    static let openWalkthrough = Notification.Name("DidIOpenWalkthrough")
+    enum NotificationDestination: Equatable {
+        case board
+        case walkthrough
+    }
+
+    static let notificationDestinationRequested =
+        Notification.Name("DidINotificationDestinationRequested")
+
+    /// Notification responses can arrive before SwiftUI has mounted `BoardView`.
+    /// Keep the route until a live board consumes it; the broadcast alone is not
+    /// the source of truth.
+    @MainActor private static var pendingNotificationDestination: NotificationDestination?
+
+    @MainActor static func requestNotificationDestination(_ destination: NotificationDestination) {
+        pendingNotificationDestination = destination
+        NotificationCenter.default.post(name: notificationDestinationRequested, object: nil)
+    }
+
+    @MainActor static func consumeNotificationDestination() -> NotificationDestination? {
+        defer { pendingNotificationDestination = nil }
+        return pendingNotificationDestination
+    }
 
     func application(
         _ application: UIApplication,
@@ -35,9 +55,8 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         let wantsWalkthrough =
             response.notification.request.content.userInfo[Notifications.walkthroughKey]
                 as? Bool == true
-        guard wantsWalkthrough else { return }
         await MainActor.run {
-            NotificationCenter.default.post(name: Self.openWalkthrough, object: nil)
+            Self.requestNotificationDestination(wantsWalkthrough ? .walkthrough : .board)
         }
     }
 

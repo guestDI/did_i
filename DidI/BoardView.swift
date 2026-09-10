@@ -130,10 +130,8 @@ struct BoardView: View {
         } message: {
             Text(Copy.putItAwayFooter)
         }
-        .onReceive(NotificationCenter.default.publisher(for: AppDelegate.openWalkthrough)) { _ in
-            // The nudge deep-links to the install instructions, not here.
-            navigated = true
-            showingWalkthrough = true
+        .onReceive(NotificationCenter.default.publisher(for: AppDelegate.notificationDestinationRequested)) { _ in
+            openPendingNotification()
         }
         .sheet(item: $dayTwo) { step in
             DayTwoFlow(step: step) {
@@ -146,7 +144,9 @@ struct BoardView: View {
         } message: {
             Text(Copy.saveFailedBody)
         }
-        .task { await onOpen() }
+        .task {
+            if !openPendingNotification() { await onOpen() }
+        }
     }
 
     /// day-2 fires on the first open where something has aged out — not on a
@@ -154,6 +154,7 @@ struct BoardView: View {
     private func onOpen() async {
         await Notifications.reconcileWidgetNudge()
         await Notifications.reconcileLeavingHomeReminders()
+        guard !openPendingNotification() else { return }
         do {
             try StoreIO.mutate { $0.recordBoardView(at: .now) }
             reload()
@@ -169,6 +170,11 @@ struct BoardView: View {
         } catch {
             reportSaveError()
         }
+
+        // A cold-launch response may arrive during the awaits above. It wins over
+        // automatic education and repeat-use prompts, preventing two sheets from
+        // racing to present on the same frame.
+        guard !openPendingNotification() else { return }
 
         let aged = DecayLesson.agedOut(in: store, now: .now)
         if !aged.isEmpty {
@@ -198,6 +204,17 @@ struct BoardView: View {
         }
         // Housekeeping last, and only ever one prompt per open.
         staleItem = StaleItem.needingArchiveOffer(in: store, now: .now)
+    }
+
+    @discardableResult
+    private func openPendingNotification() -> Bool {
+        guard let destination = AppDelegate.consumeNotificationDestination() else { return false }
+        navigated = true
+        dayTwo = nil
+        if destination == .walkthrough, !showingWalkthrough {
+            showingWalkthrough = true
+        }
+        return true
     }
 
     /// A visit spent renaming an item or setting home was not a look at the stove.

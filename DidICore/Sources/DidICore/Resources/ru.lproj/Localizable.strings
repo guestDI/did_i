@@ -45,6 +45,9 @@
 "Add" = "Добавить";
 "Try it once" = "Проверь один раз";
 "This is the whole app. There's no step four." = "Вот и всё приложение. Четвёртого шага нет.";
+"Check it, then confirm" = "Проверьте, затем подтвердите";
+"After you've checked it, tap Confirm. That's the whole app." = "После проверки нажмите «Подтвердить». Это и есть всё приложение.";
+"Confirm" = "Подтвердить";
 "Hold to undo. Everything resets overnight." = "Удерживай, чтобы отменить. Ночью всё сбрасывается.";
 "logged just now" = "только что записано";
 "Put it where you'll look" = "Поставь туда, куда посмотришь";
@@ -72,6 +75,7 @@
 "Old checkmarks lie. A green tick from yesterday tells you nothing about today, so we expire them overnight and start fresh." = "Старые галочки врут. Зелёная галочка со вчера ничего не говорит о сегодня, поэтому ночью мы их сбрасываем и начинаем заново.";
 "Nothing went wrong. This is the app working." = "Ничего не сломалось. Приложение работает именно так.";
 "Makes sense" = "Логично";
+"Set up automatic reset" = "Настроить автоматический сброс";
 "Want it to reset when you actually leave?" = "Сбрасывать, когда ты действительно уходишь?";
 "Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it's never sent to a server." = "Вместо фиксированного времени мы можем очищать подтверждения, когда ты уходишь из дома — тогда зелёная галочка всегда означает «после ухода». Для этого нужна геопозиция, но она никогда не отправляется на сервер.";
 "Want it to reset when you're back home?" = "Сбрасывать, когда ты вернёшься домой?";

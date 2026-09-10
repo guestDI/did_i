@@ -1304,3 +1304,28 @@ the separate stack-popping `undo`. User-facing labels, accessibility actions,
 onboarding, UI tests and App Store notes now consistently say “Clear current
 confirmation.” Historical `undo` storage logic remains for compatibility but is
 not presented as the behavior of the board action.
+
+## Trust-first confirmation and notification routing pass
+
+**Looking is no longer an action.** The app board and Day 0 card now keep the
+status surface inert and put confirmation in a visibly labelled trailing control.
+The menu remains the visible recovery route for clearing a record. This trades a
+little of the departure-board illusion for the more important guarantee that a
+user cannot create evidence by tapping a row to inspect it.
+
+**Confirmation copy never replaces confirmation evidence.** Stored humour still
+drives the post-write VoiceOver announcement, and onboarding keeps its one calm
+success line, but every confirmed row now shows the status word and elapsed time
+for its entire current window. The App Store fixture no longer has to manufacture
+this clearer state by removing its stored confirmation line.
+
+**The decay lesson is dismissible and location is opt-in.** `Makes sense` returns
+straight to the board, swipe-dismiss is accepted and remembered, and the separate
+`Set up automatic reset` action is the only path that continues into location.
+The later permission/setup steps remain explicit and non-dismissible once chosen.
+
+**Notification taps survive cold launch.** The delegate stores a pending board or
+walkthrough destination until `BoardView` consumes it. A notification-open route
+wins over Day 2 and repeat-use prompts, so a cold launch cannot lose the transient
+broadcast or race two sheets onto the same presentation host. Leaving-home
+notifications open the board; the one-time widget nudge opens its walkthrough.

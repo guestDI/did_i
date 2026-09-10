@@ -32,7 +32,11 @@ Shown as a sheet over the main screen, not a full-screen takeover. The item list
 **Footer, muted**
 > Nothing went wrong. This is the app working.
 
-**Button:** `Makes sense`
+**Buttons:** `Makes sense` / `Set up automatic reset`
+
+`Makes sense` dismisses the sheet and returns to the board. The sheet may also be
+swiped away; either action marks the lesson as shown so it never nags. Only
+`Set up automatic reset` continues to the location explanation below.
 
 That last line matters. Waking up to an "unknown" state reads as failure — as though the app is telling you that you left the stove on. It isn't, and it can't know that. Say so.
 

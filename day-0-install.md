@@ -74,23 +74,23 @@ The user is never asked about this. See Day 2 for when the reset rule surfaces.
 ## Screen 2 — the practice tap
 
 **Title**
-> Try it once
+> Check it, then confirm
 
 **Subtitle**
-> This is the whole app. There's no step four.
+> After you've checked it, tap Confirm. That's the whole app.
 
-Then: the live item card, in its unknown state, exactly as it will look on the main screen.
+Then: the live item card, in its unknown state, exactly as it will look on the main screen. The status is inert; a labelled `Confirm` control beside it records the check.
 
 **Footer, 11px, muted**
 > Use More actions to clear it. Old confirmations expire automatically.
 
 ### Behaviour
 
-- The tap fires the real haptic (`UIImpactFeedbackGenerator`, heavy) and writes a real entry to the store. This is not a simulation.
+- The Confirm tap fires the real haptic (`UIImpactFeedbackGenerator`, heavy) and writes a real entry to the store. This is not a simulation, so the copy explicitly tells the user to check the item first.
 - Card animates to confirmed green, shows "logged just now", and a random confirmation line appears below it.
 - Show the same More actions control as the board so the first confirmation can
-  be cleared immediately. Advance only from the explicit Done button; taps on
-  the card must not steal or race the clear action.
+  be cleared immediately. Advance only from the explicit Done button. The status
+  card itself never records or clears anything.
 
 ### Why this screen exists
 

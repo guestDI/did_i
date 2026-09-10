@@ -28,15 +28,14 @@ private func store(_ rule: ResetRule = .dailyAt(hour: 4)) -> Store {
     #expect(s.lastConfirmationLine == nil)
 }
 
-@Test func theStoredLineIsStableAcrossReadsOfTheSameConfirmation() {
-    // The widget renders one confirmation at many timeline entries; the joke
-    // must not reshuffle underneath it.
+@Test func confirmationStatusAlwaysShowsItsAgeInsteadOfTheStoredLine() {
     var s = store()
     s.confirm(id: s.items[0].id, at: at("2026-08-11 09:00:00"), calendar: utc)
     let item = s.items[0]
     let first = Copy.status(for: .confirmed(age: 60, freshness: .fresh), item: item)
     let second = Copy.status(for: .confirmed(age: 600, freshness: .fresh), item: item)
-    #expect(first == second)
+    #expect(first == "Off, 1 minute ago.")
+    #expect(second == "Off, 10 minutes ago.")
 }
 
 @Test func thirdConfirmationInOneDayEscalates() {

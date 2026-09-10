@@ -56,8 +56,13 @@ struct DayTwoFlow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Palette.ink)
         .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.hidden)
-        .interactiveDismissDisabled()
+        .presentationDragIndicator(isLesson ? .visible : .hidden)
+        .interactiveDismissDisabled(!isLesson)
+        .onDisappear {
+            // A swipe is a valid answer to the one-time explanation. Without this,
+            // making the lesson dismissible would make it reappear on every open.
+            if isLesson { _ = mark({ $0.flags.decayLessonShown = true }) }
+        }
         .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
             Button(Copy.ok) {}
         } message: {
@@ -83,10 +88,21 @@ struct DayTwoFlow: View {
                 .padding(.top, 16)
             Spacer(minLength: 20)
             Button(Copy.Lesson.button) {
-                if mark({ $0.flags.decayLessonShown = true }) { step = .locationAsk }
+                guard mark({ $0.flags.decayLessonShown = true }) else { return }
+                onFinished()
             }
             .buttonStyle(PrimaryButton())
+            Button(Copy.Lesson.setUpAutomaticReset) {
+                if mark({ $0.flags.decayLessonShown = true }) { step = .locationAsk }
+            }
+            .buttonStyle(SecondaryButton())
+            .padding(.top, 4)
         }
+    }
+
+    private var isLesson: Bool {
+        if case .lesson = step { return true }
+        return false
     }
 
     /// Only meaningful when everything that aged out shares a nightly hour.

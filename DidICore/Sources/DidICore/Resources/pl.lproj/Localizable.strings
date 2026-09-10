@@ -45,6 +45,9 @@
 "Add" = "Dodaj";
 "Try it once" = "Sprawdź raz";
 "This is the whole app. There's no step four." = "To cała aplikacja. Czwartego kroku nie ma.";
+"Check it, then confirm" = "Sprawdź, potem potwierdź";
+"After you've checked it, tap Confirm. That's the whole app." = "Po sprawdzeniu stuknij „Potwierdź”. To cała aplikacja.";
+"Confirm" = "Potwierdź";
 "Hold to undo. Everything resets overnight." = "Przytrzymaj, aby cofnąć. Nocą wszystko się resetuje.";
 "logged just now" = "zapisano przed chwilą";
 "Put it where you'll look" = "Umieść tam, gdzie spojrzysz";
@@ -72,6 +75,7 @@
 "Old checkmarks lie. A green tick from yesterday tells you nothing about today, so we expire them overnight and start fresh." = "Stare znaczniki kłamią. Zielony znacznik z wczoraj nic nie mówi o dziś, więc nocą je wygaszamy i zaczynamy od nowa.";
 "Nothing went wrong. This is the app working." = "Nic się nie zepsuło. Aplikacja działa właśnie tak.";
 "Makes sense" = "Ma sens";
+"Set up automatic reset" = "Ustaw automatyczne resetowanie";
 "Want it to reset when you actually leave?" = "Resetować dopiero, gdy naprawdę wyjdziesz?";
 "Instead of a fixed time, we can clear your confirmations when you leave home — so a green tick always means \"since I left\". That needs your location, and it's never sent to a server." = "Zamiast o stałej porze możemy wyczyścić potwierdzenia, gdy wyjdziesz z domu — wtedy zielony znacznik zawsze znaczy „od wyjścia”. Potrzebna jest lokalizacja, ale nigdy nie jest wysyłana na serwer.";
 "Want it to reset when you're back home?" = "Resetować, gdy wrócisz do domu?";

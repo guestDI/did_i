@@ -60,8 +60,8 @@ public enum Copy {
 
     // MARK: - Item status
 
-    /// day-2 tone rules. Humour is a reward for being fine, never a comment on
-    /// being uncertain, so the joke pool reaches only `.fresh`.
+    /// The board always shows the evidence the user came for. Confirmation humour
+    /// is still selected and announced at write time, but never replaces the age.
     ///
     /// `isAway` defaults to `false` because the away line — "No record *since you
     /// left*" — presupposes a geofence that knows they left. With no home set that
@@ -74,9 +74,7 @@ public enum Copy {
         switch state {
         case .unknown:
             isAway ? unknownAway : unknownAtHome
-        case .confirmed(let age, .fresh):
-            item.confirmationLine ?? confirmedAgo(word: item.word, age: age)
-        case .confirmed(let age, .aging):
+        case .confirmed(let age, _):
             confirmedAgo(word: item.word, age: age)
         }
     }
@@ -141,8 +139,8 @@ public enum Copy {
     }
 
     public enum Screen2 {
-        public static let title = t("Try it once")
-        public static let subtitle = t("This is the whole app. There's no step four.")
+        public static let title = t("Check it, then confirm")
+        public static let subtitle = t("After you've checked it, tap Confirm. That's the whole app.")
         public static let footer = t("Use More actions to clear it. Old confirmations expire automatically.")
         public static let loggedJustNow = t("logged just now")
     }
@@ -180,6 +178,7 @@ public enum Copy {
     }
 
     public static let confirmHint = t("Double tap to log")
+    public static let confirmNow = t("Confirm")
 
     /// The small widget's header row is not the confirm button — it opens the app.
     /// Sighted users get that from the layout; VoiceOver needs it said.
@@ -213,6 +212,7 @@ public enum Copy {
         /// Waking up to "unknown" reads as failure. It isn't, and it can't know.
         public static let footer = t("Nothing went wrong. This is the app working.")
         public static let button = t("Makes sense")
+        public static let setUpAutomaticReset = t("Set up automatic reset")
     }
 
     public enum LocationAsk {

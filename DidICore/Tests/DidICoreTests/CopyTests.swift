@@ -63,17 +63,18 @@ import Foundation
 
 // MARK: - Tone rules (day-2)
 
-@Test func jokesReachFreshItemsOnly() {
+@Test func storedHumourNeverReplacesConfirmationEvidence() {
     var stove = item(confirmedAt: at("2026-08-11 09:00:00"))
     stove.confirmationLine = "Yep. Consider it handled."
 
     let fresh = Copy.status(
         for: .confirmed(age: 60, freshness: .fresh), item: stove)
-    #expect(fresh == "Yep. Consider it handled.")
+    #expect(fresh == "Off, 1 minute ago.")
 
     let aging = Copy.status(
         for: .confirmed(age: 6 * 3600, freshness: .aging), item: stove)
     #expect(aging == "Off, 6 hours ago.")
+    #expect(!Copy.general.contains(fresh))
     #expect(!Copy.general.contains(aging))
 }
 

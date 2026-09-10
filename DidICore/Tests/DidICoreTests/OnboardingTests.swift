@@ -14,8 +14,8 @@ import Foundation
 }
 
 @Test func screenTwoCopyIsVerbatim() {
-    #expect(Copy.Screen2.title == "Try it once")
-    #expect(Copy.Screen2.subtitle == "This is the whole app. There's no step four.")
+    #expect(Copy.Screen2.title == "Check it, then confirm")
+    #expect(Copy.Screen2.subtitle == "After you've checked it, tap Confirm. That's the whole app.")
     #expect(Copy.Screen2.footer ==
         "Use More actions to clear it. Old confirmations expire automatically.")
 }
