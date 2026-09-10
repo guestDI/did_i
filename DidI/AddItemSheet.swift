@@ -19,14 +19,18 @@ struct AddItemSheet: View {
     @FocusState private var focused: Bool
 
     /// Chips they do not already have, on the board or in the archive.
-    private var available: [Chip] { Chip.available(excluding: store.items) }
+    private var workspaceItems: [Item] {
+        store.items.filter { $0.workspaceID == store.selectedWorkspaceID }
+    }
+
+    private var available: [Chip] { Chip.available(excluding: workspaceItems) }
 
     private var trimmedCustom: String {
         custom.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private var customNameIsAvailable: Bool {
-        Item.isNameAvailable(trimmedCustom, among: store.items)
+        Item.isNameAvailable(trimmedCustom, among: workspaceItems)
     }
 
     private var canAddCustom: Bool {

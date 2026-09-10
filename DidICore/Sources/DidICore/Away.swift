@@ -39,7 +39,7 @@ public extension Store {
     /// due-check is itself reacting to, the way `leftHome` used to race an
     /// exit-based reset.
     func needingLeavingHomeReminder(now: Date, calendar: Calendar = .current) -> [Item] {
-        active.filter {
+        allActiveItems.filter {
             $0.leavingHomeReminder == true
                 && $0.mutedUntilHome != true
                 && state($0, now: now, calendar: calendar) == .unknown

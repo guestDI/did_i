@@ -77,6 +77,7 @@ Store lives in the group container root. It is included in iCloud device backup 
 ```swift
 struct Item: Codable, Identifiable, Sendable {
     let id: UUID
+    var workspaceID: UUID        // every item belongs to exactly one board
     var name: String              // max 24 chars, widget-safe
     var symbol: String            // SF Symbol name
     var resetRule: ResetRule
@@ -96,6 +97,8 @@ enum ResetRule: Codable, Sendable, Equatable {
 
 struct Store: Codable, Sendable {
     var items: [Item]
+    var workspaces: [Workspace]
+    var selectedWorkspaceID: UUID
     var home: HomeLocation?
     var lastLeftHomeAt: Date?
     var lastEnteredHomeAt: Date?
@@ -103,6 +106,12 @@ struct Store: Codable, Sendable {
     var checkCounts: [UUID: [Date]]   // for the paranoia counter, trimmed to 30 days
 }
 ```
+
+`Workspace` is an organizational board (`id`, `name`, creation/archive dates,
+and order), not a location. Each workspace has the same six-active-item cap.
+The saved Home coordinate remains global and applies to opted-in items in every
+workspace. Legacy stores decode into a deterministic default Home workspace so
+existing item and widget identifiers remain stable.
 
 `confirmations` also carries aligned rule snapshots for Undo. Older store files
 decode with no snapshots; the old configured rule is captured before the first

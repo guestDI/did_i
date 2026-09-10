@@ -25,7 +25,7 @@ struct SettingsView: View {
     /// out required opening an item's editor before — the one place nobody looks
     /// once the toggle is set and believed.
     private var remindersCannotFire: Bool {
-        !notificationsAllowed && store.active.contains { $0.leavingHomeReminder == true }
+        !notificationsAllowed && store.allActiveItems.contains { $0.leavingHomeReminder == true }
     }
 
     private var locationRevoked: Bool {
@@ -48,6 +48,17 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    NavigationLink {
+                        WorkspaceSettingsView(store: $store)
+                    } label: {
+                        LabeledContent(
+                            Copy.Workspaces.section,
+                            value: store.selectedWorkspace.name
+                        )
+                    }
+                }
+
                 Section {
                     if store.home == nil {
                         // Dead text before this: the only route to home setup was

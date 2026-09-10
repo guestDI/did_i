@@ -1329,3 +1329,22 @@ walkthrough destination until `BoardView` consumes it. A notification-open route
 wins over Day 2 and repeat-use prompts, so a cold launch cannot lose the transient
 broadcast or race two sheets onto the same presentation host. Leaving-home
 notifications open the board; the one-time widget nudge opens its walkthrough.
+## Workspaces
+
+**Workspaces are boards, not locations.** A person can create Home, Work or Home
+2 and keep six active items in each, but there is still one global saved Home
+coordinate. Arrival resets and leaving-home reminders inspect opted-in items
+across every active workspace. Multiple physical geofences remain out of scope.
+
+**Legacy migration uses a fixed workspace UUID.** Older items decode into the
+default Home workspace with `00000000-0000-0000-0000-000000000001`. Generating
+a new UUID on each read would make the app and extension disagree before the
+first migrated write and would invalidate widget configuration.
+
+**Names are unique only inside a workspace.** A Home stove and a Work stove are
+valid; widget configuration includes the workspace name so the choice remains
+unambiguous. Items keep their confirmation and usage history when moved.
+
+**Workspace archive never archives its items.** It hides the board as a unit and
+restoring it brings back the exact board. At least one active workspace remains,
+and archived workspaces do not count toward the six-workspace cap.

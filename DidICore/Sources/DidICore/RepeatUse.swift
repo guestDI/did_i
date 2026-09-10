@@ -176,7 +176,7 @@ public extension Store {
     /// Surfaced in the add-item sheet under a quiet "Previously" section, so
     /// seasonal items are one tap to bring back.
     var archived: [Item] {
-        items.filter { $0.archivedAt != nil }.sorted { $0.order < $1.order }
+        archivedItems(in: selectedWorkspaceID)
     }
 }
 

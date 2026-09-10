@@ -11,6 +11,7 @@ struct BoardView: View {
     @State private var sharing: Item?
     @State private var showingSettings = false
     @State private var showingWalkthrough = false
+    @State private var creatingWorkspace = false
     @State private var adding: AddItemSheet.Presentation?
     @State private var weeklyCard: ParanoiaCounter.Card?
     @State private var guardrailItem: Item?
@@ -41,12 +42,16 @@ struct BoardView: View {
                         ParanoiaCard(card: weeklyCard) { dismissWeeklyCard() }
                             .padding(.top, 22)
                     }
-                    columnHeadings
-                        .padding(.top, 26)
-                    ForEach(store.active) { item in
-                        row(item: item, now: context.date)
+                    if store.active.isEmpty {
+                        emptyWorkspace.padding(.top, 38)
+                    } else {
+                        columnHeadings
+                            .padding(.top, 26)
+                        ForEach(store.active) { item in
+                            row(item: item, now: context.date)
+                        }
+                        footer
                     }
-                    footer
                 }
                 .padding(.bottom, 30)
             }
@@ -80,6 +85,7 @@ struct BoardView: View {
                 item: item,
                 hasHome: store.home != nil,
                 existingItems: store.items,
+                workspaces: store.activeWorkspaces,
                 save: { updated in
                     save { store in
                         store.update(updated)
@@ -94,6 +100,7 @@ struct BoardView: View {
             SettingsView(store: $store)
         }
         .sheet(isPresented: $showingWalkthrough) { WalkthroughSheet() }
+        .sheet(isPresented: $creatingWorkspace) { WorkspaceCreateSheet(store: $store) }
         .sheet(item: $adding) { presentation in
             AddItemSheet(store: $store, suggestion: presentation.suggestion)
         }
@@ -279,8 +286,34 @@ struct BoardView: View {
                     FlapCell(String(c), color: Palette.text, width: 32, height: 46, fontSize: 24)
                         .accessibilityHidden(true)
                 }
+                Spacer()
+                Menu {
+                    ForEach(store.activeWorkspaces) { workspace in
+                        Button {
+                            selectWorkspace(workspace.id)
+                        } label: {
+                            if workspace.id == store.selectedWorkspaceID {
+                                Label(workspace.name, systemImage: "checkmark")
+                            } else {
+                                Text(workspace.name)
+                            }
+                        }
+                    }
+                    Divider()
+                    Button(Copy.Workspaces.new, systemImage: "plus") { creatingWorkspace = true }
+                } label: {
+                    HStack(spacing: 5) {
+                        Text(store.selectedWorkspace.name)
+                            .boardFont(10, .semibold, relativeTo: .caption)
+                            .lineLimit(1)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 9, weight: .semibold))
+                    }
+                    .foregroundStyle(Palette.muted)
+                    .frame(minWidth: 44, minHeight: 44)
+                }
+                .accessibilityLabel(Copy.Workspaces.workspace)
             }
-            .accessibilityHidden(true)
             HStack {
                 Text(dateLine(now: now))
                     .boardFont(10, .medium, relativeTo: .caption2)
@@ -310,6 +343,26 @@ struct BoardView: View {
         }
         .padding(.horizontal, 22)
         .padding(.top, 18)
+    }
+
+    private var emptyWorkspace: some View {
+        VStack(spacing: 16) {
+            Text(Copy.Workspaces.empty)
+                .appFont(14, relativeTo: .subheadline)
+                .foregroundStyle(Palette.sub)
+            Button(Copy.addAnItem) {
+                navigated = true
+                adding = .init(suggestion: nil)
+            }
+            .buttonStyle(PrimaryButton())
+        }
+        .padding(.horizontal, 30)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func selectWorkspace(_ id: UUID) {
+        save { $0.selectWorkspace(id) }
+        weeklyCard = nil
     }
 
     /// Design `1a`: "MON 11 AUG · LEFT HOME 08:42". The second half only when the

@@ -17,6 +17,7 @@ struct ItemSettingsView: View {
     private let original: Item
     let hasHome: Bool
     let existingItems: [Item]
+    let workspaces: [Workspace]
     let save: (Item) -> Bool
     @State private var showingSaveError = false
     @State private var notificationsAllowed = true
@@ -33,12 +34,14 @@ struct ItemSettingsView: View {
         item: Item,
         hasHome: Bool,
         existingItems: [Item],
+        workspaces: [Workspace],
         save: @escaping (Item) -> Bool
     ) {
         _draft = State(initialValue: item)
         self.original = item
         self.hasHome = hasHome
         self.existingItems = existingItems
+        self.workspaces = workspaces
         self.save = save
     }
 
@@ -51,11 +54,20 @@ struct ItemSettingsView: View {
     }
 
     private var nameIsAvailable: Bool {
-        Item.isNameAvailable(trimmedName, among: existingItems, excluding: draft.id)
+        Item.isNameAvailable(
+            trimmedName,
+            among: existingItems.filter { $0.workspaceID == draft.workspaceID },
+            excluding: draft.id
+        )
     }
 
     private var canSave: Bool {
-        !trimmedName.isEmpty && !trimmedWord.isEmpty && nameIsAvailable
+        !trimmedName.isEmpty && !trimmedWord.isEmpty && nameIsAvailable && destinationHasRoom
+    }
+
+    private var destinationHasRoom: Bool {
+        draft.workspaceID == original.workspaceID
+            || existingItems.count { $0.workspaceID == draft.workspaceID && $0.archivedAt == nil } < Store.itemCap
     }
 
     var body: some View {
@@ -76,6 +88,18 @@ struct ItemSettingsView: View {
                             .foregroundStyle(Palette.amber)
                     } else {
                         Text(Copy.nameFieldFooter)
+                    }
+                }
+
+                if workspaces.count > 1 {
+                    Section {
+                        Picker(Copy.Workspaces.workspace, selection: $draft.workspaceID) {
+                            ForEach(workspaces) { workspace in
+                                Text(workspace.name).tag(workspace.id)
+                            }
+                        }
+                    } footer: {
+                        if !destinationHasRoom { Text(Copy.Cap.body).foregroundStyle(Palette.amber) }
                     }
                 }
 

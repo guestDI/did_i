@@ -6,6 +6,7 @@
 
 /* Widget configuration screen: the label of the item parameter itself. */
 "Item" = "Item";
+"Workspace" = "Workspace";
 
 /* Shortcuts app: the name of the tap-to-confirm action. Not user-discoverable. */
 "Confirm" = "Confirm";

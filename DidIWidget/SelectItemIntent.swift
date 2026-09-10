@@ -13,6 +13,7 @@ struct SelectItemIntent: WidgetConfigurationIntent {
     static let description = IntentDescription("Pick which item this widget shows.")
 
     @Parameter(title: "Item") var item: ItemEntity?
+    @Parameter(title: "Workspace") var workspace: WorkspaceEntity?
 }
 
 /// Control Center's counterpart to `SelectItemIntent`. Same picker, same
@@ -39,21 +40,26 @@ struct SelectControlItemIntent: ControlConfigurationIntent {
 struct ItemEntity: AppEntity {
     let id: String
     let name: String
+    let workspaceName: String
 
     static let typeDisplayRepresentation: TypeDisplayRepresentation = "Item"
     static let defaultQuery = ItemQuery()
 
     var displayRepresentation: DisplayRepresentation {
-        DisplayRepresentation(title: "\(name)")
+        DisplayRepresentation(title: "\(name)", subtitle: "\(workspaceName)")
     }
 }
 
 struct ItemQuery: EntityQuery {
     private func live() -> [ItemEntity] {
-        StoreIO.read().items
-            .filter { $0.archivedAt == nil }
-            .sorted { $0.order < $1.order }
-            .map { ItemEntity(id: $0.id.uuidString, name: $0.name) }
+        let store = StoreIO.read()
+        return store.allActiveItems.map { item in
+            ItemEntity(
+                id: item.id.uuidString,
+                name: item.name,
+                workspaceName: store.workspaces.first { $0.id == item.workspaceID }?.name ?? ""
+            )
+        }
     }
 
     func entities(for identifiers: [String]) async throws -> [ItemEntity] {
@@ -67,4 +73,31 @@ struct ItemQuery: EntityQuery {
     func defaultResult() async -> ItemEntity? {
         live().first
     }
+}
+
+struct WorkspaceEntity: AppEntity {
+    let id: String
+    let name: String
+
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Workspace"
+    static let defaultQuery = WorkspaceQuery()
+
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "\(name)")
+    }
+}
+
+struct WorkspaceQuery: EntityQuery {
+    private func live() -> [WorkspaceEntity] {
+        StoreIO.read().activeWorkspaces.map {
+            WorkspaceEntity(id: $0.id.uuidString, name: $0.name)
+        }
+    }
+
+    func entities(for identifiers: [String]) async throws -> [WorkspaceEntity] {
+        live().filter { identifiers.contains($0.id) }
+    }
+
+    func suggestedEntities() async throws -> [WorkspaceEntity] { live() }
+    func defaultResult() async -> WorkspaceEntity? { live().first }
 }

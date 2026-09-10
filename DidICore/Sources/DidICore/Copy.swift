@@ -429,6 +429,22 @@ public enum Copy {
     public static let loadFailedBody = t("We didn't change your records. Try again.")
     public static let tryAgain = t("Try again")
 
+    public enum Workspaces {
+        public static let section = t("Workspaces")
+        public static let home = t("Home")
+        public static let new = t("New workspace")
+        public static let create = t("Create workspace")
+        public static let rename = t("Rename workspace")
+        public static let archive = t("Archive workspace")
+        public static let restore = t("Restore")
+        public static let workspace = t("Workspace")
+        public static let empty = t("Nothing on this board yet.")
+        public static let archived = t("Archived workspaces")
+        public static let globalHomeFooter = t("The saved Home location applies to items in every workspace.")
+        public static let unavailable = t("Workspace unavailable")
+        public static let cap = t("That's six workspaces. Archive one before adding another.")
+    }
+
     /// The board's two column headings.
     public static let columnItem = t("Item")
     public static let columnStatus = t("Status")

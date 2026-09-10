@@ -58,6 +58,10 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDisplayName: Did I?
+        CFBundleURLTypes:
+          - CFBundleURLName: com.dihnatovich.didi.workspace
+            CFBundleURLSchemes:
+              - didi
         # Every string lives in DidICore, so this target has no .lproj folders of
         # its own — but iOS picks the app's language from the *main* bundle's
         # supported localizations. Without this list it runs the whole process in

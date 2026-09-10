@@ -135,4 +135,6 @@ Archive, never delete. Deleting someone's data on our initiative is not our call
 - **Shared households.** Two people, one stove. Needs a shared state and a "Marta confirmed it" attribution. Genuinely useful, genuinely complicated, out of scope for v1.
 - **NFC stickers.** The strongest possible answer to "can this record be trusted" — a tap that can only happen at the appliance. Ships as an accessory idea, not a v1 dependency.
 - **Apple Watch complication.** Arguably a better home for this than the phone; the glance is even cheaper.
-- **Multiple homes.** Currently a documented limitation.
+- **Multiple physical homes.** Workspaces can be named Home, Work or Home 2, but
+  they are separate boards, not separate geofences. The app still has one saved
+  Home location.

@@ -2,6 +2,8 @@ import Foundation
 
 public struct Store: Codable, Sendable {
     public var items: [Item]
+    public var workspaces: [Workspace]
+    public var selectedWorkspaceID: UUID
 
     /// Set once the user picks a home. `nil` means location was never granted or
     /// was declined, which hides the "when I leave home" reset option.
@@ -30,6 +32,8 @@ public struct Store: Codable, Sendable {
 
     public init(
         items: [Item] = [],
+        workspaces: [Workspace] = [Workspace.home()],
+        selectedWorkspaceID: UUID = Workspace.legacyID,
         home: HomeLocation? = nil,
         lastLeftHomeAt: Date? = nil,
         lastEnteredHomeAt: Date? = nil,
@@ -39,6 +43,8 @@ public struct Store: Codable, Sendable {
         plainTone: Bool = false
     ) {
         self.items = items
+        self.workspaces = workspaces.isEmpty ? [Workspace.home()] : workspaces
+        self.selectedWorkspaceID = selectedWorkspaceID
         self.home = home
         self.lastLeftHomeAt = lastLeftHomeAt
         self.lastEnteredHomeAt = lastEnteredHomeAt
@@ -54,6 +60,13 @@ public struct Store: Codable, Sendable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         items = try c.decodeIfPresent([Item].self, forKey: .items) ?? []
+        workspaces = try c.decodeIfPresent([Workspace].self, forKey: .workspaces) ?? [Workspace.home()]
+        if workspaces.isEmpty { workspaces = [Workspace.home()] }
+        let decodedSelection = try c.decodeIfPresent(UUID.self, forKey: .selectedWorkspaceID)
+            ?? Workspace.legacyID
+        selectedWorkspaceID = workspaces.contains {
+            $0.id == decodedSelection && $0.archivedAt == nil
+        } ? decodedSelection : (workspaces.first { $0.archivedAt == nil }?.id ?? Workspace.legacyID)
         home = try c.decodeIfPresent(HomeLocation.self, forKey: .home)
         lastLeftHomeAt = try c.decodeIfPresent(Date.self, forKey: .lastLeftHomeAt)
         lastEnteredHomeAt = try c.decodeIfPresent(Date.self, forKey: .lastEnteredHomeAt)
@@ -64,19 +77,22 @@ public struct Store: Codable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case items, home, lastLeftHomeAt, lastEnteredHomeAt, lastConfirmationLine, flags, usage, plainTone
+        case items, workspaces, selectedWorkspaceID, home, lastLeftHomeAt, lastEnteredHomeAt
+        case lastConfirmationLine, flags, usage, plainTone
     }
 
     /// Adds the first item onboarding produced.
-    public mutating func add(_ item: Item) {
+    public mutating func add(_ item: Item, to workspaceID: UUID? = nil) {
         var item = item
-        item.order = (items.map(\.order).max() ?? -1) + 1
+        let destination = workspaceID ?? selectedWorkspaceID
+        item.workspaceID = destination
+        item.order = (items.filter { $0.workspaceID == destination }.map(\.order).max() ?? -1) + 1
         items.append(item)
     }
 
     /// Items on the board, in order. Archived items are kept but not shown.
     public var active: [Item] {
-        items.filter { $0.archivedAt == nil }.sorted { $0.order < $1.order }
+        activeItems(in: selectedWorkspaceID)
     }
 
     /// Records a confirmation and picks the line that goes with it.
@@ -168,6 +184,9 @@ public struct Store: Codable, Sendable {
         guard let i = items.firstIndex(where: { $0.id == updated.id }) else { return }
         let existing = items[i]
         var updated = updated
+        if existing.workspaceID != updated.workspaceID {
+            updated.order = (items.filter { $0.workspaceID == updated.workspaceID }.map(\.order).max() ?? -1) + 1
+        }
         if existing.lastConfirmedAt != nil, existing.lastConfirmationRule == nil {
             updated.lastConfirmationRule = existing.resetRule
         }
@@ -211,8 +230,13 @@ public struct Store: Codable, Sendable {
     /// timeline entries on a state change nothing renders. Deduplicated because the
     /// timeline is capped at 20 — six items all resetting at 04:00 produced six
     /// identical timestamps and crowded out later ones.
-    public func allBoundaries(after date: Date, calendar: Calendar = .current) -> [Date] {
-        Set(active.flatMap { boundaries(for: $0, after: date, calendar: calendar) }).sorted()
+    public func allBoundaries(
+        after date: Date,
+        workspaceID: UUID? = nil,
+        calendar: Calendar = .current
+    ) -> [Date] {
+        let scoped = workspaceID.map(activeItems(in:)) ?? active
+        return Set(scoped.flatMap { boundaries(for: $0, after: date, calendar: calendar) }).sorted()
     }
 }
 

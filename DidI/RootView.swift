@@ -19,7 +19,7 @@ struct RootView: View {
     }
 
     private var needsOnboarding: Bool {
-        !store.flags.isComplete || store.active.isEmpty
+        !store.flags.isComplete
     }
 
     var body: some View {
@@ -49,6 +49,7 @@ struct RootView: View {
         .onReceive(NotificationCenter.default.publisher(for: StoreChange.name)) { _ in
             reload()
         }
+        .onOpenURL(perform: openWorkspace)
     }
 
     private func reload() {
@@ -58,6 +59,17 @@ struct RootView: View {
         } catch {
             loadFailed = true
             UIAccessibility.post(notification: .announcement, argument: Copy.loadFailedBody)
+        }
+    }
+
+    private func openWorkspace(_ url: URL) {
+        guard url.scheme == "didi", url.host == "workspace",
+              let id = UUID(uuidString: url.lastPathComponent) else { return }
+        do {
+            try StoreIO.mutate { $0.selectWorkspace(id) }
+            reload()
+        } catch {
+            loadFailed = true
         }
     }
 }

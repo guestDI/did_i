@@ -61,7 +61,7 @@ struct ConfirmControl: ControlWidget {
             let store = StoreIO.read()
             let resolved = entity
                 .flatMap { picked in store.items.first { $0.id.uuidString == picked.id } }
-                ?? store.active.first
+                ?? store.allActiveItems.first
             guard let resolved else {
                 return ControlItemState(id: "", name: "Did I?", symbol: "checkmark.circle", confirmed: false)
             }

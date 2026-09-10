@@ -4,6 +4,7 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
     public static let maxNameLength = 24
 
     public let id: UUID
+    public var workspaceID: UUID
     public var name: String            // max 24 chars, widget-safe
     public var word: String            // board status word: OFF, LOCKED, DOWN
     public var symbol: String          // SF Symbol name
@@ -55,6 +56,7 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
 
     public init(
         id: UUID = UUID(),
+        workspaceID: UUID = Workspace.legacyID,
         name: String,
         word: String,
         symbol: String,
@@ -73,6 +75,7 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
         chipID: String? = nil
     ) {
         self.id = id
+        self.workspaceID = workspaceID
         self.name = name
         self.word = word
         self.symbol = symbol
@@ -89,6 +92,35 @@ public struct Item: Codable, Identifiable, Sendable, Equatable {
         self.mutedUntilHome = mutedUntilHome
         self.archiveOfferedAt = archiveOfferedAt
         self.chipID = chipID
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        workspaceID = try c.decodeIfPresent(UUID.self, forKey: .workspaceID) ?? Workspace.legacyID
+        name = try c.decode(String.self, forKey: .name)
+        word = try c.decode(String.self, forKey: .word)
+        symbol = try c.decode(String.self, forKey: .symbol)
+        resetRule = try c.decode(ResetRule.self, forKey: .resetRule)
+        lastConfirmedAt = try c.decodeIfPresent(Date.self, forKey: .lastConfirmedAt)
+        lastConfirmationRule = try c.decodeIfPresent(ResetRule.self, forKey: .lastConfirmationRule)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        archivedAt = try c.decodeIfPresent(Date.self, forKey: .archivedAt)
+        order = try c.decode(Int.self, forKey: .order)
+        confirmationLine = try c.decodeIfPresent(String.self, forKey: .confirmationLine)
+        confirmations = try c.decodeIfPresent([Date].self, forKey: .confirmations)
+        confirmationRules = try c.decodeIfPresent([ResetRule].self, forKey: .confirmationRules)
+        leavingHomeReminder = try c.decodeIfPresent(Bool.self, forKey: .leavingHomeReminder)
+        mutedUntilHome = try c.decodeIfPresent(Bool.self, forKey: .mutedUntilHome)
+        archiveOfferedAt = try c.decodeIfPresent(Date.self, forKey: .archiveOfferedAt)
+        chipID = try c.decodeIfPresent(String.self, forKey: .chipID)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, workspaceID, name, word, symbol, resetRule, lastConfirmedAt
+        case lastConfirmationRule, createdAt, archivedAt, order, confirmationLine
+        case confirmations, confirmationRules, leavingHomeReminder, mutedUntilHome
+        case archiveOfferedAt, chipID
     }
 
     /// Widget configuration is a name-only picker. Two visually identical names

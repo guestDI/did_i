@@ -125,11 +125,13 @@ public struct MediumFace: View {
     let items: [Item]
     let states: [UUID: ItemState]
     let date: Date
+    let workspaceName: String?
 
-    public init(items: [Item], states: [UUID: ItemState], date: Date) {
+    public init(items: [Item], states: [UUID: ItemState], date: Date, workspaceName: String? = nil) {
         self.items = items
         self.states = states
         self.date = date
+        self.workspaceName = workspaceName
     }
 
     var shown: [Item] { Array(items.prefix(6)) }
@@ -140,7 +142,7 @@ public struct MediumFace: View {
     public var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Did I?")
+                Text(workspaceName ?? "Did I?")
                     .font(board(10, .bold))
                     .tracking(3)
                     .textCase(.uppercase)

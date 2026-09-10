@@ -21,7 +21,7 @@ struct WatchBoardView: View {
                     }
             }
         }
-        .navigationTitle("Did I?")
+        .navigationTitle(watchStore.store.selectedWorkspace.name)
         .overlay {
             if watchStore.store.active.isEmpty {
                 Text(Copy.addAnItem)
