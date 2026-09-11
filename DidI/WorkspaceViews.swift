@@ -101,6 +101,12 @@ struct WorkspaceSettingsView: View {
                         }
                         .tint(Palette.muted)
                     }
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        if store.activeWorkspaces.first?.id != workspace.id {
+                            Button(Copy.moveUp) { save { $0.moveWorkspaceUp(workspace.id) } }
+                                .tint(Palette.muted)
+                        }
+                    }
                 }
                 Button(Copy.Workspaces.new, systemImage: "plus") { creating = true }
                     .disabled(store.activeWorkspaces.count >= Store.workspaceCap)

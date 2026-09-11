@@ -79,3 +79,10 @@ import Foundation
     }
     #expect(store.createWorkspace(named: "One too many", at: .now) == nil)
 }
+
+@Test func workspacesCanBeReordered() {
+    var store = Store()
+    let workID = store.createWorkspace(named: "Work", at: .now)!
+    store.moveWorkspaceUp(workID)
+    #expect(store.activeWorkspaces.map(\.id) == [workID, Workspace.legacyID])
+}

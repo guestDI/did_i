@@ -47,10 +47,12 @@ public struct SmallFace: View {
 
     let item: Item
     let state: ItemState
+    let workspaceName: String?
 
-    public init(item: Item, state: ItemState) {
+    public init(item: Item, state: ItemState, workspaceName: String? = nil) {
         self.item = item
         self.state = state
+        self.workspaceName = workspaceName
     }
 
     public var body: some View {
@@ -61,12 +63,22 @@ public struct SmallFace: View {
                 // word is read.
                 Image(systemName: item.symbol)
                     .font(.system(size: 10, weight: .medium))
-                Text(item.name)
-                    .font(board(9))
-                    .tracking(2.5)
-                    .textCase(.uppercase)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(item.name)
+                        .font(board(9))
+                        .tracking(2.5)
+                        .textCase(.uppercase)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    if let workspaceName {
+                        Text(workspaceName)
+                            .font(board(7, .medium))
+                            .tracking(1.5)
+                            .textCase(.uppercase)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                }
                 Spacer(minLength: 4)
                 Text(shortAge(state))
                     .font(board(9, .medium))
@@ -272,11 +284,18 @@ public struct RectangularFace: View {
     let item: Item
     let items: [Item]
     let states: [UUID: ItemState]
+    let workspaceName: String?
 
-    public init(item: Item, items: [Item], states: [UUID: ItemState]) {
+    public init(
+        item: Item,
+        items: [Item],
+        states: [UUID: ItemState],
+        workspaceName: String? = nil
+    ) {
         self.item = item
         self.items = items
         self.states = states
+        self.workspaceName = workspaceName
     }
 
     var state: ItemState { states[item.id] ?? .unknown }
@@ -312,7 +331,9 @@ public struct RectangularFace: View {
                     .opacity(state == .unknown ? 0.55 : 1)
                     .invalidatableContent()
 
-                Text(Copy.summary(handled: handled, of: items.count))
+                Text([workspaceName, Copy.summary(handled: handled, of: items.count)]
+                    .compactMap { $0 }
+                    .joined(separator: " · "))
                     .font(boardScaled(.caption2))
                     .opacity(0.6)
                     .lineLimit(1)
@@ -335,10 +356,20 @@ public struct RectangularFace: View {
 /// ("Nothing on the board") and not what to do about it left the user staring at
 /// a widget with no move.
 public struct EmptyFace: View {
-    public init() {}
+    let workspaceName: String?
+
+    public init(workspaceName: String? = nil) {
+        self.workspaceName = workspaceName
+    }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 4) {
+            if let workspaceName {
+                Text(workspaceName)
+                    .fontWeight(.bold)
+                    .textCase(.uppercase)
+                    .lineLimit(1)
+            }
             Text(Copy.summary(handled: 0, of: 0))
                 .opacity(0.6)
             Text(Copy.addAnItem)

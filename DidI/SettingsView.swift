@@ -199,9 +199,7 @@ struct SettingsView: View {
             .task {
                 draftRadius = store.home?.radius ?? HomeLocation.defaultRadius
                 await refreshNotificationStatus()
-                // ponytail: tip jar hidden for 1.0 (not loading the product keeps
-                // the row, which is already gated on product != nil, from showing).
-                // Restore this call once the IAP product is live in App Store Connect.
+                await TipJar.shared.loadProduct()
             }
             .onChange(of: store.home) { _, home in
                 draftRadius = home?.radius ?? HomeLocation.defaultRadius

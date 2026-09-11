@@ -115,6 +115,17 @@ public extension Store {
         }
     }
 
+    mutating func moveWorkspaceUp(_ id: UUID) {
+        let ordered = activeWorkspaces
+        guard let position = ordered.firstIndex(where: { $0.id == id }), position > 0,
+              let lower = workspaces.firstIndex(where: { $0.id == id }),
+              let upper = workspaces.firstIndex(where: { $0.id == ordered[position - 1].id })
+        else { return }
+        let above = workspaces[upper].order
+        workspaces[upper].order = workspaces[lower].order
+        workspaces[lower].order = above
+    }
+
     mutating func restoreWorkspace(_ id: UUID) {
         guard activeWorkspaces.count < Self.workspaceCap,
               let i = workspaces.firstIndex(where: { $0.id == id }),

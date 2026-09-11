@@ -9,8 +9,9 @@ struct BoardEntry: TimelineEntry {
     let workspaceID: UUID?
 
     var workspace: Workspace? {
-        if let workspaceID {
-            return store.activeWorkspaces.first { $0.id == workspaceID }
+        if let workspaceID,
+           let configured = store.activeWorkspaces.first(where: { $0.id == workspaceID }) {
+            return configured
         }
         if let selectedID, let item = store.allActiveItems.first(where: { $0.id == selectedID }) {
             return store.activeWorkspaces.first { $0.id == item.workspaceID }
@@ -44,11 +45,16 @@ struct BoardEntry: TimelineEntry {
 /// Capped at 20 entries and 24 hours; the reload policy picks up the rest.
 struct Provider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> BoardEntry {
-        entry(at: .now, selectedID: nil, workspaceID: nil)
+        entry(at: .now, selectedID: nil, workspaceID: nil, family: context.family)
     }
 
     func snapshot(for configuration: SelectItemIntent, in context: Context) async -> BoardEntry {
-        entry(at: .now, selectedID: configuration.itemID, workspaceID: configuration.workspaceID)
+        entry(
+            at: .now,
+            selectedID: configuration.itemID,
+            workspaceID: configuration.workspaceID,
+            family: context.family
+        )
     }
 
     /// State boundaries alone left the "3M"/"1H" age readout frozen at whatever
@@ -61,12 +67,12 @@ struct Provider: AppIntentTimelineProvider {
         let now = Date()
         let horizon = now.addingTimeInterval(24 * 3600)
         let ticks = stride(from: TimeInterval(0), to: 5 * 3600, by: 15 * 60).map { now.addingTimeInterval($0) }
-        let itemWorkspaceID = configuration.itemID.flatMap { id in
-            store.allActiveItems.first { $0.id == id }?.workspaceID
-        }
-        let workspaceID = context.family == .systemMedium
-            ? (configuration.workspaceID ?? itemWorkspaceID ?? store.selectedWorkspaceID)
-            : (itemWorkspaceID ?? configuration.workspaceID ?? store.selectedWorkspaceID)
+        let workspaceID = resolvedWorkspaceID(
+            store: store,
+            selectedID: configuration.itemID,
+            configuredWorkspaceID: configuration.workspaceID,
+            family: context.family
+        )
         let boundaries = store.allBoundaries(after: now, workspaceID: workspaceID).filter { $0 < horizon }
         let dates = Set(ticks + boundaries).sorted().prefix(20)
         let entries = dates.map {
@@ -74,7 +80,7 @@ struct Provider: AppIntentTimelineProvider {
                 date: $0,
                 store: store,
                 selectedID: configuration.itemID,
-                workspaceID: configuration.workspaceID
+                workspaceID: workspaceID
             )
         }
         return Timeline(entries: entries, policy: .after(dates.last ?? horizon))
@@ -101,8 +107,38 @@ struct Provider: AppIntentTimelineProvider {
         }
     }
 
-    private func entry(at date: Date, selectedID: UUID?, workspaceID: UUID?) -> BoardEntry {
-        BoardEntry(date: date, store: StoreIO.read(), selectedID: selectedID, workspaceID: workspaceID)
+    private func entry(
+        at date: Date,
+        selectedID: UUID?,
+        workspaceID: UUID?,
+        family: WidgetFamily
+    ) -> BoardEntry {
+        let store = StoreIO.read()
+        return BoardEntry(
+            date: date,
+            store: store,
+            selectedID: selectedID,
+            workspaceID: resolvedWorkspaceID(
+                store: store,
+                selectedID: selectedID,
+                configuredWorkspaceID: workspaceID,
+                family: family
+            )
+        )
+    }
+
+    private func resolvedWorkspaceID(
+        store: Store,
+        selectedID: UUID?,
+        configuredWorkspaceID: UUID?,
+        family: WidgetFamily
+    ) -> UUID {
+        let itemWorkspaceID = selectedID.flatMap { id in
+            store.allActiveItems.first { $0.id == id }?.workspaceID
+        }
+        return family == .systemMedium
+            ? (configuredWorkspaceID ?? itemWorkspaceID ?? store.selectedWorkspaceID)
+            : (itemWorkspaceID ?? configuredWorkspaceID ?? store.selectedWorkspaceID)
     }
 }
 
@@ -148,7 +184,7 @@ struct BoardWidgetView: View {
         Group {
             switch family {
             case .systemSmall:
-                single { SmallFace(item: $0, state: $1) }
+                single { SmallFace(item: $0, state: $1, workspaceName: entry.workspace?.name) }
                     .padding(2)
                     .containerBackground(Palette.ink, for: .widget)
 
@@ -170,7 +206,8 @@ struct BoardWidgetView: View {
                     RectangularFace(
                         item: item,
                         items: entry.items.filter { $0.mutedUntilHome != true },
-                        states: entry.states
+                        states: entry.states,
+                        workspaceName: entry.workspace?.name
                     )
                 }
                 .containerBackground(.clear, for: .widget)
@@ -187,7 +224,7 @@ struct BoardWidgetView: View {
         if let item = entry.selected {
             face(item, entry.store.state(item, now: entry.date))
         } else {
-            EmptyFace()
+            EmptyFace(workspaceName: entry.workspace?.name)
         }
     }
 }
