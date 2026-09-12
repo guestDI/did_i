@@ -241,7 +241,7 @@ private func optedIn() -> OnboardingFlags {
 @Test func theEscapeHatchCopyIsVerbatim() {
     #expect(Copy.cantCheckRightNow == "Can't check right now")
     #expect(Copy.askSomeoneAtHome == "Ask someone at home")
-    #expect(Copy.imAway == "I'm away")
+    #expect(Copy.imAway == "Can't check this item?")
     #expect(Copy.mutedUntilHome == "Muted from the summary until you're home.")
     #expect(Copy.shareMessage(item: item()) == "Random question — is The stove off?")
 }

@@ -12,19 +12,12 @@ struct WatchBoardView: View {
         TimelineView(.periodic(from: .now, by: 30)) { context in
             List(watchStore.store.active) { item in
                 row(item, now: context.date)
-                    .swipeActions {
-                        if item.lastConfirmedAt != nil {
-                            Button(Copy.clearStatus) {
-                                watchStore.clear(id: item.id)
-                            }
-                        }
-                    }
             }
         }
         .navigationTitle(watchStore.store.selectedWorkspace.name)
         .overlay {
             if watchStore.store.active.isEmpty {
-                Text(Copy.addAnItem)
+                Text(Copy.watchEmpty)
                     .foregroundStyle(.secondary)
             }
         }
@@ -51,7 +44,6 @@ struct WatchBoardView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .contentShape(.rect)
-        .onTapGesture { watchStore.confirm(id: item.id) }
+        .accessibilityElement(children: .combine)
     }
 }

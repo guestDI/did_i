@@ -9,11 +9,11 @@ struct SelectItemIntent: WidgetConfigurationIntent {
     // 'LocalizedStringResource' to use the main bundle"). They are translated in
     // DidIWidget/en.lproj/Localizable.strings instead — the one place in the
     // product with a second string file, and the reason it exists.
-    static let title: LocalizedStringResource = "Choose item"
-    static let description = IntentDescription("Pick which item this widget shows.")
+    static let title: LocalizedStringResource = "Configure Did I?"
+    static let description = IntentDescription("Small widgets show an item. Medium widgets show a workspace.")
 
-    @Parameter(title: "Item") var item: ItemEntity?
-    @Parameter(title: "Workspace") var workspace: WorkspaceEntity?
+    @Parameter(title: "Item (small widgets)") var item: ItemEntity?
+    @Parameter(title: "Workspace (medium widget)") var workspace: WorkspaceEntity?
 }
 
 /// Control Center's counterpart to `SelectItemIntent`. Same picker, same
@@ -51,9 +51,10 @@ struct ItemEntity: AppEntity {
 }
 
 struct ItemQuery: EntityQuery {
-    private func live() -> [ItemEntity] {
+    private func live(includeArchived: Bool = false) -> [ItemEntity] {
         let store = StoreIO.read()
-        return store.allActiveItems.map { item in
+        let items = includeArchived ? store.items : store.allActiveItems
+        return items.map { item in
             ItemEntity(
                 id: item.id.uuidString,
                 name: item.name,
@@ -63,7 +64,7 @@ struct ItemQuery: EntityQuery {
     }
 
     func entities(for identifiers: [String]) async throws -> [ItemEntity] {
-        live().filter { identifiers.contains($0.id) }
+        live(includeArchived: true).filter { identifiers.contains($0.id) }
     }
 
     func suggestedEntities() async throws -> [ItemEntity] {
@@ -71,7 +72,10 @@ struct ItemQuery: EntityQuery {
     }
 
     func defaultResult() async -> ItemEntity? {
-        live().first
+        let store = StoreIO.read()
+        return live().first { entity in
+            store.activeItems(in: store.selectedWorkspaceID).contains { $0.id.uuidString == entity.id }
+        } ?? live().first
     }
 }
 
@@ -88,16 +92,21 @@ struct WorkspaceEntity: AppEntity {
 }
 
 struct WorkspaceQuery: EntityQuery {
-    private func live() -> [WorkspaceEntity] {
-        StoreIO.read().activeWorkspaces.map {
+    private func live(includeArchived: Bool = false) -> [WorkspaceEntity] {
+        let store = StoreIO.read()
+        let workspaces = includeArchived ? store.workspaces : store.activeWorkspaces
+        return workspaces.map {
             WorkspaceEntity(id: $0.id.uuidString, name: $0.name)
         }
     }
 
     func entities(for identifiers: [String]) async throws -> [WorkspaceEntity] {
-        live().filter { identifiers.contains($0.id) }
+        live(includeArchived: true).filter { identifiers.contains($0.id) }
     }
 
     func suggestedEntities() async throws -> [WorkspaceEntity] { live() }
-    func defaultResult() async -> WorkspaceEntity? { live().first }
+    func defaultResult() async -> WorkspaceEntity? {
+        let selectedID = StoreIO.read().selectedWorkspaceID.uuidString
+        return live().first { $0.id == selectedID } ?? live().first
+    }
 }

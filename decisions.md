@@ -1200,7 +1200,7 @@ denial hides the unavailable reminder choice.
 declined or limited permission previously expanded every unknown item with two
 large crisis actions while still claiming `Easy fix.` as though home were known.
 The status is now the location-neutral `No current record.` and a single
-`I'm away` button reveals the existing mute/share actions. A positively detected
+`Can't check this item?` button reveals the existing mute/share actions. A positively detected
 away state still shows them immediately.
 
 **Only flap glyphs animate during confirmation.** Animating the entire store or

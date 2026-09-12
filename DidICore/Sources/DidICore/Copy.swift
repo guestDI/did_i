@@ -255,7 +255,8 @@ public enum Copy {
     /// The escape hatch, always available on an unknown item while away.
     public static let cantCheckRightNow = t("Can't check right now")
     public static let askSomeoneAtHome = t("Ask someone at home")
-    public static let imAway = t("I'm away")
+    public static let imAway = t("Can't check this item?")
+    public static let watchEmpty = t("Add items on your iPhone.")
     public static let mutedUntilHome = t("Muted from the summary until you're home.")
     /// No geofence, so "until you're home" would be a promise nothing can keep:
     /// without region entry the mute has to end on the next confirmation instead.
@@ -437,12 +438,17 @@ public enum Copy {
         public static let rename = t("Rename workspace")
         public static let archive = t("Archive workspace")
         public static let restore = t("Restore")
+        public static let select = t("Switch to workspace")
         public static let workspace = t("Workspace")
         public static let empty = t("Nothing on this board yet.")
         public static let archived = t("Archived workspaces")
         public static let globalHomeFooter = t("The saved Home location applies to items in every workspace.")
         public static let unavailable = t("Workspace unavailable")
         public static let cap = t("That's six workspaces. Archive one before adding another.")
+        public static let nameAlreadyUsed = t("That workspace name is already in use.")
+        public static let nameRequired = t("Enter a workspace name.")
+        public static let couldNotRestore = t("Couldn't restore workspace")
+        public static let restoreNameConflict = t("Rename the workspace with this name before restoring this one.")
     }
 
     /// The board's two column headings.
@@ -451,8 +457,8 @@ public enum Copy {
 
     public enum Reminder {
         public static let section = t("Reminders")
-        public static let toggle = t("Remind me when I leave")
-        public static let footer = t("One notification, when you leave and this has no record.")
+        public static let toggle = t("Remind me when I leave Home")
+        public static let footer = t("One notification when you leave the saved Home location and this has no record.")
         /// Notifications switched off in iOS Settings after a reminder was turned
         /// on. The toggle is left alone — the same call as an unavailable
         /// leaving-home expiry: keep what they chose, say why it cannot run, and
@@ -485,7 +491,7 @@ public enum Copy {
     }
 
     public enum HomeSettings {
-        public static let section = t("Home")
+        public static let section = t("Home location")
         public static let notSet = t("Not set")
         public static let isSet = t("Home is set")
         public static let reset = t("Reset home location")
@@ -520,6 +526,8 @@ public enum Copy {
     /// so they live in DidIWidget/<locale>.lproj/Localizable.strings.
     public enum Widget {
         public static let description = t("One tap on your way out.")
+        public static let selectionUnavailable = t("Selection unavailable")
+        public static let reconfigure = t("Edit this widget to choose another.")
     }
 
     /// Spoken after a hold-to-undo. Not in the docs — invented, and deliberately

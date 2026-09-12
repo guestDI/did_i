@@ -40,7 +40,7 @@ public struct Workspace: Codable, Identifiable, Sendable, Equatable {
             .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: locale)
         guard !normalized.isEmpty else { return false }
         return !workspaces.contains {
-            $0.archivedAt == nil && $0.id != excludedID
+            $0.id != excludedID
                 && $0.name.trimmingCharacters(in: .whitespacesAndNewlines)
                     .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: locale) == normalized
         }

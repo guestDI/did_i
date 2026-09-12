@@ -5,6 +5,7 @@ import DidICore
 
 struct BoardView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var store: Store
     @State private var editing: Item?
     @State private var dayTwo: DayTwoFlow.Step?
@@ -19,6 +20,7 @@ struct BoardView: View {
     @State private var removing: Item?
     @State private var expandedAwayHelp: Set<UUID> = []
     @State private var showingSaveError = false
+    @State private var notificationItemID: UUID?
     @State private var authorization = LocationMonitor.shared.status
     /// Set when the user goes somewhere on purpose. See `recordChecks`.
     @State private var navigated = false
@@ -31,8 +33,9 @@ struct BoardView: View {
     var body: some View {
         // TimelineView supplies `now`. Nothing stores display state.
         TimelineView(.periodic(from: .now, by: 60)) { context in
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
                     header(now: context.date)
                     // The board is top-anchored, not bottom-anchored as design 1a
                     // draws it: day-2 requires the list stay visible behind the
@@ -49,13 +52,19 @@ struct BoardView: View {
                             .padding(.top, 26)
                         ForEach(store.active) { item in
                             row(item: item, now: context.date)
+                                .id(item.id)
                         }
                         footer
                     }
                 }
-                .padding(.bottom, 30)
+                    .padding(.bottom, 30)
+                }
+                .scrollIndicators(.hidden)
+                .onChange(of: notificationItemID) { _, itemID in
+                    guard let itemID else { return }
+                    withAnimation { proxy.scrollTo(itemID, anchor: .center) }
+                }
             }
-            .scrollIndicators(.hidden)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Palette.ink)
@@ -218,8 +227,17 @@ struct BoardView: View {
         guard let destination = AppDelegate.consumeNotificationDestination() else { return false }
         navigated = true
         dayTwo = nil
-        if destination == .walkthrough, !showingWalkthrough {
-            showingWalkthrough = true
+        switch destination {
+        case .walkthrough:
+            if !showingWalkthrough { showingWalkthrough = true }
+        case .item(let workspaceID, let itemID):
+            if store.activeWorkspaces.contains(where: { $0.id == workspaceID }),
+               store.allActiveItems.contains(where: { $0.id == itemID && $0.workspaceID == workspaceID }) {
+                _ = save { $0.selectWorkspace(workspaceID) }
+                notificationItemID = itemID
+            }
+        case .board:
+            break
         }
         return true
     }
@@ -394,11 +412,10 @@ struct BoardView: View {
 
     private var footer: some View {
         Text(Copy.boardFooter)
-            .boardFont(8.5, .medium, relativeTo: .caption2)
-            .tracking(2.2)
-            .textCase(.uppercase)
-            .foregroundStyle(Palette.dim)
-            .frame(maxWidth: .infinity)
+            .appFont(12, .medium, relativeTo: .footnote)
+            .foregroundStyle(Palette.sub)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 22)
             .padding(.top, 16)
     }
 
@@ -417,8 +434,15 @@ struct BoardView: View {
                     onConfirm: { confirm(item) },
                     onClear: item.lastConfirmedAt == nil ? nil : { clearStatus(item) }
                 )
-                rowActions(item: item, now: now)
-                    .offset(x: rowActionOffset(for: item), y: 13)
+                if dynamicTypeSize.isAccessibilitySize {
+                    rowActions(item: item, now: now)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.trailing, 10)
+                        .padding(.top, 13)
+                } else {
+                    rowActions(item: item, now: now)
+                        .offset(x: rowActionOffset(for: item), y: 13)
+                }
             }
             if store.state(item, now: now) == .unknown {
                 if store.isAway || expandedAwayHelp.contains(item.id) {
@@ -494,8 +518,6 @@ struct BoardView: View {
         .accessibilityLabel(Copy.moreActions)
     }
 
-    /// The title is monospaced. Cap the menu before the flap column so custom
-    /// 24-character names never collide with status cells on compact phones.
     private func rowActionOffset(for item: Item) -> CGFloat {
         min(22 + CGFloat(item.name.count) * 11.8, 170)
     }

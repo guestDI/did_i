@@ -1,9 +1,13 @@
 /* Widget configuration — Russian. Separate from DidICore: AppIntents only reads the extension's own bundle. */
 
 "Choose item" = "Выбрать пункт";
+"Configure Did I?" = "Настроить Did I?";
 "Pick which item this widget shows." = "Выбери, что показывает этот виджет.";
+"Small widgets show an item. Medium widgets show a workspace." = "Малые виджеты показывают пункт, средние — пространство.";
 "Item" = "Пункт";
 "Workspace" = "Пространство";
+"Item (small widgets)" = "Пункт (малые виджеты)";
+"Workspace (medium widget)" = "Пространство (средний виджет)";
 "Confirm" = "Подтвердить";
 "Confirm an item without opening the app. Add it again for each item you track." = "Подтверди пункт, не открывая приложение. Добавь ещё раз для каждого отслеживаемого пункта.";
 "Confirmed" = "Подтверждено";

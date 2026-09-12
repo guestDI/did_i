@@ -68,6 +68,25 @@ final class OnboardingUITests: XCTestCase {
     }
 
     @MainActor
+    func testPracticeBackReplacesAnAccidentalFirstChoice() throws {
+        let app = freshApp()
+        app.launch()
+
+        tap(app.buttons["The stove"], in: app)
+        XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 3))
+        tap(app.buttons["Back"], in: app)
+
+        XCTAssertTrue(app.buttons["Iron"].waitForExistence(timeout: 3))
+        tap(app.buttons["Iron"], in: app)
+
+        XCTAssertTrue(
+            app.descendants(matching: .any)["confirmationRow.Iron"]
+                .waitForExistence(timeout: 3)
+        )
+        XCTAssertFalse(app.descendants(matching: .any)["confirmationRow.The stove"].exists)
+    }
+
+    @MainActor
     func testClearedPracticeConfirmationStaysClearedAfterRelaunch() throws {
         let app = freshApp()
         app.launch()

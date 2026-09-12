@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     enum NotificationDestination: Equatable {
         case board
         case walkthrough
+        case item(workspaceID: UUID, itemID: UUID)
     }
 
     static let notificationDestinationRequested =
@@ -52,11 +53,20 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        let wantsWalkthrough =
-            response.notification.request.content.userInfo[Notifications.walkthroughKey]
-                as? Bool == true
+        let userInfo = response.notification.request.content.userInfo
+        let wantsWalkthrough = userInfo[Notifications.walkthroughKey] as? Bool == true
+        let workspaceID = (userInfo[Notifications.workspaceIDKey] as? String)
+            .flatMap(UUID.init(uuidString:))
+        let itemID = (userInfo[Notifications.itemIDKey] as? String)
+            .flatMap(UUID.init(uuidString:))
         await MainActor.run {
-            Self.requestNotificationDestination(wantsWalkthrough ? .walkthrough : .board)
+            if wantsWalkthrough {
+                Self.requestNotificationDestination(.walkthrough)
+            } else if let workspaceID, let itemID {
+                Self.requestNotificationDestination(.item(workspaceID: workspaceID, itemID: itemID))
+            } else {
+                Self.requestNotificationDestination(.board)
+            }
         }
     }
 

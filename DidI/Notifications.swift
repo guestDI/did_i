@@ -12,6 +12,8 @@ enum Notifications {
     /// Set on the nudge so tapping it deep-links to the install walkthrough
     /// rather than the main screen.
     static let walkthroughKey = "opensWalkthrough"
+    static let itemIDKey = "itemID"
+    static let workspaceIDKey = "workspaceID"
 
     static var center: UNUserNotificationCenter { .current() }
 
@@ -107,6 +109,10 @@ enum Notifications {
             // the entitlement — the widget nudge deliberately does not use it.
             content.interruptionLevel = .timeSensitive
             content.relevanceScore = 1
+            content.userInfo = [
+                itemIDKey: item.id.uuidString,
+                workspaceIDKey: item.workspaceID.uuidString,
+            ]
 
             let request = UNNotificationRequest(
                 identifier: leavingHomePrefix + item.id.uuidString,

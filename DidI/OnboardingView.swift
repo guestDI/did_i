@@ -11,6 +11,7 @@ struct OnboardingView: View {
     @State private var store: Store
     @State private var screen: Int
     @State private var showingSaveError = false
+    @State private var replacingFirstItem = false
     let finished: () -> Void
 
     init(store: Store, finished: @escaping () -> Void) {
@@ -28,8 +29,20 @@ struct OnboardingView: View {
         ZStack {
             Palette.ink.ignoresSafeArea()
             switch screen {
-            case 1: PickItemScreen(items: store.items, onPick: pick, onRestore: restore)
-            case 2: PracticeScreen(store: $store, onDone: { advance(from: 2) })
+            case 1:
+                PickItemScreen(
+                    items: replacingFirstItem
+                        ? store.items.filter { $0.id != store.active.first?.id }
+                        : store.items,
+                    onPick: pick,
+                    onRestore: restore
+                )
+            case 2:
+                PracticeScreen(
+                    store: $store,
+                    onBack: { replacingFirstItem = true; screen = 1 },
+                    onDone: { advance(from: 2) }
+                )
             default: WidgetScreen(store: $store, onDone: finish)
             }
         }
@@ -49,11 +62,28 @@ struct OnboardingView: View {
         let returning = store.flags.isComplete
         let item = chip.item(named: name, createdAt: .now)
         guard save({
+            if replacingFirstItem, let currentID = $0.active.first?.id,
+               let index = $0.items.firstIndex(where: { $0.id == currentID }) {
+                $0.items[index].name = item.name
+                $0.items[index].word = item.word
+                $0.items[index].symbol = item.symbol
+                $0.items[index].resetRule = item.resetRule
+                $0.items[index].lastConfirmedAt = nil
+                $0.items[index].lastConfirmationRule = nil
+                $0.items[index].confirmationLine = nil
+                $0.items[index].confirmations = nil
+                $0.items[index].confirmationRules = nil
+                $0.items[index].chipID = item.chipID
+                $0.flags.firstItemType = chip.id
+                $0.flags.practiceTapCompleted = false
+                return
+            }
             if $0.flags.installedAt == nil { $0.flags.installedAt = .now }
             if $0.flags.firstItemType == nil { $0.flags.firstItemType = chip.id }
             $0.add(item)
             if !returning { $0.flags.completedScreen = 1 }
         }) else { return }
+        replacingFirstItem = false
         if returning { finished() } else { screen = 2 }
     }
 
@@ -221,7 +251,9 @@ private struct PickItemScreen: View {
 // MARK: - Screen 2
 
 private struct PracticeScreen: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Binding var store: Store
+    let onBack: () -> Void
     let onDone: () -> Void
 
     @State private var showingSaveError = false
@@ -254,6 +286,11 @@ private struct PracticeScreen: View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
+                    if !practiceCompleted {
+                        Button(Copy.back, action: onBack)
+                            .buttonStyle(SecondaryButton(alignment: .leading))
+                            .padding(.bottom, 18)
+                    }
                     Text(Copy.Screen2.title)
                         .boardFont(21, .semibold, relativeTo: .title3)
                         .foregroundStyle(Palette.text)
@@ -273,26 +310,15 @@ private struct PracticeScreen: View {
                                 onConfirm: { confirm(item) },
                                 onClear: practiceCompleted ? { clearStatus(item) } : nil
                             )
-                            Menu {
-                                if practiceCompleted {
-                                    Button(Copy.clearStatus, systemImage: "xmark.circle") {
-                                        clearStatus(item)
-                                    }
-                                } else {
-                                    Button(Copy.confirmLabel(item: item), systemImage: "checkmark") {
-                                        confirm(item)
-                                    }
-                                }
-                            } label: {
-                                Image(systemName: "ellipsis")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(Palette.dim)
-                                    .frame(width: 44, height: 44)
-                                    .contentShape(.rect)
+                            if dynamicTypeSize.isAccessibilitySize {
+                                practiceMenu(item)
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .padding(.trailing, 10)
+                                    .padding(.top, 13)
+                            } else {
+                                practiceMenu(item)
+                                    .offset(x: min(22 + CGFloat(item.name.count) * 11.8, 170), y: 13)
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(Copy.moreActions)
-                            .offset(x: min(22 + CGFloat(item.name.count) * 11.8, 170), y: 13)
                         }
                         .padding(.horizontal, -26)
 
@@ -328,6 +354,28 @@ private struct PracticeScreen: View {
         } message: {
             Text(Copy.saveFailedBody)
         }
+    }
+
+    private func practiceMenu(_ item: Item) -> some View {
+        Menu {
+            if practiceCompleted {
+                Button(Copy.clearStatus, systemImage: "xmark.circle") {
+                    clearStatus(item)
+                }
+            } else {
+                Button(Copy.confirmLabel(item: item), systemImage: "checkmark") {
+                    confirm(item)
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Palette.dim)
+                .frame(width: 44, height: 44)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Copy.moreActions)
     }
 
     /// Not a simulation: real haptic, real entry in the real store.

@@ -45,63 +45,79 @@ public struct BoardRow: View {
     }
 
     public var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
-                name
-                // Two lines: the away line runs to 62 characters and is the one
-                // sentence in the app that must never be clipped.
-                Text(status)
-                    .boardFont(11.5, .medium, relativeTo: .caption)
-                    .foregroundStyle(Palette.sub)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityHidden(true)
-            }
-            Spacer(minLength: 0)
-            Button(action: onConfirm) {
-                VStack(alignment: .trailing, spacing: 4) {
-                    HStack(spacing: 6) {
-                        FlapCell(
-                            state == .unknown ? "·" : "✓",
-                            color: Palette.color(for: state),
-                            width: 22, height: 28, fontSize: 13
-                        )
-                        if dynamicTypeSize.isAccessibilitySize {
-                            Text(state == .unknown ? "———" : item.word.uppercased())
-                                .font(boardScaled(.headline, .bold))
-                                .foregroundStyle(Palette.color(for: state))
-                                .multilineTextAlignment(.trailing)
-                        } else {
-                            FlapWord(
-                                item: item, state: state,
-                                cellWidth: 18, cellHeight: 28, fontSize: 12.5, maxWidth: 150
-                            )
-                        }
-                    }
-                    Text(Copy.confirmNow)
-                        .boardFont(8.5, .bold, relativeTo: .caption2)
-                        .tracking(1.5)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Palette.muted)
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 12) {
+                    name
+                    statusText
+                    confirmationButton
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(minWidth: 44, minHeight: 44, alignment: .trailing)
-                .contentShape(.rect)
+            } else {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        name
+                        statusText
+                    }
+                    Spacer(minLength: 0)
+                    confirmationButton
+                }
             }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("confirmationRow.\(item.name)")
-            .accessibilityLabel(Copy.confirmLabel(item: item))
-            .accessibilityValue(status)
-            .accessibilityHint(Copy.confirmHint)
-            .modifier(ClearAccessibility(action: onClear))
         }
         .padding(.horizontal, 22)
         .padding(.vertical, 15)
-        // Rows stay a regular grid even when the status line wraps to two —
-        // a departure board with ragged rows stops reading as one.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .frame(minHeight: 76)
         .overlay(alignment: .bottom) {
             Rectangle().fill(Palette.rule).frame(height: 1)
         }
+    }
+
+    private var statusText: some View {
+        Text(status)
+            .boardFont(11.5, .medium, relativeTo: .caption)
+            .foregroundStyle(Palette.sub)
+            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityHidden(true)
+    }
+
+    private var confirmationButton: some View {
+        Button(action: onConfirm) {
+            VStack(alignment: .trailing, spacing: 4) {
+                HStack(spacing: 6) {
+                    FlapCell(
+                        state == .unknown ? "·" : "✓",
+                        color: Palette.color(for: state),
+                        width: 22, height: 28, fontSize: 13
+                    )
+                    if dynamicTypeSize.isAccessibilitySize {
+                        Text(state == .unknown ? "———" : item.word.uppercased())
+                            .font(boardScaled(.headline, .bold))
+                            .foregroundStyle(Palette.color(for: state))
+                            .multilineTextAlignment(.trailing)
+                    } else {
+                        FlapWord(
+                            item: item, state: state,
+                            cellWidth: 18, cellHeight: 28, fontSize: 12.5, maxWidth: 150
+                        )
+                    }
+                }
+                Text(Copy.confirmNow)
+                    .boardFont(8.5, .bold, relativeTo: .caption2)
+                    .tracking(1.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Palette.muted)
+            }
+            .frame(minWidth: 44, minHeight: 44, alignment: .trailing)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("confirmationRow.\(item.name)")
+        .accessibilityLabel(Copy.confirmLabel(item: item))
+        .accessibilityValue(status)
+        .accessibilityHint(Copy.confirmHint)
+        .modifier(ClearAccessibility(action: onClear))
     }
 
     private var name: some View {
@@ -110,7 +126,8 @@ public struct BoardRow: View {
             .tracking(2.5)
             .textCase(.uppercase)
             .foregroundStyle(Palette.text)
-            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
+            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
+            .padding(.trailing, dynamicTypeSize.isAccessibilitySize ? 44 : 0)
     }
 }
 

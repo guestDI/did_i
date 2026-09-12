@@ -30,6 +30,8 @@ struct WorkspaceCreateSheet: View {
                 } footer: {
                     if store.activeWorkspaces.count >= Store.workspaceCap {
                         Text(Copy.Workspaces.cap).foregroundStyle(Palette.amber)
+                    } else if !trimmed.isEmpty && !Workspace.isNameAvailable(trimmed, among: store.workspaces) {
+                        Text(Copy.Workspaces.nameAlreadyUsed).foregroundStyle(Palette.amber)
                     }
                 }
             }
@@ -72,21 +74,50 @@ struct WorkspaceSettingsView: View {
     @State private var renaming: Workspace?
     @State private var rename = ""
     @State private var showingSaveError = false
+    @State private var workspaceError: String?
+
+    private var renameIsValid: Bool {
+        guard let renaming else { return false }
+        return Workspace.isNameAvailable(rename, among: store.workspaces, excluding: renaming.id)
+    }
 
     var body: some View {
         List {
             Section {
                 ForEach(store.activeWorkspaces) { workspace in
-                    Button {
-                        storeSelection(workspace.id)
-                    } label: {
-                        HStack {
+                    HStack(spacing: 8) {
+                        Button { storeSelection(workspace.id) } label: {
                             Text(workspace.name).foregroundStyle(Palette.text)
                             Spacer()
                             if workspace.id == store.selectedWorkspaceID {
                                 Image(systemName: "checkmark").foregroundStyle(Palette.amber)
                             }
                         }
+                        .buttonStyle(.plain)
+                        Menu {
+                            if workspace.id != store.selectedWorkspaceID {
+                                Button(Copy.Workspaces.select, systemImage: "checkmark") {
+                                    storeSelection(workspace.id)
+                                }
+                            }
+                            Button(Copy.Workspaces.rename, systemImage: "pencil") {
+                                beginRename(workspace)
+                            }
+                            if store.activeWorkspaces.first?.id != workspace.id {
+                                Button(Copy.moveUp, systemImage: "arrow.up") {
+                                    save { $0.moveWorkspaceUp(workspace.id) }
+                                }
+                            }
+                            if store.activeWorkspaces.count > 1 {
+                                Button(Copy.Workspaces.archive, systemImage: "archivebox") {
+                                    save { $0.archiveWorkspace(workspace.id, at: .now) }
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .frame(width: 44, height: 44)
+                        }
+                        .accessibilityLabel(Copy.moreActions)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         if store.activeWorkspaces.count > 1 {
@@ -96,8 +127,7 @@ struct WorkspaceSettingsView: View {
                             .tint(Palette.amber)
                         }
                         Button(Copy.Workspaces.rename) {
-                            rename = workspace.name
-                            renaming = workspace
+                            beginRename(workspace)
                         }
                         .tint(Palette.muted)
                     }
@@ -111,14 +141,19 @@ struct WorkspaceSettingsView: View {
                 Button(Copy.Workspaces.new, systemImage: "plus") { creating = true }
                     .disabled(store.activeWorkspaces.count >= Store.workspaceCap)
             } footer: {
-                Text(Copy.Workspaces.globalHomeFooter)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(Copy.Workspaces.globalHomeFooter)
+                    if store.activeWorkspaces.count >= Store.workspaceCap {
+                        Text(Copy.Workspaces.cap).foregroundStyle(Palette.amber)
+                    }
+                }
             }
 
             if !store.archivedWorkspaces.isEmpty {
                 Section(Copy.Workspaces.archived) {
                     ForEach(store.archivedWorkspaces) { workspace in
                         Button {
-                            save { $0.restoreWorkspace(workspace.id) }
+                            restore(workspace)
                         } label: {
                             LabeledContent(workspace.name) { Text(Copy.Workspaces.restore) }
                         }
@@ -134,12 +169,36 @@ struct WorkspaceSettingsView: View {
             get: { renaming != nil }, set: { if !$0 { renaming = nil } }
         )) {
             TextField(Copy.nameFieldTitle, text: $rename)
+                .onChange(of: rename) { _, value in
+                    if value.count > Workspace.maxNameLength {
+                        rename = String(value.prefix(Workspace.maxNameLength))
+                    }
+                }
             Button(Copy.cancel, role: .cancel) { renaming = nil }
             Button(Copy.done) { finishRename() }
+                .disabled(!renameIsValid)
+        } message: {
+            if !rename.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !renameIsValid {
+                Text(Copy.Workspaces.nameAlreadyUsed)
+            } else if !renameIsValid {
+                Text(Copy.Workspaces.nameRequired)
+            }
         }
         .alert(Copy.saveFailedTitle, isPresented: $showingSaveError) {
             Button(Copy.ok) {}
         } message: { Text(Copy.saveFailedBody) }
+        .alert(Copy.Workspaces.couldNotRestore, isPresented: Binding(
+            get: { workspaceError != nil }, set: { if !$0 { workspaceError = nil } }
+        )) {
+            Button(Copy.ok) { workspaceError = nil }
+        } message: {
+            if let workspaceError { Text(workspaceError) }
+        }
+    }
+
+    private func beginRename(_ workspace: Workspace) {
+        rename = workspace.name
+        renaming = workspace
     }
 
     private func finishRename() {
@@ -148,6 +207,18 @@ struct WorkspaceSettingsView: View {
         guard Workspace.isNameAvailable(value, among: store.workspaces, excluding: workspace.id) else { return }
         renaming = nil
         save { $0.renameWorkspace(workspace.id, to: value) }
+    }
+
+    private func restore(_ workspace: Workspace) {
+        guard store.activeWorkspaces.count < Store.workspaceCap else {
+            workspaceError = Copy.Workspaces.cap
+            return
+        }
+        guard Workspace.isNameAvailable(workspace.name, among: store.workspaces, excluding: workspace.id) else {
+            workspaceError = Copy.Workspaces.restoreNameConflict
+            return
+        }
+        save { $0.restoreWorkspace(workspace.id) }
     }
 
     private func storeSelection(_ id: UUID) {

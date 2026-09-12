@@ -1,12 +1,16 @@
 /* Widget configuration screen: the title of the item picker. */
 "Choose item" = "Choose item";
+"Configure Did I?" = "Configure Did I?";
 
 /* Widget configuration screen: help text under the item picker. */
 "Pick which item this widget shows." = "Pick which item this widget shows.";
+"Small widgets show an item. Medium widgets show a workspace." = "Small widgets show an item. Medium widgets show a workspace.";
 
 /* Widget configuration screen: the label of the item parameter itself. */
 "Item" = "Item";
 "Workspace" = "Workspace";
+"Item (small widgets)" = "Item (small widgets)";
+"Workspace (medium widget)" = "Workspace (medium widget)";
 
 /* Shortcuts app: the name of the tap-to-confirm action. Not user-discoverable. */
 "Confirm" = "Confirm";

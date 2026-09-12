@@ -171,7 +171,7 @@ Plus an escape hatch, always available in that state:
 
 When the app cannot determine whether someone is home because location was
 declined or limited, use the neutral status `No current record.` and show a
-single compact `I'm away` disclosure. Only reveal the two escape actions after
+single compact `Can't check this item?` disclosure. Only reveal the two escape actions after
 that tap. Do not permanently expand every unknown row with away-state controls.
 
 Snark aimed at someone who is genuinely anxious and 3km from home is the fastest way to make this app feel cruel. The joke is a reward for being fine, never a comment on being uncertain.

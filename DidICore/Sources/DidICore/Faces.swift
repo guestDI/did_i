@@ -357,9 +357,11 @@ public struct RectangularFace: View {
 /// a widget with no move.
 public struct EmptyFace: View {
     let workspaceName: String?
+    let message: String?
 
-    public init(workspaceName: String? = nil) {
+    public init(workspaceName: String? = nil, message: String? = nil) {
         self.workspaceName = workspaceName
+        self.message = message
     }
 
     public var body: some View {
@@ -370,9 +372,15 @@ public struct EmptyFace: View {
                     .textCase(.uppercase)
                     .lineLimit(1)
             }
-            Text(Copy.summary(handled: 0, of: 0))
-                .opacity(0.6)
-            Text(Copy.addAnItem)
+            if let message {
+                Text(message)
+                Text(Copy.Widget.reconfigure)
+                    .opacity(0.6)
+            } else {
+                Text(Copy.summary(handled: 0, of: 0))
+                    .opacity(0.6)
+                Text(Copy.addAnItem)
+            }
         }
         .font(board(9))
         .lineLimit(1)

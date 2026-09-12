@@ -80,6 +80,16 @@ import Foundation
     #expect(store.createWorkspace(named: "One too many", at: .now) == nil)
 }
 
+@Test func archivedWorkspaceNamesRemainReserved() {
+    var store = Store()
+    let workID = store.createWorkspace(named: "Work", at: .now)!
+    store.archiveWorkspace(workID, at: .now)
+
+    #expect(store.createWorkspace(named: " work ", at: .now) == nil)
+    store.restoreWorkspace(workID)
+    #expect(store.activeWorkspaces.contains { $0.id == workID })
+}
+
 @Test func workspacesCanBeReordered() {
     var store = Store()
     let workID = store.createWorkspace(named: "Work", at: .now)!

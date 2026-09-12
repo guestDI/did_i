@@ -7,11 +7,11 @@ struct BoardEntry: TimelineEntry {
     let store: Store
     let selectedID: UUID?
     let workspaceID: UUID?
+    let family: WidgetFamily
 
     var workspace: Workspace? {
-        if let workspaceID,
-           let configured = store.activeWorkspaces.first(where: { $0.id == workspaceID }) {
-            return configured
+        if let workspaceID {
+            return store.activeWorkspaces.first(where: { $0.id == workspaceID })
         }
         if let selectedID, let item = store.allActiveItems.first(where: { $0.id == selectedID }) {
             return store.activeWorkspaces.first { $0.id == item.workspaceID }
@@ -37,7 +37,14 @@ struct BoardEntry: TimelineEntry {
         })
     }
 
-    var destinationWorkspaceID: UUID? { selected?.workspaceID ?? workspace?.id }
+    var destinationWorkspaceID: UUID? { workspace?.id }
+
+    var selectionUnavailable: Bool {
+        if family == .systemMedium {
+            return workspaceID != nil && workspace == nil
+        }
+        return selectedID != nil && selected == nil
+    }
 }
 
 /// Entries are precomputed at every boundary the store already knows about, so
@@ -80,7 +87,8 @@ struct Provider: AppIntentTimelineProvider {
                 date: $0,
                 store: store,
                 selectedID: configuration.itemID,
-                workspaceID: workspaceID
+                workspaceID: workspaceID,
+                family: context.family
             )
         }
         return Timeline(entries: entries, policy: .after(dates.last ?? horizon))
@@ -123,7 +131,8 @@ struct Provider: AppIntentTimelineProvider {
                 selectedID: selectedID,
                 configuredWorkspaceID: workspaceID,
                 family: family
-            )
+            ),
+            family: family
         )
     }
 
@@ -182,6 +191,9 @@ struct BoardWidgetView: View {
 
     var body: some View {
         Group {
+            if entry.selectionUnavailable {
+                unavailable
+            } else {
             switch family {
             case .systemSmall:
                 single { SmallFace(item: $0, state: $1, workspaceName: entry.workspace?.name) }
@@ -212,10 +224,26 @@ struct BoardWidgetView: View {
                 }
                 .containerBackground(.clear, for: .widget)
             }
+            }
         }
         .widgetURL(entry.destinationWorkspaceID.flatMap {
             URL(string: "didi://workspace/\($0.uuidString)")
         })
+    }
+
+    @ViewBuilder private var unavailable: some View {
+        switch family {
+        case .accessoryCircular:
+            Image(systemName: "questionmark")
+                .containerBackground(.clear, for: .widget)
+        case .accessoryRectangular:
+            Text(Copy.Widget.selectionUnavailable)
+                .font(.caption)
+                .containerBackground(.clear, for: .widget)
+        default:
+            EmptyFace(message: Copy.Widget.selectionUnavailable)
+                .containerBackground(Palette.ink, for: .widget)
+        }
     }
 
     /// Single-item families, with the empty board handled once.
